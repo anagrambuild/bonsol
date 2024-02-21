@@ -1,0 +1,5 @@
+[toolchain]
+channel = "1.75.0"
+components = [ "rustfmt", "rustc-dev" ]
+targets = ["x86_64-unknown-linux-gnu"]
+profile = "default"

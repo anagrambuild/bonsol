@@ -1,0 +1,8 @@
+[package]
+name = "simple"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+json = "0.12.4"
+risc0-zkvm = {version = "*", default-features = false, features = ["std"]}

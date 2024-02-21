@@ -1,0 +1,30 @@
+[package]
+name = "relay"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+tokio = { version = "1.36.0", features = ["full"] }
+solana-sdk = { version = "1.17.18" }
+solana-rpc-client  = {version = "1.17.18" }
+solana-rpc-client-api = { version = "1.17.18" }
+solana-pubsub-client = {version = "1.17.18" }
+solana-transaction-status = {version = "1.17.18" }
+futures-util = { version = "0.3.30" }
+clap = { version = "4.5.0" , features = ["derive"] }
+clap_derive = { version = "4.5.0" }
+thiserror = { version = "1.0.57" }
+anyhow = { version = "1.0.79" }
+bonsai-sdk = { version = "0.6.1" }
+risc0-zkvm = { version = "0.20.1"}
+anagram-bonsol-schema = {path = "../schemas-rust"}
+reqwest = { version = "0.11.24" }
+serde = { version = "1.0.197" }
+serde_json = { version = "1.0.114" }
+hex = "0.4.3"
+redb  = "1.5.0" 
+bincode = "=2.0.0-rc.3"
+[lints]
+workspace = true

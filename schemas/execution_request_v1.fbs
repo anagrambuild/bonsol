@@ -1,0 +1,17 @@
+enum ExecutionInputType : uint8{
+  URL = 0,
+  DATA = 1,
+}
+
+table ExecutionRequestV1{
+  input_type: ExecutionInputType;
+  tip: uint64;
+  execution_id: [uint8];
+  image_id: [uint8];
+  callback_program_id: [uint8];
+  callback_instruction_prefix: [uint8];
+  input_data: [uint8];
+}
+
+
+root_type ExecutionRequestV1;

@@ -1,0 +1,13 @@
+include "./execution_request_v1.fbs"; 
+include "./status_v1.fbs";
+
+union ChannelInstructionData {
+  ExecuteV1: ExecutionRequestV1,
+  StatusV1: StatusV1,
+} 
+
+table ChannelInstruction{
+  instruction: ChannelInstructionData;
+}
+
+root_type ChannelInstruction;
