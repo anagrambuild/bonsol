@@ -1,4 +1,4 @@
-import { ChannelInstruction, ChannelInstructionData, ExecutionInputType, ExecutionRequestV1 } from "bonsol-schemas"
+import { ChannelInstruction, ExecutionInputType, ChannelInstructionIxType, ExecutionRequestV1 } from "bonsol-schemas"
 import * as flatbuffers from "flatbuffers"
 import { AccountRole, Address, IInstruction, ReadonlyAccount, WritableAccount, address, getAddressEncoder, getProgramDerivedAddress } from "@solana/web3.js";
 import { unionToChannelInstructionData } from "bonsol-schemas/dist/bonsol/channel-instruction-data";
@@ -56,9 +56,12 @@ export class BonsolProgram {
     ExecutionRequestV1.addInputData(builder, ind);
     ExecutionRequestV1.addTip(builder, BigInt(params.tip || 0));
     const er = ExecutionRequestV1.endExecutionRequestV1(builder);
+    builder.finish(er);
+    const erbuf = builder.asUint8Array();
+    const erv = ChannelInstruction.createExecuteV1Vector(builder, erbuf);
     ChannelInstruction.startChannelInstruction(builder);
-    ChannelInstruction.addInstructionType(builder, ChannelInstructionData.ExecuteV1);
-    ChannelInstruction.addInstruction(builder, er);
+    ChannelInstruction.addExecuteV1(builder, erv);
+    ChannelInstruction.addIxType(builder, ChannelInstructionIxType.ExecuteV1);
     const ci = ChannelInstruction.endChannelInstruction(builder);
     builder.finish(ci);
     const buf = builder.asUint8Array();

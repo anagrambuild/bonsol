@@ -43,9 +43,9 @@ describe('BonsolProgram', () => {
     const result = await BonsolProgram.Execute(
       {
         executionId: eid,
-        imageId: "imageId",
+        imageId: "ffddd818c78b130ba84aacd1cc69e075e40053c4ca14f1b0272bf196c204d2d0",
         inputType: ExecutionInputType.DATA,
-        input: Uint8Array.from(Buffer.from(input,'utf-8')),
+        input: Buffer.from(input,'utf-8'),
         requester: pub
       }
     )
@@ -54,15 +54,28 @@ describe('BonsolProgram', () => {
       rpcSubscriptions: sub
     }) 
     const ctx = await api.getLatestBlockhash().send()
-    expect(() => {
-    const transaction = pipe(
-      createTransaction({ version: 0 }),
-      tx => setTransactionFeePayer(pub, tx),
-      tx => setTransactionLifetimeUsingBlockhash(ctx.value, tx),
-      tx => appendTransactionInstruction(result, tx),
-      async tx => signTransaction([keyPair], tx),
-      async tx => s(await tx, { commitment: "confirmed" })
-    );
+    expect(async () => {
+      const x = pipe(
+        createTransaction({ version: 0 }),
+        tx => setTransactionFeePayer(pub, tx),
+        tx => setTransactionLifetimeUsingBlockhash(ctx.value, tx),
+        tx => appendTransactionInstruction(result, tx),
+        async tx => signTransaction([keyPair], tx),
+        async tx => {
+          await s(await tx, { commitment: "confirmed" });
+          return tx;
+        },
+        async tx => api.getTransaction(getSignatureFromTransaction(await tx), {
+          commitment: "confirmed",
+            maxSupportedTransactionVersion: 0
+        }).send(),
+        async tx => {
+          console.log((await tx)?.meta?.logMessages)
+          return tx;
+        }
+      );
+      await x;
+      
     }).not.toThrow()
    
   })

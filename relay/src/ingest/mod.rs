@@ -56,6 +56,7 @@ impl RpcIngester {
     }
 }
 
+#[derive(Debug)]
 pub struct BonsolInstruction {
     pub cpi: bool,
     pub accounts: Vec<Pubkey>,

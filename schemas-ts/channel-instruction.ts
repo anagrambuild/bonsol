@@ -2,7 +2,7 @@
 
 import * as flatbuffers from 'flatbuffers';
 
-import { ChannelInstructionData, unionToChannelInstructionData, unionListToChannelInstructionData } from './channel-instruction-data.js';
+import { ChannelInstructionIxType } from './channel-instruction-ix-type.js';
 
 
 export class ChannelInstruction {
@@ -23,26 +23,90 @@ static getSizePrefixedRootAsChannelInstruction(bb:flatbuffers.ByteBuffer, obj?:C
   return (obj || new ChannelInstruction()).__init(bb.readInt32(bb.position()) + bb.position(), bb);
 }
 
-instructionType():ChannelInstructionData {
+ixType():ChannelInstructionIxType {
   const offset = this.bb!.__offset(this.bb_pos, 4);
-  return offset ? this.bb!.readUint8(this.bb_pos + offset) : ChannelInstructionData.NONE;
+  return offset ? this.bb!.readUint8(this.bb_pos + offset) : ChannelInstructionIxType.ExecuteV1;
 }
 
-instruction<T extends flatbuffers.Table>(obj:any):any|null {
+mutate_ix_type(value:ChannelInstructionIxType):boolean {
+  const offset = this.bb!.__offset(this.bb_pos, 4);
+
+  if (offset === 0) {
+    return false;
+  }
+
+  this.bb!.writeUint8(this.bb_pos + offset, value);
+  return true;
+}
+
+executeV1(index: number):number|null {
   const offset = this.bb!.__offset(this.bb_pos, 6);
-  return offset ? this.bb!.__union(obj, this.bb_pos + offset) : null;
+  return offset ? this.bb!.readUint8(this.bb!.__vector(this.bb_pos + offset) + index) : 0;
+}
+
+executeV1Length():number {
+  const offset = this.bb!.__offset(this.bb_pos, 6);
+  return offset ? this.bb!.__vector_len(this.bb_pos + offset) : 0;
+}
+
+executeV1Array():Uint8Array|null {
+  const offset = this.bb!.__offset(this.bb_pos, 6);
+  return offset ? new Uint8Array(this.bb!.bytes().buffer, this.bb!.bytes().byteOffset + this.bb!.__vector(this.bb_pos + offset), this.bb!.__vector_len(this.bb_pos + offset)) : null;
+}
+
+statusV1(index: number):number|null {
+  const offset = this.bb!.__offset(this.bb_pos, 8);
+  return offset ? this.bb!.readUint8(this.bb!.__vector(this.bb_pos + offset) + index) : 0;
+}
+
+statusV1Length():number {
+  const offset = this.bb!.__offset(this.bb_pos, 8);
+  return offset ? this.bb!.__vector_len(this.bb_pos + offset) : 0;
+}
+
+statusV1Array():Uint8Array|null {
+  const offset = this.bb!.__offset(this.bb_pos, 8);
+  return offset ? new Uint8Array(this.bb!.bytes().buffer, this.bb!.bytes().byteOffset + this.bb!.__vector(this.bb_pos + offset), this.bb!.__vector_len(this.bb_pos + offset)) : null;
 }
 
 static startChannelInstruction(builder:flatbuffers.Builder) {
-  builder.startObject(2);
+  builder.startObject(3);
 }
 
-static addInstructionType(builder:flatbuffers.Builder, instructionType:ChannelInstructionData) {
-  builder.addFieldInt8(0, instructionType, ChannelInstructionData.NONE);
+static addIxType(builder:flatbuffers.Builder, ixType:ChannelInstructionIxType) {
+  builder.addFieldInt8(0, ixType, ChannelInstructionIxType.ExecuteV1);
 }
 
-static addInstruction(builder:flatbuffers.Builder, instructionOffset:flatbuffers.Offset) {
-  builder.addFieldOffset(1, instructionOffset, 0);
+static addExecuteV1(builder:flatbuffers.Builder, executeV1Offset:flatbuffers.Offset) {
+  builder.addFieldOffset(1, executeV1Offset, 0);
+}
+
+static createExecuteV1Vector(builder:flatbuffers.Builder, data:number[]|Uint8Array):flatbuffers.Offset {
+  builder.startVector(1, data.length, 1);
+  for (let i = data.length - 1; i >= 0; i--) {
+    builder.addInt8(data[i]!);
+  }
+  return builder.endVector();
+}
+
+static startExecuteV1Vector(builder:flatbuffers.Builder, numElems:number) {
+  builder.startVector(1, numElems, 1);
+}
+
+static addStatusV1(builder:flatbuffers.Builder, statusV1Offset:flatbuffers.Offset) {
+  builder.addFieldOffset(2, statusV1Offset, 0);
+}
+
+static createStatusV1Vector(builder:flatbuffers.Builder, data:number[]|Uint8Array):flatbuffers.Offset {
+  builder.startVector(1, data.length, 1);
+  for (let i = data.length - 1; i >= 0; i--) {
+    builder.addInt8(data[i]!);
+  }
+  return builder.endVector();
+}
+
+static startStatusV1Vector(builder:flatbuffers.Builder, numElems:number) {
+  builder.startVector(1, numElems, 1);
 }
 
 static endChannelInstruction(builder:flatbuffers.Builder):flatbuffers.Offset {
@@ -58,10 +122,11 @@ static finishSizePrefixedChannelInstructionBuffer(builder:flatbuffers.Builder, o
   builder.finish(offset, undefined, true);
 }
 
-static createChannelInstruction(builder:flatbuffers.Builder, instructionType:ChannelInstructionData, instructionOffset:flatbuffers.Offset):flatbuffers.Offset {
+static createChannelInstruction(builder:flatbuffers.Builder, ixType:ChannelInstructionIxType, executeV1Offset:flatbuffers.Offset, statusV1Offset:flatbuffers.Offset):flatbuffers.Offset {
   ChannelInstruction.startChannelInstruction(builder);
-  ChannelInstruction.addInstructionType(builder, instructionType);
-  ChannelInstruction.addInstruction(builder, instructionOffset);
+  ChannelInstruction.addIxType(builder, ixType);
+  ChannelInstruction.addExecuteV1(builder, executeV1Offset);
+  ChannelInstruction.addStatusV1(builder, statusV1Offset);
   return ChannelInstruction.endChannelInstruction(builder);
 }
 }

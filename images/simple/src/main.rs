@@ -1,17 +1,19 @@
-#![no_main]
 
-
-use json::parse;
+use std::str::from_utf8;
+use gjson::Kind;
 use risc0_zkvm::guest::env;
 
-risc0_zkvm::guest::entry!(main);
-
 fn main() {
-    let data: String = env::read();
-    let data = parse(&data).unwrap();
-    let val = data["attestation"].as_str();
-    if val.is_none() {
-        env::commit(&0);
+    let mut data = Vec::new();
+    env::read_slice(&mut data);
+    let st = from_utf8(&data).unwrap();
+    let valid = gjson::valid(st);
+    if valid {
+        let val = gjson::get(st, "attestation");
+        if val.kind() == Kind::String {
+            env::commit(&1);
+            return;
+        }
     }
-    env::commit(&1);
+    env::commit(&0);
 }

@@ -12,44 +12,40 @@ extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
 
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-pub const ENUM_MIN_CHANNEL_INSTRUCTION_DATA: u8 = 0;
+pub const ENUM_MIN_CHANNEL_INSTRUCTION_IX_TYPE: u8 = 0;
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-pub const ENUM_MAX_CHANNEL_INSTRUCTION_DATA: u8 = 2;
+pub const ENUM_MAX_CHANNEL_INSTRUCTION_IX_TYPE: u8 = 1;
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_CHANNEL_INSTRUCTION_DATA: [ChannelInstructionData; 3] = [
-  ChannelInstructionData::NONE,
-  ChannelInstructionData::ExecuteV1,
-  ChannelInstructionData::StatusV1,
+pub const ENUM_VALUES_CHANNEL_INSTRUCTION_IX_TYPE: [ChannelInstructionIxType; 2] = [
+  ChannelInstructionIxType::ExecuteV1,
+  ChannelInstructionIxType::StatusV1,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 #[repr(transparent)]
-pub struct ChannelInstructionData(pub u8);
+pub struct ChannelInstructionIxType(pub u8);
 #[allow(non_upper_case_globals)]
-impl ChannelInstructionData {
-  pub const NONE: Self = Self(0);
-  pub const ExecuteV1: Self = Self(1);
-  pub const StatusV1: Self = Self(2);
+impl ChannelInstructionIxType {
+  pub const ExecuteV1: Self = Self(0);
+  pub const StatusV1: Self = Self(1);
 
   pub const ENUM_MIN: u8 = 0;
-  pub const ENUM_MAX: u8 = 2;
+  pub const ENUM_MAX: u8 = 1;
   pub const ENUM_VALUES: &'static [Self] = &[
-    Self::NONE,
     Self::ExecuteV1,
     Self::StatusV1,
   ];
   /// Returns the variant's name or "" if unknown.
   pub fn variant_name(self) -> Option<&'static str> {
     match self {
-      Self::NONE => Some("NONE"),
       Self::ExecuteV1 => Some("ExecuteV1"),
       Self::StatusV1 => Some("StatusV1"),
       _ => None,
     }
   }
 }
-impl core::fmt::Debug for ChannelInstructionData {
+impl core::fmt::Debug for ChannelInstructionIxType {
   fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
     if let Some(name) = self.variant_name() {
       f.write_str(name)
@@ -58,7 +54,7 @@ impl core::fmt::Debug for ChannelInstructionData {
     }
   }
 }
-impl<'a> flatbuffers::Follow<'a> for ChannelInstructionData {
+impl<'a> flatbuffers::Follow<'a> for ChannelInstructionIxType {
   type Inner = Self;
   #[inline]
   unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
@@ -67,15 +63,15 @@ impl<'a> flatbuffers::Follow<'a> for ChannelInstructionData {
   }
 }
 
-impl flatbuffers::Push for ChannelInstructionData {
-    type Output = ChannelInstructionData;
+impl flatbuffers::Push for ChannelInstructionIxType {
+    type Output = ChannelInstructionIxType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
         flatbuffers::emplace_scalar::<u8>(dst, self.0);
     }
 }
 
-impl flatbuffers::EndianScalar for ChannelInstructionData {
+impl flatbuffers::EndianScalar for ChannelInstructionIxType {
   type Scalar = u8;
   #[inline]
   fn to_little_endian(self) -> u8 {
@@ -89,7 +85,7 @@ impl flatbuffers::EndianScalar for ChannelInstructionData {
   }
 }
 
-impl<'a> flatbuffers::Verifiable for ChannelInstructionData {
+impl<'a> flatbuffers::Verifiable for ChannelInstructionIxType {
   #[inline]
   fn run_verifier(
     v: &mut flatbuffers::Verifier, pos: usize
@@ -99,9 +95,7 @@ impl<'a> flatbuffers::Verifiable for ChannelInstructionData {
   }
 }
 
-impl flatbuffers::SimpleToVerifyInSlice for ChannelInstructionData {}
-pub struct ChannelInstructionDataUnionTableOffset {}
-
+impl flatbuffers::SimpleToVerifyInSlice for ChannelInstructionIxType {}
 pub enum ChannelInstructionOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -118,8 +112,9 @@ impl<'a> flatbuffers::Follow<'a> for ChannelInstruction<'a> {
 }
 
 impl<'a> ChannelInstruction<'a> {
-  pub const VT_INSTRUCTION_TYPE: flatbuffers::VOffsetT = 4;
-  pub const VT_INSTRUCTION: flatbuffers::VOffsetT = 6;
+  pub const VT_IX_TYPE: flatbuffers::VOffsetT = 4;
+  pub const VT_EXECUTE_V1: flatbuffers::VOffsetT = 6;
+  pub const VT_STATUS_V1: flatbuffers::VOffsetT = 8;
 
   #[inline]
   pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
@@ -128,59 +123,55 @@ impl<'a> ChannelInstruction<'a> {
   #[allow(unused_mut)]
   pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
     _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
-    args: &'args ChannelInstructionArgs
+    args: &'args ChannelInstructionArgs<'args>
   ) -> flatbuffers::WIPOffset<ChannelInstruction<'bldr>> {
     let mut builder = ChannelInstructionBuilder::new(_fbb);
-    if let Some(x) = args.instruction { builder.add_instruction(x); }
-    builder.add_instruction_type(args.instruction_type);
+    if let Some(x) = args.status_v1 { builder.add_status_v1(x); }
+    if let Some(x) = args.execute_v1 { builder.add_execute_v1(x); }
+    builder.add_ix_type(args.ix_type);
     builder.finish()
   }
 
 
   #[inline]
-  pub fn instruction_type(&self) -> ChannelInstructionData {
+  pub fn ix_type(&self) -> ChannelInstructionIxType {
     // Safety:
     // Created from valid Table for this object
     // which contains a valid value in this slot
-    unsafe { self._tab.get::<ChannelInstructionData>(ChannelInstruction::VT_INSTRUCTION_TYPE, Some(ChannelInstructionData::NONE)).unwrap()}
+    unsafe { self._tab.get::<ChannelInstructionIxType>(ChannelInstruction::VT_IX_TYPE, Some(ChannelInstructionIxType::ExecuteV1)).unwrap()}
   }
   #[inline]
-  pub fn instruction(&self) -> Option<flatbuffers::Table<'a>> {
+  pub fn execute_v1(&self) -> Option<flatbuffers::Vector<'a, u8>> {
     // Safety:
     // Created from valid Table for this object
     // which contains a valid value in this slot
-    unsafe { self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Table<'a>>>(ChannelInstruction::VT_INSTRUCTION, None)}
+    unsafe { self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, u8>>>(ChannelInstruction::VT_EXECUTE_V1, None)}
+  }
+  pub fn execute_v1_nested_flatbuffer(&'a self) -> Option<ExecutionRequestV1<'a>> {
+    self.execute_v1().map(|data| {
+      use flatbuffers::Follow;
+      // Safety:
+      // Created from a valid Table for this object
+      // Which contains a valid flatbuffer in this slot
+      unsafe { <flatbuffers::ForwardsUOffset<ExecutionRequestV1<'a>>>::follow(data.bytes(), 0) }
+    })
   }
   #[inline]
-  #[allow(non_snake_case)]
-  pub fn instruction_as_execute_v1(&self) -> Option<ExecutionRequestV1<'a>> {
-    if self.instruction_type() == ChannelInstructionData::ExecuteV1 {
-      self.instruction().map(|t| {
-       // Safety:
-       // Created from a valid Table for this object
-       // Which contains a valid union in this slot
-       unsafe { ExecutionRequestV1::init_from_table(t) }
-     })
-    } else {
-      None
-    }
+  pub fn status_v1(&self) -> Option<flatbuffers::Vector<'a, u8>> {
+    // Safety:
+    // Created from valid Table for this object
+    // which contains a valid value in this slot
+    unsafe { self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, u8>>>(ChannelInstruction::VT_STATUS_V1, None)}
   }
-
-  #[inline]
-  #[allow(non_snake_case)]
-  pub fn instruction_as_status_v1(&self) -> Option<StatusV1<'a>> {
-    if self.instruction_type() == ChannelInstructionData::StatusV1 {
-      self.instruction().map(|t| {
-       // Safety:
-       // Created from a valid Table for this object
-       // Which contains a valid union in this slot
-       unsafe { StatusV1::init_from_table(t) }
-     })
-    } else {
-      None
-    }
+  pub fn status_v1_nested_flatbuffer(&'a self) -> Option<StatusV1<'a>> {
+    self.status_v1().map(|data| {
+      use flatbuffers::Follow;
+      // Safety:
+      // Created from a valid Table for this object
+      // Which contains a valid flatbuffer in this slot
+      unsafe { <flatbuffers::ForwardsUOffset<StatusV1<'a>>>::follow(data.bytes(), 0) }
+    })
   }
-
 }
 
 impl flatbuffers::Verifiable for ChannelInstruction<'_> {
@@ -190,27 +181,25 @@ impl flatbuffers::Verifiable for ChannelInstruction<'_> {
   ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
     use self::flatbuffers::Verifiable;
     v.visit_table(pos)?
-     .visit_union::<ChannelInstructionData, _>("instruction_type", Self::VT_INSTRUCTION_TYPE, "instruction", Self::VT_INSTRUCTION, false, |key, v, pos| {
-        match key {
-          ChannelInstructionData::ExecuteV1 => v.verify_union_variant::<flatbuffers::ForwardsUOffset<ExecutionRequestV1>>("ChannelInstructionData::ExecuteV1", pos),
-          ChannelInstructionData::StatusV1 => v.verify_union_variant::<flatbuffers::ForwardsUOffset<StatusV1>>("ChannelInstructionData::StatusV1", pos),
-          _ => Ok(()),
-        }
-     })?
+     .visit_field::<ChannelInstructionIxType>("ix_type", Self::VT_IX_TYPE, false)?
+     .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, u8>>>("execute_v1", Self::VT_EXECUTE_V1, false)?
+     .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, u8>>>("status_v1", Self::VT_STATUS_V1, false)?
      .finish();
     Ok(())
   }
 }
-pub struct ChannelInstructionArgs {
-    pub instruction_type: ChannelInstructionData,
-    pub instruction: Option<flatbuffers::WIPOffset<flatbuffers::UnionWIPOffset>>,
+pub struct ChannelInstructionArgs<'a> {
+    pub ix_type: ChannelInstructionIxType,
+    pub execute_v1: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a, u8>>>,
+    pub status_v1: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a, u8>>>,
 }
-impl<'a> Default for ChannelInstructionArgs {
+impl<'a> Default for ChannelInstructionArgs<'a> {
   #[inline]
   fn default() -> Self {
     ChannelInstructionArgs {
-      instruction_type: ChannelInstructionData::NONE,
-      instruction: None,
+      ix_type: ChannelInstructionIxType::ExecuteV1,
+      execute_v1: None,
+      status_v1: None,
     }
   }
 }
@@ -221,12 +210,16 @@ pub struct ChannelInstructionBuilder<'a: 'b, 'b> {
 }
 impl<'a: 'b, 'b> ChannelInstructionBuilder<'a, 'b> {
   #[inline]
-  pub fn add_instruction_type(&mut self, instruction_type: ChannelInstructionData) {
-    self.fbb_.push_slot::<ChannelInstructionData>(ChannelInstruction::VT_INSTRUCTION_TYPE, instruction_type, ChannelInstructionData::NONE);
+  pub fn add_ix_type(&mut self, ix_type: ChannelInstructionIxType) {
+    self.fbb_.push_slot::<ChannelInstructionIxType>(ChannelInstruction::VT_IX_TYPE, ix_type, ChannelInstructionIxType::ExecuteV1);
   }
   #[inline]
-  pub fn add_instruction(&mut self, instruction: flatbuffers::WIPOffset<flatbuffers::UnionWIPOffset>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(ChannelInstruction::VT_INSTRUCTION, instruction);
+  pub fn add_execute_v1(&mut self, execute_v1: flatbuffers::WIPOffset<flatbuffers::Vector<'b , u8>>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(ChannelInstruction::VT_EXECUTE_V1, execute_v1);
+  }
+  #[inline]
+  pub fn add_status_v1(&mut self, status_v1: flatbuffers::WIPOffset<flatbuffers::Vector<'b , u8>>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(ChannelInstruction::VT_STATUS_V1, status_v1);
   }
   #[inline]
   pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> ChannelInstructionBuilder<'a, 'b> {
@@ -246,27 +239,9 @@ impl<'a: 'b, 'b> ChannelInstructionBuilder<'a, 'b> {
 impl core::fmt::Debug for ChannelInstruction<'_> {
   fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
     let mut ds = f.debug_struct("ChannelInstruction");
-      ds.field("instruction_type", &self.instruction_type());
-      match self.instruction_type() {
-        ChannelInstructionData::ExecuteV1 => {
-          if let Some(x) = self.instruction_as_execute_v1() {
-            ds.field("instruction", &x)
-          } else {
-            ds.field("instruction", &"InvalidFlatbuffer: Union discriminant does not match value.")
-          }
-        },
-        ChannelInstructionData::StatusV1 => {
-          if let Some(x) = self.instruction_as_status_v1() {
-            ds.field("instruction", &x)
-          } else {
-            ds.field("instruction", &"InvalidFlatbuffer: Union discriminant does not match value.")
-          }
-        },
-        _ => {
-          let x: Option<()> = None;
-          ds.field("instruction", &x)
-        },
-      };
+      ds.field("ix_type", &self.ix_type());
+      ds.field("execute_v1", &self.execute_v1());
+      ds.field("status_v1", &self.status_v1());
       ds.finish()
   }
 }

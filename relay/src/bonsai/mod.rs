@@ -1,12 +1,12 @@
 use anagram_bonsol_schema::{
-    parse_ix_data, ChannelInstruction, ChannelInstructionData, ExecutionInputType,
-    ExecutionRequestV1, StatusV1,
+    parse_ix_data, ChannelInstruction, ChannelInstructionIxType, ExecutionInputType, ExecutionRequestV1, StatusV1
 };
 use anyhow::Result;
 use bincode::{self, config, config::Configuration, Decode, Encode};
 use bonsai_sdk::alpha::Client;
 use redb::{ReadableTable, RedbValue, TableDefinition};
 use risc0_zkvm::compute_image_id;
+use serde::Serialize;
 use serde_json::to_vec;
 use std::str::from_utf8;
 use std::sync::Arc;
@@ -88,7 +88,9 @@ impl BonsaiRunner {
                 let bytes = fs::read(entry.path())?;
                 let image_id = hex::encode(compute_image_id(&bytes)?);
                 client.upload_img(image_id.as_str(), bytes)?;
+                println!("Loaded image: {}", &image_id);
                 loaded_images.insert(image_id, ());
+                
             }
         }
 
@@ -108,21 +110,31 @@ impl BonsaiRunner {
         let loaded_images = self.loaded_images.clone();
         let data_dir = self.data_dir.clone();
         let db = Arc::new(redb::Database::create(data_dir)?);
+        let txn = db.begin_write()?;
+        txn.open_table(ERS_TABLE)?;
+        txn.commit()?;
         self.db_handle = Some(tokio::task::spawn_blocking(move || {
             let db = db.clone();
-            let mut rx = dbrx;
-            while let Some(ers) = rx.blocking_recv() {
+            let mut dbrx = dbrx;
+            while let Some(ers) = dbrx.blocking_recv() {
+                
                 let req = ers.request_id.clone();
-                //now
                 let mut created_at = time::SystemTime::now()
                     .duration_since(UNIX_EPOCH)?
                     .as_secs();
                 let read = db.begin_read()?;
-                let table = read.open_table(ERS_TABLE)?;
-                if let Some(exising) = table.get(req.as_str())? {
+                
+                let table = read.open_table(ERS_TABLE);
+                if table.is_err() {
+                    println!("Error opening table for read: {:?}", table.err());
+                    continue;
+                }
+                
+                if let Some(exising) = table.unwrap().get(req.as_str())? {
                     let (timestamp, _) = exising.value();
                     created_at = timestamp;
                 }
+                
                 let txn = db.begin_write()?;
                 {
                     let mut table = txn.open_table(ERS_TABLE)?;
@@ -136,16 +148,16 @@ impl BonsaiRunner {
         self.worker_handle = Some(tokio::spawn(async move {
             let mut rx = rx;
             let sem = Semaphore::new(15);
-            while let Some(bix) = rx.recv().await {
+            while let Some(bix) = rx.recv().await {    
                 let _permit = sem.acquire().await.unwrap();
                 let dbtx = dbtx.clone();
                 let client = client.clone();
                 let loaded_images = loaded_images.clone();
                 let _: JoinHandle<Result<()>> = tokio::spawn(async move {
                     if let Ok(bonsol_ix_type) = parse_ix_data(&bix.data) {
-                        match bonsol_ix_type.instruction_type() {
-                            ChannelInstructionData(1) => {
-                                if let Some(variant) = bonsol_ix_type.instruction_as_execute_v1() {
+                        match bonsol_ix_type.ix_type() {
+                            ChannelInstructionIxType::ExecuteV1 => {
+                                if let Some(variant) = bonsol_ix_type.execute_v1_nested_flatbuffer() {
                                     let input = to_vec(get_input_data(variant).await?)?;
                                     let image_id = parse_image_id(
                                         variant.image_id().map(|g| g.bytes()).unwrap_or(&[]),
@@ -171,6 +183,7 @@ impl BonsaiRunner {
                                                 .as_secs(),
                                         };
                                         dbtx.send(ers).unwrap();
+                                        println!("Session created: {}", session.uuid);
                                         let mut status = "";
                                         while status != "SUCCEEDED" && status != "FAILED" {
                                             let res = session.status(&client)?;
@@ -210,7 +223,10 @@ impl BonsaiRunner {
                                                         .duration_since(UNIX_EPOCH)?
                                                         .as_secs(),
                                                 };
+                                                eprintln!("Session completed: {:?}", status);
                                                 dbtx.send(ers).unwrap();
+                                                status = "SUCCEEDED";
+                                                break;
                                             } else {
                                                 let ers = ExecutionRequestStatus {
                                                     request_id: exec_id.to_string(),
@@ -224,12 +240,14 @@ impl BonsaiRunner {
                                                 eprintln!("Session failed: {:?}", status);
                                                 status = "FAILED";
                                                 dbtx.send(ers).unwrap();
+                                                break;
                                             }
                                         }
 
-                                        if status == "SUCCESS" {
+                                        if status == "SUCCEEDED" {
                                             let snark =
                                                 client.create_snark(session.uuid.clone())?;
+                                            eprint!("Creating snark... {:?}", snark);
                                             let mut status = "";
                                             while status != "SUCCEEDED" && status != "FAILED" {
                                                 let res = snark.status(&client)?;
@@ -246,6 +264,7 @@ impl BonsaiRunner {
                                                     
                                                     // Download the receipt, containing the output
                                                     if let Some(sr) = res.output {
+                                                        println!("Receipt: {:?}", sr.snark);
                                                         let ers = ExecutionRequestStatus {
                                                             request_id: exec_id.to_string(),
                                                             proving_session_id: session
@@ -259,6 +278,7 @@ impl BonsaiRunner {
                                                                 .as_secs(),
                                                         };
                                                         dbtx.send(ers).unwrap();
+                                                        break;
                                                     }
                                                 } else {
                                                     let ers = ExecutionRequestStatus {
@@ -273,16 +293,17 @@ impl BonsaiRunner {
                                                     eprintln!("Session failed: {:?}", status);
                                                     status = "FAILED";
                                                     dbtx.send(ers).unwrap();
+                                                    break;
                                                 }
                                             }
                                         }
+                                    } else {
+                                        eprintln!("Image not found");
                                     }
                                 }
                             }
 
-                            ChannelInstructionData(2) => {
-                                //store status for reciept explorer
-                            }
+                           
                             _ => {}
                         }
                     }

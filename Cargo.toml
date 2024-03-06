@@ -1,17 +1,20 @@
 [workspace]
 members = [
-  "channel", "relay",
-  "schemas-rust",
-  "images/simple"
+  "channel", 
+  "relay",
+  "schemas-rust"
 ]
 resolver = "2"
 
 [workspace.dependencies]
-planus = "0.4.0"
-solana-program = "1.17.18"
-solana-sdk = "1.17.18"
-thiserror = "1.0.56"
-solana-program-test = "1.17.18"
+solana-program = "=1.17.18"
+solana-sdk = "=1.17.18"
+thiserror = "1.0.57"
+solana-program-test = "=1.17.18"
+solana-rpc-client = "=1.17.18"
+solana-rpc-client-api = "=1.17.18"
+solana-pubsub-client = "=1.17.18"
+solana-transaction-status = "=1.17.18"
 
 [workspace.lints.clippy]
 clone_on_ref_ptr = "deny"

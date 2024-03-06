@@ -4,3 +4,5 @@ test-ledger
 node_modules
 elf
 **/node_modules
+relay/stark_verify*
+.DS_Store

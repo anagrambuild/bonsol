@@ -3,6 +3,8 @@ name = "simple"
 version = "0.1.0"
 edition = "2021"
 
+[workspace]
+
 [dependencies]
-json = "0.12.4"
+gjson = "0.8"
 risc0-zkvm = {version = "*", default-features = false, features = ["std"]}

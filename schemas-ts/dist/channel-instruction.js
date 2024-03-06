@@ -26,7 +26,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ChannelInstruction = void 0;
 const flatbuffers = __importStar(require("flatbuffers"));
-const channel_instruction_data_js_1 = require("./channel-instruction-data.js");
+const channel_instruction_ix_type_js_1 = require("./channel-instruction-ix-type.js");
 class ChannelInstruction {
     constructor() {
         this.bb = null;
@@ -44,22 +44,73 @@ class ChannelInstruction {
         bb.setPosition(bb.position() + flatbuffers.SIZE_PREFIX_LENGTH);
         return (obj || new ChannelInstruction()).__init(bb.readInt32(bb.position()) + bb.position(), bb);
     }
-    instructionType() {
+    ixType() {
         const offset = this.bb.__offset(this.bb_pos, 4);
-        return offset ? this.bb.readUint8(this.bb_pos + offset) : channel_instruction_data_js_1.ChannelInstructionData.NONE;
+        return offset ? this.bb.readUint8(this.bb_pos + offset) : channel_instruction_ix_type_js_1.ChannelInstructionIxType.ExecuteV1;
     }
-    instruction(obj) {
+    mutate_ix_type(value) {
+        const offset = this.bb.__offset(this.bb_pos, 4);
+        if (offset === 0) {
+            return false;
+        }
+        this.bb.writeUint8(this.bb_pos + offset, value);
+        return true;
+    }
+    executeV1(index) {
         const offset = this.bb.__offset(this.bb_pos, 6);
-        return offset ? this.bb.__union(obj, this.bb_pos + offset) : null;
+        return offset ? this.bb.readUint8(this.bb.__vector(this.bb_pos + offset) + index) : 0;
+    }
+    executeV1Length() {
+        const offset = this.bb.__offset(this.bb_pos, 6);
+        return offset ? this.bb.__vector_len(this.bb_pos + offset) : 0;
+    }
+    executeV1Array() {
+        const offset = this.bb.__offset(this.bb_pos, 6);
+        return offset ? new Uint8Array(this.bb.bytes().buffer, this.bb.bytes().byteOffset + this.bb.__vector(this.bb_pos + offset), this.bb.__vector_len(this.bb_pos + offset)) : null;
+    }
+    statusV1(index) {
+        const offset = this.bb.__offset(this.bb_pos, 8);
+        return offset ? this.bb.readUint8(this.bb.__vector(this.bb_pos + offset) + index) : 0;
+    }
+    statusV1Length() {
+        const offset = this.bb.__offset(this.bb_pos, 8);
+        return offset ? this.bb.__vector_len(this.bb_pos + offset) : 0;
+    }
+    statusV1Array() {
+        const offset = this.bb.__offset(this.bb_pos, 8);
+        return offset ? new Uint8Array(this.bb.bytes().buffer, this.bb.bytes().byteOffset + this.bb.__vector(this.bb_pos + offset), this.bb.__vector_len(this.bb_pos + offset)) : null;
     }
     static startChannelInstruction(builder) {
-        builder.startObject(2);
+        builder.startObject(3);
     }
-    static addInstructionType(builder, instructionType) {
-        builder.addFieldInt8(0, instructionType, channel_instruction_data_js_1.ChannelInstructionData.NONE);
+    static addIxType(builder, ixType) {
+        builder.addFieldInt8(0, ixType, channel_instruction_ix_type_js_1.ChannelInstructionIxType.ExecuteV1);
     }
-    static addInstruction(builder, instructionOffset) {
-        builder.addFieldOffset(1, instructionOffset, 0);
+    static addExecuteV1(builder, executeV1Offset) {
+        builder.addFieldOffset(1, executeV1Offset, 0);
+    }
+    static createExecuteV1Vector(builder, data) {
+        builder.startVector(1, data.length, 1);
+        for (let i = data.length - 1; i >= 0; i--) {
+            builder.addInt8(data[i]);
+        }
+        return builder.endVector();
+    }
+    static startExecuteV1Vector(builder, numElems) {
+        builder.startVector(1, numElems, 1);
+    }
+    static addStatusV1(builder, statusV1Offset) {
+        builder.addFieldOffset(2, statusV1Offset, 0);
+    }
+    static createStatusV1Vector(builder, data) {
+        builder.startVector(1, data.length, 1);
+        for (let i = data.length - 1; i >= 0; i--) {
+            builder.addInt8(data[i]);
+        }
+        return builder.endVector();
+    }
+    static startStatusV1Vector(builder, numElems) {
+        builder.startVector(1, numElems, 1);
     }
     static endChannelInstruction(builder) {
         const offset = builder.endObject();
@@ -71,10 +122,11 @@ class ChannelInstruction {
     static finishSizePrefixedChannelInstructionBuffer(builder, offset) {
         builder.finish(offset, undefined, true);
     }
-    static createChannelInstruction(builder, instructionType, instructionOffset) {
+    static createChannelInstruction(builder, ixType, executeV1Offset, statusV1Offset) {
         ChannelInstruction.startChannelInstruction(builder);
-        ChannelInstruction.addInstructionType(builder, instructionType);
-        ChannelInstruction.addInstruction(builder, instructionOffset);
+        ChannelInstruction.addIxType(builder, ixType);
+        ChannelInstruction.addExecuteV1(builder, executeV1Offset);
+        ChannelInstruction.addStatusV1(builder, statusV1Offset);
         return ChannelInstruction.endChannelInstruction(builder);
     }
 }

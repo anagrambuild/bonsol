@@ -1,8 +1,8 @@
 use crate::error::ChannelError;
-use anagram_bonsol_schema::{
-    parse_ix_data, ChannelInstruction, ChannelInstructionData, ExecutionRequestV1,
-};
 use crate::verifying_key::VERIFYINGKEY;
+use anagram_bonsol_schema::{
+    parse_ix_data, ChannelInstruction, ChannelInstructionIxType, ExecutionRequestV1,
+};
 use solana_program::{
     account_info::AccountInfo,
     bpf_loader_upgradeable,
@@ -21,8 +21,7 @@ pub struct ExecuteAccounts<'a> {
     pub callback_program: &'a AccountInfo<'a>,
     pub system_program: &'a AccountInfo<'a>,
     pub extra_accounts: &'a [AccountInfo<'a>],
-    pub execution_id: &'a [u8],
-    pub data: ExecutionRequestV1<'a>,
+    pub execution_id: Vec<u8>,
     pub exec_bump: Option<u8>,
 }
 
@@ -101,76 +100,68 @@ fn check_owner(
     Ok(())
 }
 
-pub trait FromInstruction<'a>: Sized {
-    fn from_instruction(
+impl<'a> ExecuteAccounts<'a> {
+    fn from_instruction<'b>(
         accounts: &'a [AccountInfo<'a>],
-        data: ChannelInstruction<'a>,
-    ) -> Result<Self, ChannelError>;
-}
-
-impl<'a> FromInstruction<'a> for ExecuteAccounts<'a> {
-    fn from_instruction(
-        accounts: &'a [AccountInfo<'a>],
-        data: ChannelInstruction<'a>,
+        data: &'b ExecutionRequestV1<'b>,
     ) -> Result<Self, ChannelError> {
-        if let Some(variant) = data.instruction_as_execute_v1() {
-            if let Some(executionid) = variant.execution_id() {
-                let mut ea = ExecuteAccounts {
-                    requester: &accounts[0],
-                    exec: &accounts[1],
-                    callback_program: &accounts[2],
-                    system_program: &accounts[3],
-                    extra_accounts: &accounts[4..],
-                    execution_id: executionid.bytes(),
-                    data: variant,
-                    exec_bump: None,
-                };
-                check_writable_signer(ea.requester, ChannelError::InvalidRequesterAccount)?;
-                and(
-                    &[
-                        check_writeable(ea.exec, ChannelError::InvalidExecutionAccount),
-                        check_owner(
-                            ea.exec,
-                            &system_program::ID,
-                            ChannelError::InvalidExecutionAccount,
-                        ),
-                        ensure_0(ea.exec, ChannelError::InvalidExecutionAccount),
-                    ],
-                    ChannelError::InvalidExecutionAccount,
-                )?;
-                ea.exec_bump = Some(check_pda(
-                    vec![
-                        "execution".as_bytes(),
-                        &ea.requester.key.to_bytes(),
-                        ea.execution_id,
-                    ],
-                    ea.exec.key,
-                    ChannelError::InvalidExecutionAccount,
-                )?);
+        if let Some(executionid) = data.execution_id() {
+            let evec = executionid.bytes().to_owned();
+            let mut ea = ExecuteAccounts {
+                requester: &accounts[0],
+                exec: &accounts[1],
+                callback_program: &accounts[2],
+                system_program: &accounts[3],
+                extra_accounts: &accounts[4..],
+                execution_id: evec,
+                exec_bump: None,
+            };
+            check_writable_signer(ea.requester, ChannelError::InvalidRequesterAccount)?;
+            and(
+                &[
+                    check_writeable(ea.exec, ChannelError::InvalidExecutionAccount),
+                    check_owner(
+                        ea.exec,
+                        &system_program::ID,
+                        ChannelError::InvalidExecutionAccount,
+                    ),
+                    ensure_0(ea.exec, ChannelError::InvalidExecutionAccount),
+                ],
+                ChannelError::InvalidExecutionAccount,
+            )?;
+            ea.exec_bump = Some(check_pda(
+                vec![
+                    "execution".as_bytes(),
+                    &ea.requester.key.to_bytes(),
+                    ea.execution_id.as_slice(),
+                ],
+                ea.exec.key,
+                ChannelError::InvalidExecutionAccount,
+            )?);
 
-                or(
-                    &[
-                        check_key_match(
-                            ea.callback_program,
-                            &crate::id(),
-                            ChannelError::InvalidCallbackAccount,
-                        ),
-                        check_owner(
-                            ea.callback_program,
-                            &bpf_loader_upgradeable::ID,
-                            ChannelError::InvalidCallbackAccount,
-                        ),
-                    ],
-                    ChannelError::InvalidCallbackAccount,
-                )?;
-                check_key_match(
-                    ea.system_program,
-                    &system_program::ID,
-                    ChannelError::InvalidInstruction,
-                )?;
-                return Ok(ea);
-            }
+            or(
+                &[
+                    check_key_match(
+                        ea.callback_program,
+                        &crate::id(),
+                        ChannelError::InvalidCallbackAccount,
+                    ),
+                    check_owner(
+                        ea.callback_program,
+                        &bpf_loader_upgradeable::ID,
+                        ChannelError::InvalidCallbackAccount,
+                    ),
+                ],
+                ChannelError::InvalidCallbackAccount,
+            )?;
+            check_key_match(
+                ea.system_program,
+                &system_program::ID,
+                ChannelError::InvalidInstruction,
+            )?;
+            return Ok(ea);
         }
+
         Err(ChannelError::InvalidInstruction)
     }
 }
@@ -201,23 +192,26 @@ pub fn process_instruction<'a>(
     accounts: &'a [AccountInfo<'a>],
     instruction_data: &'a [u8],
 ) -> ProgramResult {
-    let ix = parse_ix_data(instruction_data).map_err(|e| {
-        msg!("failed here");
-        ChannelError::InvalidInstructionParse
-    })?;
-    match ix.instruction_type() {
-        ChannelInstructionData(1) => {
-            let ea = ExecuteAccounts::from_instruction(accounts, ix)?;
+    let ix = parse_ix_data(instruction_data).map_err(|_| ChannelError::InvalidInstructionParse)?;
+    let er = ix.execute_v1_nested_flatbuffer();
+
+    match ix.ix_type() {
+        ChannelInstructionIxType::ExecuteV1 => {
+            if er.is_none() {
+                return Err(ChannelError::InvalidInstruction.into());
+            }
+            let er = er.unwrap();
+            let ea = ExecuteAccounts::from_instruction(accounts, &er)?;
             let b = [ea.exec_bump.unwrap()];
             let seeds = vec![
                 "execution".as_bytes(),
                 ea.requester.key.as_ref(),
-                ea.execution_id,
+                ea.execution_id.as_slice(),
                 &b,
             ];
-            let bytes = ea.data._tab.buf();
+            let bytes = ix.execute_v1().unwrap().bytes();
             let space = bytes.len() as u64;
-            let tip = ea.data.tip();
+            let tip = er.tip();
             create_program_account(
                 ea.exec,
                 &seeds,
@@ -227,14 +221,11 @@ pub fn process_instruction<'a>(
                 Some(tip),
             )?;
             sol_memcpy(&mut ea.exec.data.borrow_mut(), bytes, bytes.len());
-            Ok(())
         }
-        ChannelInstructionData(2) => {
-            
-            Ok(())
-        },
-        _ => Err(ChannelError::InvalidInstruction),
-    }
-    .map(|_| ())
-    .map_err(|e| e.into())
+        ChannelInstructionIxType::StatusV1 => {},
+        _ => return {
+            Err(ChannelError::InvalidInstruction.into())
+        }
+    };
+    Ok(())
 }
