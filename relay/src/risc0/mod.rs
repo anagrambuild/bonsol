@@ -1,6 +1,8 @@
 use anagram_bonsol_schema::{parse_ix_data, ChannelInstructionIxType};
 use anyhow::Result;
+use wasmer_wasix::runtime::module_cache::{ ModuleHash};
 use std::{collections::HashMap, io::Read, str::from_utf8, sync::Arc};
+use wasmer::{Engine, Module, Store};
 
 use crate::ingest::BonsolInstruction;
 use ark_bn254::{Bn254, Fr};
@@ -57,26 +59,32 @@ impl Risc0Runner {
     pub fn start(&mut self) -> Result<UnboundedSender<BonsolInstruction>> {
         let (tx, rx) = tokio::sync::mpsc::unbounded_channel::<BonsolInstruction>();
         let loaded_images = self.loaded_images.clone();
+
+        let mut rx = rx;
         self.worker_handle = Some(tokio::spawn(async move {
-            // let mut zkey_file = fs::File::open("stark_verify_final.zkey")?;
-            // println!("Reading proving key");
-            // let (pk, matrices) = read_zkey(&mut zkey_file)?;
-            // println!("Proving key read");
-            // let shared_pk = Arc::new(pk);
-            // let shared_matrices = Arc::new(matrices);
-            let mut rx = rx;
+            let mut zkey_file = fs::File::open("stark_verify_final.zkey")?;
+            println!("Reading proving key");
+            let (pk, matrices) = read_zkey(&mut zkey_file)?;
+            println!("Proving key read");
+            let shared_pk = Arc::new(pk);
+            let shared_matrices = Arc::new(matrices);
+            let engine = Engine::default();
+            let bytes = std::fs::read("./st.wasmu")?;
+            let shared_module = Arc::new(unsafe { Module::deserialize_unchecked(&engine, &bytes)? });
 
             while let Some(bix) = rx.recv().await {
                 println!("Received instruction");
-                // let proving_key = shared_pk.clone();
-                // let matrices = shared_matrices.clone();
+                let proving_key = shared_pk.clone();
+                let matrices = shared_matrices.clone();
                 let loaded_images = loaded_images.clone();
-                println!("spawning task");
-
+                let module = shared_module.clone();
                 let _: JoinHandle<Result<()>> = tokio::task::spawn_blocking(move || {
                     println!("Creating witness calculator");
-                    let mut wtns = WitnessCalculator::new("./stark_verify.wasm")
-                        .map_err(|e| anyhow::anyhow!(e))?;
+                    let store = Store::default();
+                    let mut wtns = WitnessCalculator::from_module(&module, store).map_err(|e| {
+                        println!("{:?}", e);
+                        anyhow::anyhow!(e)
+                    })?;
                     println!("Witness calculator created");
                     if let Ok(bonsol_ix_type) = parse_ix_data(&bix.data) {
                         match bonsol_ix_type.ix_type() {
@@ -107,43 +115,39 @@ impl Risc0Runner {
                                             rollup = join(&rollup, &rec)?;
                                         }
                                         println!("Rolling up segments");
-                                        // let num_inputs = matrices.num_instance_variables.clone();
-                                        // let num_constraints = matrices.num_constraints.clone();
-                                        
-                                        // rollup.verify_integrity_with_context(&dctx)?;
-
-                                        // let ident_receipt = identity_p254(&rollup).unwrap();
-                                        // println!("Preparing Compression");
-
-                                        // let mut inputs: HashMap<String, Inputs> = HashMap::new();
-
-                                        // let mut rng = thread_rng();
-                                        // let rng = &mut rng;
-                                        // let r = ark_bn254::Fr::rand(rng);
-                                        // let s = ark_bn254::Fr::rand(rng);
-                                        // println!("Pushing inputs");
-                                        // let biv = ident_receipt
-                                        //     .seal
-                                        //     .into_iter()
-                                        //     .map(BigInt::from)
-                                        //     .collect();
-                                        // inputs.insert("iop".to_string(), biv);
-                                        // let full_assignment = wtns
-                                        //     .calculate_witness_element::<Bn254, _>(inputs, false)
-                                        //     .unwrap();
-                                        // println!("Proving Compression");
-                                        // let proof =
-                                        //     GrothBn::create_proof_with_reduction_and_matrices(
-                                        //         &proving_key,
-                                        //         r,
-                                        //         s,
-                                        //         &matrices,
-                                        //         num_inputs,
-                                        //         num_constraints,
-                                        //         full_assignment.as_slice(),
-                                        //     )
-                                        //     .unwrap();
-                                        // println!("Proof: {:?}", proof);
+                                        let num_inputs = matrices.num_instance_variables.clone();
+                                        let num_constraints = matrices.num_constraints.clone();
+                                        rollup.verify_integrity_with_context(&dctx)?;
+                                        let ident_receipt = identity_p254(&rollup).unwrap();
+                                        println!("Preparing Compression");
+                                        let mut inputs: HashMap<String, Inputs> = HashMap::new();
+                                        let mut rng = thread_rng();
+                                        let rng = &mut rng;
+                                        let r = ark_bn254::Fr::rand(rng);
+                                        let s = ark_bn254::Fr::rand(rng);
+                                        println!("Pushing inputs");
+                                        let biv = ident_receipt
+                                            .seal
+                                            .into_iter()
+                                            .map(BigInt::from)
+                                            .collect();
+                                        inputs.insert("iop".to_string(), biv);
+                                        let full_assignment = wtns
+                                            .calculate_witness_element::<Bn254, _>(inputs, false)
+                                            .unwrap();
+                                        println!("Proving Compression");
+                                        let proof =
+                                            GrothBn::create_proof_with_reduction_and_matrices(
+                                                &proving_key,
+                                                r,
+                                                s,
+                                                &matrices,
+                                                num_inputs,
+                                                num_constraints,
+                                                full_assignment.as_slice(),
+                                            )
+                                            .unwrap();
+                                        println!("Proof: {:?}", proof);
                                     }
                                 }
                             }

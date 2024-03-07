@@ -8,6 +8,8 @@ edition = "2021"
 [dependencies]
 fnv = "1.0.7"
 num = "=0.4.1"
+wasmer = { version = "=4.2.6", features = ["compiler"] }
+wasmer-wasix = { version = "0.18.1" }
 tokio = { version = "1.36.0", features = ["full"] }
 solana-sdk = { workspace = true }
 solana-rpc-client = { workspace = true }
@@ -20,14 +22,14 @@ clap_derive = { version = "4.5.0" }
 thiserror = { workspace = true }
 anyhow = { version = "1.0.79" }
 bonsai-sdk = { version = "0.6.1" }
-ark-circom = { path = "../../circom-compat", features = ["default","llvm"] }
+ark-circom = { path = "../../circom-compat", features = ["default"] }
 ark-bn254 = { version = "=0.4.0" }
 ark-relations = { version = "=0.4.0" }
 ark-std = { version = "=0.4.0" }
 ark-crypto-primitives = { version = "=0.4.0" }
 ark-groth16 = { version = "=0.4.0" }
 risc0-zkvm = { version = "0.20", features = [
-  "prove", "metal"
+  "prove"
 ] }
 anagram-bonsol-schema = { path = "../schemas-rust" }
 reqwest = { version = "0.11.24" }
