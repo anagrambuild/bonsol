@@ -7,10 +7,10 @@
 			"path": "../Development/groth16-solana"
 		},
 		{
-			"path": "../risc0/compact_proof"
+			"path": "../circom-compat"
 		},
 		{
-			"path": "../circom-compat"
+			"path": "../risc0/risc0/groth16"
 		}
 	],
 	"settings": {

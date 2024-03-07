@@ -121,21 +121,20 @@ impl Risc0Runner {
                                         let ident_receipt = identity_p254(&rollup).unwrap();
                                         println!("Preparing Compression");
                                         let mut inputs: HashMap<String, Inputs> = HashMap::new();
-                                        let mut rng = thread_rng();
-                                        let rng = &mut rng;
-                                        let r = ark_bn254::Fr::rand(rng);
-                                        let s = ark_bn254::Fr::rand(rng);
                                         println!("Pushing inputs");
-                                        let biv = ident_receipt
-                                            .seal
+                                        let biv = ident_receipt.seal
                                             .into_iter()
                                             .map(BigInt::from)
                                             .collect();
-                                        inputs.insert("iop".to_string(), biv);
+                                        inputs.insert("iop".to_string(), Inputs::BigIntVec(biv));
                                         let full_assignment = wtns
                                             .calculate_witness_element::<Bn254, _>(inputs, false)
                                             .unwrap();
                                         println!("Proving Compression");
+                                        let mut rng = thread_rng();
+                                        let rng = &mut rng;
+                                        let r = ark_bn254::Fr::rand(rng);
+                                        let s = ark_bn254::Fr::rand(rng);
                                         let proof =
                                             GrothBn::create_proof_with_reduction_and_matrices(
                                                 &proving_key,
