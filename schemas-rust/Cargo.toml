@@ -1,7 +1,7 @@
 [package]
 name = "anagram-bonsol-schema"
 version = "0.0.1"
-description = "Bonsol types and schema definitions"
+description = "Bonsol types, schema definitions"
 authors = ["anagram build team"]
 repository = "https://github.com/anagrambuild/bonsol"
 license = "MIT"

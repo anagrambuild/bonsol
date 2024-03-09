@@ -17,6 +17,8 @@ use std::{
 };
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
 use tokio::task::JoinHandle;
+
+use crate::types::BonsolInstruction;
 pub type TxChannel = UnboundedReceiver<Vec<BonsolInstruction>>;
 #[derive(Debug)]
 pub enum IngestErrorType {
@@ -56,28 +58,24 @@ impl RpcIngester {
     }
 }
 
-#[derive(Debug)]
-pub struct BonsolInstruction {
-    pub cpi: bool,
-    pub accounts: Vec<Pubkey>,
-    pub data: Vec<u8>,
-}
 // todo find a way to consume without clone
 fn filter_txs(program: &Pubkey, tx: EncodedTransactionWithStatusMeta) -> Vec<BonsolInstruction> {
     let mut res = vec![];
     if let Some(dtx) = tx.transaction.decode() {
         let scc = dtx.message.static_account_keys();
-        for ix in dtx.message.instructions().iter() {
-            if ix.program_id(scc) == program {
-                res.push(BonsolInstruction {
-                    cpi: false,
-                    accounts: ix.accounts.iter().map(|a| scc[*a as usize]).collect(),
-                    data: ix.data.clone(),
-                });
-            }
-        }
-
         if let Some(meta) = tx.meta {
+            if meta.err.is_some() {
+                return res;
+            }
+            for ix in dtx.message.instructions().iter() {
+                if ix.program_id(scc) == program {
+                    res.push(BonsolInstruction {
+                        cpi: false,
+                        accounts: ix.accounts.iter().map(|a| scc[*a as usize]).collect(),
+                        data: ix.data.clone(),
+                    });
+                }
+            }
             let o_ix_groups: Option<Vec<UiInnerInstructions>> = meta.inner_instructions.into();
             if let Some(inner_ix_groups) = o_ix_groups {
                 for group in inner_ix_groups {

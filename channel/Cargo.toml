@@ -12,6 +12,8 @@ no-entrypoint = []
 test-sbf = []
 
 [dependencies]
+ark-bn254 = "0.4.0"
+ark-serialize = "0.4.0"
 solana-program = {workspace = true}
 anagram-bonsol-schema = {path = "../schemas-rust"}
 thiserror = { workspace = true }

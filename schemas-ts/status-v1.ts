@@ -39,34 +39,49 @@ mutate_status(value:StatusTypes):boolean {
   return true;
 }
 
-message(index: number):number|null {
+proof(index: number):number|null {
   const offset = this.bb!.__offset(this.bb_pos, 6);
   return offset ? this.bb!.readUint8(this.bb!.__vector(this.bb_pos + offset) + index) : 0;
 }
 
-messageLength():number {
+proofLength():number {
   const offset = this.bb!.__offset(this.bb_pos, 6);
   return offset ? this.bb!.__vector_len(this.bb_pos + offset) : 0;
 }
 
-messageArray():Uint8Array|null {
+proofArray():Uint8Array|null {
   const offset = this.bb!.__offset(this.bb_pos, 6);
   return offset ? new Uint8Array(this.bb!.bytes().buffer, this.bb!.bytes().byteOffset + this.bb!.__vector(this.bb_pos + offset), this.bb!.__vector_len(this.bb_pos + offset)) : null;
 }
 
+input(index: number):number|null {
+  const offset = this.bb!.__offset(this.bb_pos, 8);
+  return offset ? this.bb!.readUint8(this.bb!.__vector(this.bb_pos + offset) + index) : 0;
+}
+
+inputLength():number {
+  const offset = this.bb!.__offset(this.bb_pos, 8);
+  return offset ? this.bb!.__vector_len(this.bb_pos + offset) : 0;
+}
+
+inputArray():Uint8Array|null {
+  const offset = this.bb!.__offset(this.bb_pos, 8);
+  return offset ? new Uint8Array(this.bb!.bytes().buffer, this.bb!.bytes().byteOffset + this.bb!.__vector(this.bb_pos + offset), this.bb!.__vector_len(this.bb_pos + offset)) : null;
+}
+
 static startStatusV1(builder:flatbuffers.Builder) {
-  builder.startObject(2);
+  builder.startObject(3);
 }
 
 static addStatus(builder:flatbuffers.Builder, status:StatusTypes) {
   builder.addFieldInt8(0, status, StatusTypes.Unknown);
 }
 
-static addMessage(builder:flatbuffers.Builder, messageOffset:flatbuffers.Offset) {
-  builder.addFieldOffset(1, messageOffset, 0);
+static addProof(builder:flatbuffers.Builder, proofOffset:flatbuffers.Offset) {
+  builder.addFieldOffset(1, proofOffset, 0);
 }
 
-static createMessageVector(builder:flatbuffers.Builder, data:number[]|Uint8Array):flatbuffers.Offset {
+static createProofVector(builder:flatbuffers.Builder, data:number[]|Uint8Array):flatbuffers.Offset {
   builder.startVector(1, data.length, 1);
   for (let i = data.length - 1; i >= 0; i--) {
     builder.addInt8(data[i]!);
@@ -74,7 +89,23 @@ static createMessageVector(builder:flatbuffers.Builder, data:number[]|Uint8Array
   return builder.endVector();
 }
 
-static startMessageVector(builder:flatbuffers.Builder, numElems:number) {
+static startProofVector(builder:flatbuffers.Builder, numElems:number) {
+  builder.startVector(1, numElems, 1);
+}
+
+static addInput(builder:flatbuffers.Builder, inputOffset:flatbuffers.Offset) {
+  builder.addFieldOffset(2, inputOffset, 0);
+}
+
+static createInputVector(builder:flatbuffers.Builder, data:number[]|Uint8Array):flatbuffers.Offset {
+  builder.startVector(1, data.length, 1);
+  for (let i = data.length - 1; i >= 0; i--) {
+    builder.addInt8(data[i]!);
+  }
+  return builder.endVector();
+}
+
+static startInputVector(builder:flatbuffers.Builder, numElems:number) {
   builder.startVector(1, numElems, 1);
 }
 
@@ -91,10 +122,11 @@ static finishSizePrefixedStatusV1Buffer(builder:flatbuffers.Builder, offset:flat
   builder.finish(offset, undefined, true);
 }
 
-static createStatusV1(builder:flatbuffers.Builder, status:StatusTypes, messageOffset:flatbuffers.Offset):flatbuffers.Offset {
+static createStatusV1(builder:flatbuffers.Builder, status:StatusTypes, proofOffset:flatbuffers.Offset, inputOffset:flatbuffers.Offset):flatbuffers.Offset {
   StatusV1.startStatusV1(builder);
   StatusV1.addStatus(builder, status);
-  StatusV1.addMessage(builder, messageOffset);
+  StatusV1.addProof(builder, proofOffset);
+  StatusV1.addInput(builder, inputOffset);
   return StatusV1.endStatusV1(builder);
 }
 }

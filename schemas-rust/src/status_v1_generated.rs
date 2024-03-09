@@ -106,6 +106,85 @@ impl<'a> flatbuffers::Verifiable for StatusTypes {
 }
 
 impl flatbuffers::SimpleToVerifyInSlice for StatusTypes {}
+pub enum StructOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct Struct<'a> {
+  pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a> for Struct<'a> {
+  type Inner = Struct<'a>;
+  #[inline]
+  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+    Self { _tab: flatbuffers::Table::new(buf, loc) }
+  }
+}
+
+impl<'a> Struct<'a> {
+
+  #[inline]
+  pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+    Struct { _tab: table }
+  }
+  #[allow(unused_mut)]
+  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
+    _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
+    _args: &'args StructArgs
+  ) -> flatbuffers::WIPOffset<Struct<'bldr>> {
+    let mut builder = StructBuilder::new(_fbb);
+    builder.finish()
+  }
+
+}
+
+impl flatbuffers::Verifiable for Struct<'_> {
+  #[inline]
+  fn run_verifier(
+    v: &mut flatbuffers::Verifier, pos: usize
+  ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
+    use self::flatbuffers::Verifiable;
+    v.visit_table(pos)?
+     .finish();
+    Ok(())
+  }
+}
+pub struct StructArgs {
+}
+impl<'a> Default for StructArgs {
+  #[inline]
+  fn default() -> Self {
+    StructArgs {
+    }
+  }
+}
+
+pub struct StructBuilder<'a: 'b, 'b> {
+  fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
+  start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b> StructBuilder<'a, 'b> {
+  #[inline]
+  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> StructBuilder<'a, 'b> {
+    let start = _fbb.start_table();
+    StructBuilder {
+      fbb_: _fbb,
+      start_: start,
+    }
+  }
+  #[inline]
+  pub fn finish(self) -> flatbuffers::WIPOffset<Struct<'a>> {
+    let o = self.fbb_.end_table(self.start_);
+    flatbuffers::WIPOffset::new(o.value())
+  }
+}
+
+impl core::fmt::Debug for Struct<'_> {
+  fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+    let mut ds = f.debug_struct("Struct");
+      ds.finish()
+  }
+}
 pub enum StatusV1Offset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -123,7 +202,8 @@ impl<'a> flatbuffers::Follow<'a> for StatusV1<'a> {
 
 impl<'a> StatusV1<'a> {
   pub const VT_STATUS: flatbuffers::VOffsetT = 4;
-  pub const VT_MESSAGE: flatbuffers::VOffsetT = 6;
+  pub const VT_PROOF: flatbuffers::VOffsetT = 6;
+  pub const VT_INPUT: flatbuffers::VOffsetT = 8;
 
   #[inline]
   pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
@@ -135,7 +215,8 @@ impl<'a> StatusV1<'a> {
     args: &'args StatusV1Args<'args>
   ) -> flatbuffers::WIPOffset<StatusV1<'bldr>> {
     let mut builder = StatusV1Builder::new(_fbb);
-    if let Some(x) = args.message { builder.add_message(x); }
+    if let Some(x) = args.input { builder.add_input(x); }
+    if let Some(x) = args.proof { builder.add_proof(x); }
     builder.add_status(args.status);
     builder.finish()
   }
@@ -149,11 +230,18 @@ impl<'a> StatusV1<'a> {
     unsafe { self._tab.get::<StatusTypes>(StatusV1::VT_STATUS, Some(StatusTypes::Unknown)).unwrap()}
   }
   #[inline]
-  pub fn message(&self) -> Option<flatbuffers::Vector<'a, u8>> {
+  pub fn proof(&self) -> Option<flatbuffers::Vector<'a, u8>> {
     // Safety:
     // Created from valid Table for this object
     // which contains a valid value in this slot
-    unsafe { self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, u8>>>(StatusV1::VT_MESSAGE, None)}
+    unsafe { self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, u8>>>(StatusV1::VT_PROOF, None)}
+  }
+  #[inline]
+  pub fn input(&self) -> Option<flatbuffers::Vector<'a, u8>> {
+    // Safety:
+    // Created from valid Table for this object
+    // which contains a valid value in this slot
+    unsafe { self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, u8>>>(StatusV1::VT_INPUT, None)}
   }
 }
 
@@ -165,21 +253,24 @@ impl flatbuffers::Verifiable for StatusV1<'_> {
     use self::flatbuffers::Verifiable;
     v.visit_table(pos)?
      .visit_field::<StatusTypes>("status", Self::VT_STATUS, false)?
-     .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, u8>>>("message", Self::VT_MESSAGE, false)?
+     .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, u8>>>("proof", Self::VT_PROOF, false)?
+     .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, u8>>>("input", Self::VT_INPUT, false)?
      .finish();
     Ok(())
   }
 }
 pub struct StatusV1Args<'a> {
     pub status: StatusTypes,
-    pub message: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a, u8>>>,
+    pub proof: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a, u8>>>,
+    pub input: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a, u8>>>,
 }
 impl<'a> Default for StatusV1Args<'a> {
   #[inline]
   fn default() -> Self {
     StatusV1Args {
       status: StatusTypes::Unknown,
-      message: None,
+      proof: None,
+      input: None,
     }
   }
 }
@@ -194,8 +285,12 @@ impl<'a: 'b, 'b> StatusV1Builder<'a, 'b> {
     self.fbb_.push_slot::<StatusTypes>(StatusV1::VT_STATUS, status, StatusTypes::Unknown);
   }
   #[inline]
-  pub fn add_message(&mut self, message: flatbuffers::WIPOffset<flatbuffers::Vector<'b , u8>>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(StatusV1::VT_MESSAGE, message);
+  pub fn add_proof(&mut self, proof: flatbuffers::WIPOffset<flatbuffers::Vector<'b , u8>>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(StatusV1::VT_PROOF, proof);
+  }
+  #[inline]
+  pub fn add_input(&mut self, input: flatbuffers::WIPOffset<flatbuffers::Vector<'b , u8>>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(StatusV1::VT_INPUT, input);
   }
   #[inline]
   pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> StatusV1Builder<'a, 'b> {
@@ -216,7 +311,8 @@ impl core::fmt::Debug for StatusV1<'_> {
   fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
     let mut ds = f.debug_struct("StatusV1");
       ds.field("status", &self.status());
-      ds.field("message", &self.message());
+      ds.field("proof", &self.proof());
+      ds.field("input", &self.input());
       ds.finish()
   }
 }

@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 fnv = "1.0.7"
 num = "=0.4.1"
+flatbuffers = { version = "23.5.26"}
 wasmer = { version = "=4.2.6", features = ["compiler"] }
 wasmer-wasix = { version = "0.18.1" }
 tokio = { version = "1.36.0", features = ["full"] }
@@ -28,11 +29,15 @@ ark-relations = { version = "=0.4.0" }
 ark-std = { version = "=0.4.0" }
 ark-crypto-primitives = { version = "=0.4.0" }
 ark-groth16 = { version = "=0.4.0" }
-risc0-zkvm = { version = "0.20", features = [
+rand = { version = "0.8.4" }
+risc0-zkvm = { git= "https://github.com/risc0/risc0", tag="v0.21.0-rc.1", features = [
+  "prove"
+] }
+ark-serialize = "0.4.0"
+risc0-groth16 = { git= "https://github.com/risc0/risc0", tag="v0.21.0-rc.1", features = [
   "prove"
 ] }
 anagram-bonsol-schema = { path = "../schemas-rust" }
-reqwest = { version = "0.11.24" }
 serde = { version = "1.0.197" }
 serde_json = { version = "1.0.114" }
 hex = "0.4.3"

@@ -3,7 +3,7 @@
 
 use solana_program::declare_id;
 declare_id!("BoNSrwTtTM4PRkbbPvehk1XzHC65cKfdNSod9FyTejRn");
-pub mod error;
 #[cfg(not(feature = "no-entrypoint"))]
 mod entrypoint;
+pub mod error;
 mod verifying_key;

@@ -6,10 +6,13 @@ enum StatusTypes:uint8 {
   Failed = 4,
 }
 
-
+table Struct {
+  
+}
 table StatusV1{
   status: StatusTypes;
-  message: [uint8];
+  proof: [uint8];
+  input: [uint8];
 }
 
 root_type StatusV1;

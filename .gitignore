@@ -6,3 +6,4 @@ elf
 **/node_modules
 relay/stark_verify*
 .DS_Store
+relaykp.json
