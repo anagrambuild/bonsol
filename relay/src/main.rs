@@ -2,13 +2,13 @@ mod ingest;
 mod risc0;
 mod callback;
 pub mod types;
-use std::{str::FromStr, sync::Arc};
+use std::{str::FromStr};
 use anyhow::Result;
 use clap::Parser;
 use clap_derive::Subcommand;
 use ingest::Ingester;
 use risc0::Risc0Runner;
-use solana_sdk::{pubkey::Pubkey, signature::{read_keypair_file, Keypair}, signer::Signer};
+use solana_sdk::{pubkey::Pubkey, signature::{read_keypair_file, Keypair}};
 use thiserror::Error;
 use tokio::{select, signal};
 #[derive(Subcommand, Debug)]

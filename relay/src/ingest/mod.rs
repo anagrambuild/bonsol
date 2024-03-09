@@ -3,11 +3,11 @@ use futures_util::StreamExt;
 use solana_pubsub_client::nonblocking::pubsub_client::PubsubClient;
 use solana_rpc_client_api::config::{RpcBlockSubscribeConfig, RpcBlockSubscribeFilter};
 use solana_sdk::bs58;
-use solana_sdk::commitment_config::{CommitmentConfig, CommitmentLevel};
-use solana_sdk::instruction::CompiledInstruction;
+use solana_sdk::commitment_config::{CommitmentConfig};
+
 use solana_sdk::pubkey::Pubkey;
 use solana_transaction_status::{
-    EncodedTransactionWithStatusMeta, InnerInstruction, UiInnerInstructions, UiInstruction,
+    EncodedTransactionWithStatusMeta, UiInnerInstructions, UiInstruction,
     UiTransactionEncoding,
 };
 use std::fmt;
@@ -15,7 +15,7 @@ use std::{
     error::Error,
     fmt::{Display, Formatter},
 };
-use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
+use tokio::sync::mpsc::{UnboundedReceiver};
 use tokio::task::JoinHandle;
 
 use crate::types::BonsolInstruction;
@@ -122,7 +122,7 @@ impl Ingester for RpcIngester {
                 })
                 .unwrap();
 
-            let (mut stream, unsub) = c
+            let (mut stream, _unsub) = c
                 .block_subscribe(
                     RpcBlockSubscribeFilter::MentionsAccountOrProgram(program.to_string()),
                     Some(RpcBlockSubscribeConfig {

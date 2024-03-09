@@ -3,7 +3,6 @@ use std::{str::FromStr, sync::Arc};
 use anyhow::Result;
 use solana_rpc_client::nonblocking::rpc_client::RpcClient;
 use solana_sdk::{
-    address_lookup_table::instruction,
     instruction::{AccountMeta, Instruction},
     pubkey::Pubkey,
     signature::Keypair,

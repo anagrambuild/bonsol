@@ -6,32 +6,29 @@ use anyhow::Result;
 use flatbuffers::FlatBufferBuilder;
 use hex::FromHex;
 use risc0_groth16::{
-    docker::stark_to_snark, split_digest, to_json, verifier::prepared_verifying_key, Seal, Verifier,
+    docker::stark_to_snark, split_digest,
 };
-use solana_sdk::pubkey::Pubkey;
+
 use std::convert::TryInto;
 
-use solana_rpc_client::nonblocking::rpc_client::RpcClient;
-use std::{collections::HashMap, fs::File, io::Cursor, str::from_utf8, sync::Arc};
-use wasmer::{Engine, Module, Store};
 
-use ark_bn254::{Bn254, Fq, Fq2, Fr, G1Affine, G2Affine};
-use ark_circom::{
-    circom::Inputs, read_zkey_mapped, CircomBuilder, CircomConfig, WitnessCalculator,
-};
-use ark_crypto_primitives::snark::SNARK;
+use std::{collections::HashMap, str::from_utf8, sync::Arc};
+
+
+use ark_bn254::{Bn254};
+
+
 use ark_groth16::Groth16;
 use ark_serialize::CanonicalSerialize;
 
-use ark_relations::r1cs::ConstraintMatrices;
-use ark_std::rand::thread_rng;
-use ark_std::UniformRand;
-use num::BigInt;
+
+
+
+
 use risc0_zkvm::{
-    compute_image_id, default_prover, get_prover_server,
-    recursion::{identity_p254, join, lift, valid_control_ids},
-    sha::{Digest, Digestible},
-    CompactReceipt, ExecutorEnv, ExecutorImpl, ProverOpts, VerifierContext, ALLOWED_IDS_ROOT,
+    compute_image_id, get_prover_server,
+    recursion::{identity_p254},
+    sha::{Digest, Digestible}, ExecutorEnv, ExecutorImpl, ProverOpts, VerifierContext, ALLOWED_IDS_ROOT,
 };
 use std::fs;
 use tokio::{sync::mpsc::UnboundedSender, task::JoinHandle};
@@ -109,7 +106,7 @@ impl Risc0Runner {
                         .unwrap_or(Vec::new()),
                     ExecutionInputType::URL => {
                         // could brick us
-                        let url =
+                        let _url =
                             from_utf8(variant.input_data().map(|g| g.bytes()).unwrap_or(&[]))?;
                         // async http client with retrys and timeouts
                         // ensure size of payload is factored into tip settings
