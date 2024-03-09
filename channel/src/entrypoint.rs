@@ -1,9 +1,9 @@
-use std::{cell::Ref, panic::RefUnwindSafe, str::from_utf8};
+use std::{str::from_utf8};
 
 use crate::error::ChannelError;
 use crate::verifying_key::VERIFYINGKEY;
 use anagram_bonsol_schema::{
-    parse_ix_data, root_as_execution_request_v1, root_as_status_v1, ChannelInstruction,
+    parse_ix_data, root_as_execution_request_v1,
     ChannelInstructionIxType, ExecutionRequestV1, StatusTypes, StatusV1,
 };
 use groth16_solana::groth16::Groth16Verifier;
@@ -206,7 +206,7 @@ struct StatusAccounts<'a> {
 impl<'a> StatusAccounts<'a> {
     fn from_instruction<'b>(
         accounts: &'a [AccountInfo<'a>],
-        data: &'b StatusV1<'b>,
+        _data: &'b StatusV1<'b>,
     ) -> Result<Self, ChannelError> {
         let ea = accounts[1].clone();
         let prover = &accounts[3];
@@ -282,7 +282,7 @@ fn create_program_account<'a>(
         &[account.clone(), payer.clone(), system.clone()],
         &[seeds],
     )
-    .map_err(|e| ChannelError::InvalidSystemProgram)
+    .map_err(|_e| ChannelError::InvalidSystemProgram)
 }
 
 fn refund(exec: &AccountInfo, requester: &AccountInfo) -> Result<(), ProgramError> {
@@ -300,7 +300,7 @@ fn payout_tip(exec: &AccountInfo, prover: &AccountInfo, tip: u64) -> Result<(), 
 
 entrypoint!(process_instruction);
 pub fn process_instruction<'a>(
-    program_id: &Pubkey,
+    _program_id: &Pubkey,
     accounts: &'a [AccountInfo<'a>],
     instruction_data: &'a [u8],
 ) -> ProgramResult {
@@ -415,7 +415,7 @@ pub fn process_instruction<'a>(
                         let mut accounts = vec![AccountMeta::new(*sa.exec.key, true)];
                         for a in sa.extra_accounts {
                             // dont cary feepayer signature through to callback
-                            let signer =
+                            let _signer =
                                 if sol_memcmp(a.key.as_ref(), sa.prover.key.as_ref(), 32) == 0 {
                                     false
                                 } else {
@@ -459,7 +459,7 @@ pub fn process_instruction<'a>(
                 refund(sa.exec, sa.requester)?;
             }
         }
-        _ => return { Err(ChannelError::InvalidInstruction.into()) },
+        _ => return Err(ChannelError::InvalidInstruction.into()),
     };
     Ok(())
 }
