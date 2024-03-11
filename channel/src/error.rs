@@ -21,6 +21,12 @@ pub enum ChannelError {
     InvalidConversion,
     #[error("Invalid Callback Program")]
     InvalidCallbackProgram,
+    #[error("Invalid Proof")]
+    InvalidProof,
+    #[error("Proof Verification Failed")]
+    ProofVerificationFailed,
+    #[error("Invalid Public Inputs")]
+    InvalidPublicInputs,
 }
 
 impl From<ChannelError> for ProgramError {

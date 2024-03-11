@@ -54,17 +54,17 @@ proofArray():Uint8Array|null {
   return offset ? new Uint8Array(this.bb!.bytes().buffer, this.bb!.bytes().byteOffset + this.bb!.__vector(this.bb_pos + offset), this.bb!.__vector_len(this.bb_pos + offset)) : null;
 }
 
-input(index: number):number|null {
+inputs(index: number):number|null {
   const offset = this.bb!.__offset(this.bb_pos, 8);
   return offset ? this.bb!.readUint8(this.bb!.__vector(this.bb_pos + offset) + index) : 0;
 }
 
-inputLength():number {
+inputsLength():number {
   const offset = this.bb!.__offset(this.bb_pos, 8);
   return offset ? this.bb!.__vector_len(this.bb_pos + offset) : 0;
 }
 
-inputArray():Uint8Array|null {
+inputsArray():Uint8Array|null {
   const offset = this.bb!.__offset(this.bb_pos, 8);
   return offset ? new Uint8Array(this.bb!.bytes().buffer, this.bb!.bytes().byteOffset + this.bb!.__vector(this.bb_pos + offset), this.bb!.__vector_len(this.bb_pos + offset)) : null;
 }
@@ -93,11 +93,11 @@ static startProofVector(builder:flatbuffers.Builder, numElems:number) {
   builder.startVector(1, numElems, 1);
 }
 
-static addInput(builder:flatbuffers.Builder, inputOffset:flatbuffers.Offset) {
-  builder.addFieldOffset(2, inputOffset, 0);
+static addInputs(builder:flatbuffers.Builder, inputsOffset:flatbuffers.Offset) {
+  builder.addFieldOffset(2, inputsOffset, 0);
 }
 
-static createInputVector(builder:flatbuffers.Builder, data:number[]|Uint8Array):flatbuffers.Offset {
+static createInputsVector(builder:flatbuffers.Builder, data:number[]|Uint8Array):flatbuffers.Offset {
   builder.startVector(1, data.length, 1);
   for (let i = data.length - 1; i >= 0; i--) {
     builder.addInt8(data[i]!);
@@ -105,7 +105,7 @@ static createInputVector(builder:flatbuffers.Builder, data:number[]|Uint8Array):
   return builder.endVector();
 }
 
-static startInputVector(builder:flatbuffers.Builder, numElems:number) {
+static startInputsVector(builder:flatbuffers.Builder, numElems:number) {
   builder.startVector(1, numElems, 1);
 }
 
@@ -122,11 +122,11 @@ static finishSizePrefixedStatusV1Buffer(builder:flatbuffers.Builder, offset:flat
   builder.finish(offset, undefined, true);
 }
 
-static createStatusV1(builder:flatbuffers.Builder, status:StatusTypes, proofOffset:flatbuffers.Offset, inputOffset:flatbuffers.Offset):flatbuffers.Offset {
+static createStatusV1(builder:flatbuffers.Builder, status:StatusTypes, proofOffset:flatbuffers.Offset, inputsOffset:flatbuffers.Offset):flatbuffers.Offset {
   StatusV1.startStatusV1(builder);
   StatusV1.addStatus(builder, status);
   StatusV1.addProof(builder, proofOffset);
-  StatusV1.addInput(builder, inputOffset);
+  StatusV1.addInputs(builder, inputsOffset);
   return StatusV1.endStatusV1(builder);
 }
 }

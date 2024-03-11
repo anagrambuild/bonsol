@@ -68,29 +68,13 @@ class ExecutionRequestV1 {
         this.bb.writeUint64(this.bb_pos + offset, value);
         return true;
     }
-    executionId(index) {
+    executionId(optionalEncoding) {
         const offset = this.bb.__offset(this.bb_pos, 8);
-        return offset ? this.bb.readUint8(this.bb.__vector(this.bb_pos + offset) + index) : 0;
+        return offset ? this.bb.__string(this.bb_pos + offset, optionalEncoding) : null;
     }
-    executionIdLength() {
-        const offset = this.bb.__offset(this.bb_pos, 8);
-        return offset ? this.bb.__vector_len(this.bb_pos + offset) : 0;
-    }
-    executionIdArray() {
-        const offset = this.bb.__offset(this.bb_pos, 8);
-        return offset ? new Uint8Array(this.bb.bytes().buffer, this.bb.bytes().byteOffset + this.bb.__vector(this.bb_pos + offset), this.bb.__vector_len(this.bb_pos + offset)) : null;
-    }
-    imageId(index) {
+    imageId(optionalEncoding) {
         const offset = this.bb.__offset(this.bb_pos, 10);
-        return offset ? this.bb.readUint8(this.bb.__vector(this.bb_pos + offset) + index) : 0;
-    }
-    imageIdLength() {
-        const offset = this.bb.__offset(this.bb_pos, 10);
-        return offset ? this.bb.__vector_len(this.bb_pos + offset) : 0;
-    }
-    imageIdArray() {
-        const offset = this.bb.__offset(this.bb_pos, 10);
-        return offset ? new Uint8Array(this.bb.bytes().buffer, this.bb.bytes().byteOffset + this.bb.__vector(this.bb_pos + offset), this.bb.__vector_len(this.bb_pos + offset)) : null;
+        return offset ? this.bb.__string(this.bb_pos + offset, optionalEncoding) : null;
     }
     callbackProgramId(index) {
         const offset = this.bb.__offset(this.bb_pos, 12);
@@ -128,8 +112,20 @@ class ExecutionRequestV1 {
         const offset = this.bb.__offset(this.bb_pos, 16);
         return offset ? new Uint8Array(this.bb.bytes().buffer, this.bb.bytes().byteOffset + this.bb.__vector(this.bb_pos + offset), this.bb.__vector_len(this.bb_pos + offset)) : null;
     }
+    inputDigest(index) {
+        const offset = this.bb.__offset(this.bb_pos, 18);
+        return offset ? this.bb.readUint8(this.bb.__vector(this.bb_pos + offset) + index) : 0;
+    }
+    inputDigestLength() {
+        const offset = this.bb.__offset(this.bb_pos, 18);
+        return offset ? this.bb.__vector_len(this.bb_pos + offset) : 0;
+    }
+    inputDigestArray() {
+        const offset = this.bb.__offset(this.bb_pos, 18);
+        return offset ? new Uint8Array(this.bb.bytes().buffer, this.bb.bytes().byteOffset + this.bb.__vector(this.bb_pos + offset), this.bb.__vector_len(this.bb_pos + offset)) : null;
+    }
     static startExecutionRequestV1(builder) {
-        builder.startObject(7);
+        builder.startObject(8);
     }
     static addInputType(builder, inputType) {
         builder.addFieldInt8(0, inputType, execution_input_type_js_1.ExecutionInputType.URL);
@@ -140,28 +136,8 @@ class ExecutionRequestV1 {
     static addExecutionId(builder, executionIdOffset) {
         builder.addFieldOffset(2, executionIdOffset, 0);
     }
-    static createExecutionIdVector(builder, data) {
-        builder.startVector(1, data.length, 1);
-        for (let i = data.length - 1; i >= 0; i--) {
-            builder.addInt8(data[i]);
-        }
-        return builder.endVector();
-    }
-    static startExecutionIdVector(builder, numElems) {
-        builder.startVector(1, numElems, 1);
-    }
     static addImageId(builder, imageIdOffset) {
         builder.addFieldOffset(3, imageIdOffset, 0);
-    }
-    static createImageIdVector(builder, data) {
-        builder.startVector(1, data.length, 1);
-        for (let i = data.length - 1; i >= 0; i--) {
-            builder.addInt8(data[i]);
-        }
-        return builder.endVector();
-    }
-    static startImageIdVector(builder, numElems) {
-        builder.startVector(1, numElems, 1);
     }
     static addCallbackProgramId(builder, callbackProgramIdOffset) {
         builder.addFieldOffset(4, callbackProgramIdOffset, 0);
@@ -202,6 +178,19 @@ class ExecutionRequestV1 {
     static startInputDataVector(builder, numElems) {
         builder.startVector(1, numElems, 1);
     }
+    static addInputDigest(builder, inputDigestOffset) {
+        builder.addFieldOffset(7, inputDigestOffset, 0);
+    }
+    static createInputDigestVector(builder, data) {
+        builder.startVector(1, data.length, 1);
+        for (let i = data.length - 1; i >= 0; i--) {
+            builder.addInt8(data[i]);
+        }
+        return builder.endVector();
+    }
+    static startInputDigestVector(builder, numElems) {
+        builder.startVector(1, numElems, 1);
+    }
     static endExecutionRequestV1(builder) {
         const offset = builder.endObject();
         return offset;
@@ -212,7 +201,7 @@ class ExecutionRequestV1 {
     static finishSizePrefixedExecutionRequestV1Buffer(builder, offset) {
         builder.finish(offset, undefined, true);
     }
-    static createExecutionRequestV1(builder, inputType, tip, executionIdOffset, imageIdOffset, callbackProgramIdOffset, callbackInstructionPrefixOffset, inputDataOffset) {
+    static createExecutionRequestV1(builder, inputType, tip, executionIdOffset, imageIdOffset, callbackProgramIdOffset, callbackInstructionPrefixOffset, inputDataOffset, inputDigestOffset) {
         ExecutionRequestV1.startExecutionRequestV1(builder);
         ExecutionRequestV1.addInputType(builder, inputType);
         ExecutionRequestV1.addTip(builder, tip);
@@ -221,6 +210,7 @@ class ExecutionRequestV1 {
         ExecutionRequestV1.addCallbackProgramId(builder, callbackProgramIdOffset);
         ExecutionRequestV1.addCallbackInstructionPrefix(builder, callbackInstructionPrefixOffset);
         ExecutionRequestV1.addInputData(builder, inputDataOffset);
+        ExecutionRequestV1.addInputDigest(builder, inputDigestOffset);
         return ExecutionRequestV1.endExecutionRequestV1(builder);
     }
 }

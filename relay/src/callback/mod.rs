@@ -1,18 +1,23 @@
 use std::{str::FromStr, sync::Arc};
 
-use anyhow::Result;
-use solana_rpc_client::nonblocking::rpc_client::RpcClient;
-use solana_sdk::{
-    instruction::{AccountMeta, Instruction},
-    pubkey::Pubkey,
-    signature::Keypair,
-    signer::Signer,
-    transaction::Transaction,
+use {
+    anyhow::Result,
+    solana_rpc_client::nonblocking::rpc_client::RpcClient,
+    solana_sdk::{
+        instruction::{AccountMeta, Instruction},
+        pubkey::Pubkey,
+        signature::Keypair,
+        signer::Signer,
+        transaction::Transaction,
+    },
+    tokio::{
+        sync::{
+            mpsc::{unbounded_channel, UnboundedSender},
+            Semaphore,
+        },
+        task::JoinHandle,
+    },
 };
-use tokio::{sync::{
-    mpsc::{unbounded_channel, UnboundedSender},
-    Semaphore,
-}, task::JoinHandle};
 
 use crate::types::CallbackInstruction;
 const RPC_PERMITS: usize = 200;
@@ -56,9 +61,9 @@ impl RpcCallback {
                                 (prog, vec![])
                             }
                         };
-                        
+
                         let mut accounts = vec![
-                            AccountMeta::new_readonly(cix.requester_account, false),
+                            AccountMeta::new(cix.requester_account, false),
                             AccountMeta::new(cix.execution_request_data_account, false),
                             AccountMeta::new_readonly(id, false),
                             AccountMeta::new(signer.pubkey(), true),

@@ -14,4 +14,12 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.ExitCode = void 0;
 __exportStar(require("./channel_instruction"), exports);
+var ExitCode;
+(function (ExitCode) {
+    ExitCode[ExitCode["Success"] = 0] = "Success";
+    ExitCode[ExitCode["VerifyError"] = 1] = "VerifyError";
+    ExitCode[ExitCode["ProvingError"] = 2] = "ProvingError";
+    ExitCode[ExitCode["InputError"] = 3] = "InputError";
+})(ExitCode || (exports.ExitCode = ExitCode = {}));

@@ -16,4 +16,5 @@ fn main() {
         }
     }
     env::commit(&0);
+    env::commit(&0);
 }

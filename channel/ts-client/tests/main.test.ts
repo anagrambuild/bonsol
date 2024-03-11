@@ -38,7 +38,7 @@ describe('BonsolProgram', () => {
       lamports: lamports(1000000000n),
       recipientAddress: pub
     })
-    const eid = randomBytes(16).toString('hex')
+    const eid = "test-execution-id"
     const input = JSON.stringify({ "attestation": "test" })
     const result = await BonsolProgram.Execute(
       {

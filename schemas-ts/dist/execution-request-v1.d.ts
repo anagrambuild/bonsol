@@ -10,12 +10,10 @@ export declare class ExecutionRequestV1 {
     mutate_input_type(value: ExecutionInputType): boolean;
     tip(): bigint;
     mutate_tip(value: bigint): boolean;
-    executionId(index: number): number | null;
-    executionIdLength(): number;
-    executionIdArray(): Uint8Array | null;
-    imageId(index: number): number | null;
-    imageIdLength(): number;
-    imageIdArray(): Uint8Array | null;
+    executionId(): string | null;
+    executionId(optionalEncoding: flatbuffers.Encoding): string | Uint8Array | null;
+    imageId(): string | null;
+    imageId(optionalEncoding: flatbuffers.Encoding): string | Uint8Array | null;
     callbackProgramId(index: number): number | null;
     callbackProgramIdLength(): number;
     callbackProgramIdArray(): Uint8Array | null;
@@ -25,15 +23,14 @@ export declare class ExecutionRequestV1 {
     inputData(index: number): number | null;
     inputDataLength(): number;
     inputDataArray(): Uint8Array | null;
+    inputDigest(index: number): number | null;
+    inputDigestLength(): number;
+    inputDigestArray(): Uint8Array | null;
     static startExecutionRequestV1(builder: flatbuffers.Builder): void;
     static addInputType(builder: flatbuffers.Builder, inputType: ExecutionInputType): void;
     static addTip(builder: flatbuffers.Builder, tip: bigint): void;
     static addExecutionId(builder: flatbuffers.Builder, executionIdOffset: flatbuffers.Offset): void;
-    static createExecutionIdVector(builder: flatbuffers.Builder, data: number[] | Uint8Array): flatbuffers.Offset;
-    static startExecutionIdVector(builder: flatbuffers.Builder, numElems: number): void;
     static addImageId(builder: flatbuffers.Builder, imageIdOffset: flatbuffers.Offset): void;
-    static createImageIdVector(builder: flatbuffers.Builder, data: number[] | Uint8Array): flatbuffers.Offset;
-    static startImageIdVector(builder: flatbuffers.Builder, numElems: number): void;
     static addCallbackProgramId(builder: flatbuffers.Builder, callbackProgramIdOffset: flatbuffers.Offset): void;
     static createCallbackProgramIdVector(builder: flatbuffers.Builder, data: number[] | Uint8Array): flatbuffers.Offset;
     static startCallbackProgramIdVector(builder: flatbuffers.Builder, numElems: number): void;
@@ -43,8 +40,11 @@ export declare class ExecutionRequestV1 {
     static addInputData(builder: flatbuffers.Builder, inputDataOffset: flatbuffers.Offset): void;
     static createInputDataVector(builder: flatbuffers.Builder, data: number[] | Uint8Array): flatbuffers.Offset;
     static startInputDataVector(builder: flatbuffers.Builder, numElems: number): void;
+    static addInputDigest(builder: flatbuffers.Builder, inputDigestOffset: flatbuffers.Offset): void;
+    static createInputDigestVector(builder: flatbuffers.Builder, data: number[] | Uint8Array): flatbuffers.Offset;
+    static startInputDigestVector(builder: flatbuffers.Builder, numElems: number): void;
     static endExecutionRequestV1(builder: flatbuffers.Builder): flatbuffers.Offset;
     static finishExecutionRequestV1Buffer(builder: flatbuffers.Builder, offset: flatbuffers.Offset): void;
     static finishSizePrefixedExecutionRequestV1Buffer(builder: flatbuffers.Builder, offset: flatbuffers.Offset): void;
-    static createExecutionRequestV1(builder: flatbuffers.Builder, inputType: ExecutionInputType, tip: bigint, executionIdOffset: flatbuffers.Offset, imageIdOffset: flatbuffers.Offset, callbackProgramIdOffset: flatbuffers.Offset, callbackInstructionPrefixOffset: flatbuffers.Offset, inputDataOffset: flatbuffers.Offset): flatbuffers.Offset;
+    static createExecutionRequestV1(builder: flatbuffers.Builder, inputType: ExecutionInputType, tip: bigint, executionIdOffset: flatbuffers.Offset, imageIdOffset: flatbuffers.Offset, callbackProgramIdOffset: flatbuffers.Offset, callbackInstructionPrefixOffset: flatbuffers.Offset, inputDataOffset: flatbuffers.Offset, inputDigestOffset: flatbuffers.Offset): flatbuffers.Offset;
 }

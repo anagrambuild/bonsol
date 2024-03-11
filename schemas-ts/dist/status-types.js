@@ -6,7 +6,7 @@ var StatusTypes;
 (function (StatusTypes) {
     StatusTypes[StatusTypes["Unknown"] = 0] = "Unknown";
     StatusTypes[StatusTypes["Queued"] = 1] = "Queued";
-    StatusTypes[StatusTypes["InProgress"] = 2] = "InProgress";
+    StatusTypes[StatusTypes["Claimed"] = 2] = "Claimed";
     StatusTypes[StatusTypes["Completed"] = 3] = "Completed";
     StatusTypes[StatusTypes["Failed"] = 4] = "Failed";
 })(StatusTypes || (exports.StatusTypes = StatusTypes = {}));

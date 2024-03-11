@@ -8,7 +8,7 @@ license = "MIT"
 edition = "2021"
 
 [dependencies]
-flatbuffers = "23.5.26"
+flatbuffers = {workspace = true}
 thiserror = {workspace = true}
 serde = "1.0.196"
 

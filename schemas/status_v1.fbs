@@ -1,18 +1,15 @@
-enum StatusTypes:uint8 {
+enum StatusTypes: uint8 {
   Unknown = 0,
   Queued = 1,
-  InProgress = 2,
+  Claimed = 2,
   Completed = 3,
   Failed = 4,
 }
 
-table Struct {
-  
-}
 table StatusV1{
   status: StatusTypes;
   proof: [uint8];
-  input: [uint8];
+  inputs: [uint8];
 }
 
 root_type StatusV1;

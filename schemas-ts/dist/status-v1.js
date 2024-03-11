@@ -68,15 +68,15 @@ class StatusV1 {
         const offset = this.bb.__offset(this.bb_pos, 6);
         return offset ? new Uint8Array(this.bb.bytes().buffer, this.bb.bytes().byteOffset + this.bb.__vector(this.bb_pos + offset), this.bb.__vector_len(this.bb_pos + offset)) : null;
     }
-    input(index) {
+    inputs(index) {
         const offset = this.bb.__offset(this.bb_pos, 8);
         return offset ? this.bb.readUint8(this.bb.__vector(this.bb_pos + offset) + index) : 0;
     }
-    inputLength() {
+    inputsLength() {
         const offset = this.bb.__offset(this.bb_pos, 8);
         return offset ? this.bb.__vector_len(this.bb_pos + offset) : 0;
     }
-    inputArray() {
+    inputsArray() {
         const offset = this.bb.__offset(this.bb_pos, 8);
         return offset ? new Uint8Array(this.bb.bytes().buffer, this.bb.bytes().byteOffset + this.bb.__vector(this.bb_pos + offset), this.bb.__vector_len(this.bb_pos + offset)) : null;
     }
@@ -99,17 +99,17 @@ class StatusV1 {
     static startProofVector(builder, numElems) {
         builder.startVector(1, numElems, 1);
     }
-    static addInput(builder, inputOffset) {
-        builder.addFieldOffset(2, inputOffset, 0);
+    static addInputs(builder, inputsOffset) {
+        builder.addFieldOffset(2, inputsOffset, 0);
     }
-    static createInputVector(builder, data) {
+    static createInputsVector(builder, data) {
         builder.startVector(1, data.length, 1);
         for (let i = data.length - 1; i >= 0; i--) {
             builder.addInt8(data[i]);
         }
         return builder.endVector();
     }
-    static startInputVector(builder, numElems) {
+    static startInputsVector(builder, numElems) {
         builder.startVector(1, numElems, 1);
     }
     static endStatusV1(builder) {
@@ -122,11 +122,11 @@ class StatusV1 {
     static finishSizePrefixedStatusV1Buffer(builder, offset) {
         builder.finish(offset, undefined, true);
     }
-    static createStatusV1(builder, status, proofOffset, inputOffset) {
+    static createStatusV1(builder, status, proofOffset, inputsOffset) {
         StatusV1.startStatusV1(builder);
         StatusV1.addStatus(builder, status);
         StatusV1.addProof(builder, proofOffset);
-        StatusV1.addInput(builder, inputOffset);
+        StatusV1.addInputs(builder, inputsOffset);
         return StatusV1.endStatusV1(builder);
     }
 }

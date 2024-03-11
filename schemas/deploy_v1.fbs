@@ -1,0 +1,21 @@
+//TODO allow non provers to deploy configured programs
+enum InputType:uint8 {
+  Unknown = 0,
+  PublicData = 1,
+  PublicAccountData = 3,
+  PublicUrl = 4,
+  Private = 5,
+}
+
+table DeployV1 {
+  image_id: string;
+  program_name: string;
+  url: string;
+  digest: string;
+  // TODO instead of this pattern allow private inputs to be stored on the "network of provers via some kind of mpc decryption scheme"
+  private_inputs_url: string; //image creator must maintain a server to allow private inputs to be saved under an execution id and loaded by claimed prover
+  inputs: [InputType]; //loaded into the program in array order
+}
+
+
+root_type DeployV1;

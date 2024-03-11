@@ -1,22 +1,22 @@
-use anyhow::Result;
-use futures_util::StreamExt;
-use solana_pubsub_client::nonblocking::pubsub_client::PubsubClient;
-use solana_rpc_client_api::config::{RpcBlockSubscribeConfig, RpcBlockSubscribeFilter};
-use solana_sdk::bs58;
-use solana_sdk::commitment_config::{CommitmentConfig};
+use {
+    anyhow::Result,
+    futures_util::StreamExt,
+    solana_pubsub_client::nonblocking::pubsub_client::PubsubClient,
+    solana_rpc_client_api::config::{RpcBlockSubscribeConfig, RpcBlockSubscribeFilter},
+    solana_sdk::{bs58, commitment_config::CommitmentConfig},
+};
 
-use solana_sdk::pubkey::Pubkey;
-use solana_transaction_status::{
-    EncodedTransactionWithStatusMeta, UiInnerInstructions, UiInstruction,
-    UiTransactionEncoding,
+use {
+    solana_sdk::pubkey::Pubkey,
+    solana_transaction_status::{
+        EncodedTransactionWithStatusMeta, UiInnerInstructions, UiInstruction, UiTransactionEncoding,
+    },
+    std::{
+        error::Error,
+        fmt::{self, Display, Formatter},
+    },
+    tokio::{sync::mpsc::UnboundedReceiver, task::JoinHandle},
 };
-use std::fmt;
-use std::{
-    error::Error,
-    fmt::{Display, Formatter},
-};
-use tokio::sync::mpsc::{UnboundedReceiver};
-use tokio::task::JoinHandle;
 
 use crate::types::BonsolInstruction;
 pub type TxChannel = UnboundedReceiver<Vec<BonsolInstruction>>;
@@ -95,7 +95,9 @@ fn filter_txs(program: &Pubkey, tx: EncodedTransactionWithStatusMeta) -> Vec<Bon
                                             data,
                                         });
                                     } else {
-                                        println!("Failed to decode bs58 data for bonsol instruction");
+                                        println!(
+                                            "Failed to decode bs58 data for bonsol instruction"
+                                        );
                                     }
                                 }
                             }

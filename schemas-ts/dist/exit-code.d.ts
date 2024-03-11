@@ -1,4 +1,3 @@
-export * from './channel_instruction';
 export declare enum ExitCode {
     Success = 0,
     VerifyError = 1,

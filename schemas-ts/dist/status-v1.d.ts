@@ -11,19 +11,19 @@ export declare class StatusV1 {
     proof(index: number): number | null;
     proofLength(): number;
     proofArray(): Uint8Array | null;
-    input(index: number): number | null;
-    inputLength(): number;
-    inputArray(): Uint8Array | null;
+    inputs(index: number): number | null;
+    inputsLength(): number;
+    inputsArray(): Uint8Array | null;
     static startStatusV1(builder: flatbuffers.Builder): void;
     static addStatus(builder: flatbuffers.Builder, status: StatusTypes): void;
     static addProof(builder: flatbuffers.Builder, proofOffset: flatbuffers.Offset): void;
     static createProofVector(builder: flatbuffers.Builder, data: number[] | Uint8Array): flatbuffers.Offset;
     static startProofVector(builder: flatbuffers.Builder, numElems: number): void;
-    static addInput(builder: flatbuffers.Builder, inputOffset: flatbuffers.Offset): void;
-    static createInputVector(builder: flatbuffers.Builder, data: number[] | Uint8Array): flatbuffers.Offset;
-    static startInputVector(builder: flatbuffers.Builder, numElems: number): void;
+    static addInputs(builder: flatbuffers.Builder, inputsOffset: flatbuffers.Offset): void;
+    static createInputsVector(builder: flatbuffers.Builder, data: number[] | Uint8Array): flatbuffers.Offset;
+    static startInputsVector(builder: flatbuffers.Builder, numElems: number): void;
     static endStatusV1(builder: flatbuffers.Builder): flatbuffers.Offset;
     static finishStatusV1Buffer(builder: flatbuffers.Builder, offset: flatbuffers.Offset): void;
     static finishSizePrefixedStatusV1Buffer(builder: flatbuffers.Builder, offset: flatbuffers.Offset): void;
-    static createStatusV1(builder: flatbuffers.Builder, status: StatusTypes, proofOffset: flatbuffers.Offset, inputOffset: flatbuffers.Offset): flatbuffers.Offset;
+    static createStatusV1(builder: flatbuffers.Builder, status: StatusTypes, proofOffset: flatbuffers.Offset, inputsOffset: flatbuffers.Offset): flatbuffers.Offset;
 }

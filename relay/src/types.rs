@@ -9,16 +9,16 @@ pub struct BonsolInstruction {
 
 pub enum CallbackStatus {
     Completed,
-    Failure
+    Failure,
 }
 pub struct ProgramExec {
-   pub program_id: Pubkey,
-   pub instruction_prefix: Vec<u8>,
+    pub program_id: Pubkey,
+    pub instruction_prefix: Vec<u8>,
 }
 pub struct CallbackInstruction {
-    pub execution_request_id: Vec<u8>,
+    pub execution_request_id: String,
     pub requester_account: Pubkey,
     pub execution_request_data_account: Pubkey,
     pub ix_data: Option<Vec<u8>>,
-    pub program_exec: Option<ProgramExec>
+    pub program_exec: Option<ProgramExec>,
 }

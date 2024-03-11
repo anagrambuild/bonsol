@@ -1,17 +1,26 @@
 enum ExecutionInputType : uint8{
-  URL = 0,
-  DATA = 1,
+  PUBLIC_URL = 0,
+  PUBLIC_DATA = 1,
+  PRIVATE_DATA = 2,
+}
+
+table Input {
+  input_type: ExecutionInputType = 1;
+  label: string;
+  data: [uint8];
 }
 
 table ExecutionRequestV1{
   input_type: ExecutionInputType;
   tip: uint64;
-  execution_id: [uint8];
-  image_id: [uint8];
+  execution_id: string;
+  image_id: string;
   callback_program_id: [uint8];
   callback_instruction_prefix: [uint8];
-  input_data: [uint8];
+  forward_output: bool = false;
+  input: [Input];
+  input_digest: [uint8]; // sha256 of the input data, checked against journal digest
+  max_block_height: uint64; // max block height to accept prover commitment
 }
-
 
 root_type ExecutionRequestV1;

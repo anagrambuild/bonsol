@@ -2,3 +2,4 @@
 
 export { ExecutionInputType } from './execution-input-type.js';
 export { ExecutionRequestV1 } from './execution-request-v1.js';
+export { Inputs } from './inputs.js';

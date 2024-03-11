@@ -1,16 +1,21 @@
+mod callback;
 mod ingest;
 mod risc0;
-mod callback;
 pub mod types;
-use std::{str::FromStr};
-use anyhow::Result;
-use clap::Parser;
-use clap_derive::Subcommand;
-use ingest::Ingester;
-use risc0::Risc0Runner;
-use solana_sdk::{pubkey::Pubkey, signature::{read_keypair_file, Keypair}};
-use thiserror::Error;
-use tokio::{select, signal};
+use {
+    anyhow::Result,
+    clap::Parser,
+    clap_derive::Subcommand,
+    ingest::Ingester,
+    risc0::Risc0Runner,
+    solana_sdk::{
+        pubkey::Pubkey,
+        signature::{read_keypair_file, Keypair},
+    },
+    std::str::FromStr,
+    thiserror::Error,
+    tokio::{select, signal},
+};
 #[derive(Subcommand, Debug)]
 pub enum SubCommand {
     StartWithRpc {
@@ -26,7 +31,7 @@ pub enum SubCommand {
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 struct Args {
-    #[arg(long="keypair", short='k')]
+    #[arg(long = "keypair", short = 'k')]
     node_keypair_path: String,
     #[arg(long)]
     risc0_image_folder: String,
@@ -47,7 +52,7 @@ async fn start_rpc_ingester_risc0(
     wss_rpc_url: String,
     bonsol_program: String,
     image_folder: String,
-    signer: Keypair
+    signer: Keypair,
 ) -> Result<()> {
     let mut ingester = ingest::RpcIngester::new(wss_rpc_url);
     let program = Pubkey::from_str(&bonsol_program)?;
@@ -73,10 +78,16 @@ async fn main() -> Result<()> {
             rpc_url,
             bonsol_program,
         } => tokio::spawn(async move {
-            let signer = read_keypair_file(args.node_keypair_path)
-                .map_err(|_| CliError::InvalidRpcUrl)
-                ?;
-            start_rpc_ingester_risc0(rpc_url, wss_rpc_url, bonsol_program, args.risc0_image_folder, signer).await
+            let signer =
+                read_keypair_file(args.node_keypair_path).map_err(|_| CliError::InvalidRpcUrl)?;
+            start_rpc_ingester_risc0(
+                rpc_url,
+                wss_rpc_url,
+                bonsol_program,
+                args.risc0_image_folder,
+                signer,
+            )
+            .await
         }),
     };
 
