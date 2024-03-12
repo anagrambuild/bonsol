@@ -11,5 +11,4 @@ table StatusV1{
   proof: [uint8];
   inputs: [uint8];
 }
-
 root_type StatusV1;
