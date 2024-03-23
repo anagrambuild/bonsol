@@ -1,10 +1,7 @@
 
 use gjson::Kind;
 use risc0_zkvm::{guest::{env, sha::Impl},sha::{Digest, Sha256}};
-//Its a good Idea to make a Type for your inputs
-type Input = (String, String, String);
-//The output type must be a tuple with the first element being the digest of the inputs
-type Output = (Digest, bool);
+
 fn main() {
     // The Bonsol Host will send your inputs packed in a Vec<u8> 
     let mut public1 = Vec::new();
@@ -29,5 +26,6 @@ fn main() {
         ].concat(),
     );
     //Type argument here is optional but hepls enforce the type of the output
-    env::commit::<Output>(&(*digest, res));
+    env::commit_slice(digest.as_bytes());
+    env::commit_slice(&[res as u8]);
 }

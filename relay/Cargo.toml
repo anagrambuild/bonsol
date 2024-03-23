@@ -5,6 +5,10 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[features]
+proof-compression-docker = []
+proof-compression-wasm = []
+
 [dependencies]
 figment = {version = "0.10.14", features = ["toml"]}
 fnv = "1.0.7"
@@ -41,7 +45,7 @@ ark-groth16 = { version = "=0.4.0" }
 rand = { version = "0.8.4" }
 risc0-zkvm = { version = "0.21.0", features = ["prove"] }
 ark-serialize = "0.4.0"
-risc0-groth16 = { version = "0.21.0", features = ["prove"] }
+risc0-groth16 = { version = "0.21.0", features = ["prove"]}
 risc0-binfmt = { version = "0.21.0" }
 anagram-bonsol-schema = { path = "../schemas-rust" }
 serde = { version = "1.0.197" }

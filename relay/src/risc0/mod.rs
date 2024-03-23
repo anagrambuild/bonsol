@@ -649,7 +649,7 @@ fn risc0_docker_compress_proof(succint_receipt: SuccinctReceipt) -> Result<Compr
     let seal = stark_to_snark(&sealbytes)?;
     let claim = succint_receipt.claim;
     let digest = claim.digest();
-    let input: Vec<u8> = Vec::new();
+    let mut input: Vec<u8> = Vec::new();
     let root = hex::decode(ALLOWED_IDS_ROOT).unwrap();
     let rb: [u8; 32] = root.try_into().unwrap();
     let (i0, i1) = split_digest(digest)?;

@@ -91,21 +91,20 @@ This is done like this
 
 use gjson::Kind;
 use risc0_zkvm::{guest::{env, sha::Impl},sha::{Digest, Sha256}};
-//Its a good Idea to make a Type for your inputs
-type Input = (String, String, String);
-//The output type must be a tuple with the first element being the digest of the inputs
-type Output = (Digest, bool);
+
 fn main() {
-    // The Bonsol Host will send your inputs in a tuple in the order they were declared on chain
-    let (
-        publici1,  //json
-        publici2,  //path
-        privatei2, //value
-    ): Input = env::read();
+    // The Bonsol Host will send your inputs packed in a Vec<u8> 
+    let mut public1 = Vec::new();
+    env::read_slice(&mut public1);
+    let publici1 = String::from_utf8(public1).unwrap();
+    let mut private2 = Vec::new();
+    env::read_slice(&mut private2);
+    let privatei2 = String::from_utf8(private2).unwrap();
+    
     let valid = gjson::valid(&publici1);
     let mut res = false;
     if valid {
-        let val = gjson::get(&publici1, &publici2);
+        let val = gjson::get(&publici1, "attestation");
         if val.kind() == Kind::String && val.str() == privatei2 {
             res = true;
         }
@@ -113,12 +112,11 @@ fn main() {
     let digest = Impl::hash_bytes(
         &[
             publici1.as_bytes(),
-            publici2.as_bytes(),
             privatei2.as_bytes(),
         ].concat(),
     );
-    //Type argument here is optional but hepls enforce the type of the output
-    env::commit::<Output>(&(*digest, res));
+    env::commit_slice(digest.as_bytes());
+    env::commit_slice(&[res as u8]);
 }
 
 ```
@@ -131,22 +129,23 @@ use risc0_zkvm::{guest::{env, sha::Impl},sha::{Digest, Sha256}};
 let digest = Impl::hash_bytes(
         &[
             publici1.as_bytes(),
-            publici2.as_bytes(),
             privatei2.as_bytes(),
         ].concat(),
     );
-//commit as the first output, this will be in the journal
-env::commit::<Output>(&(*digest, ...));
-
+env::commit_slice(digest.as_bytes());
 ```
 
 ## Development Status
 * Proving and verifying a proof: works
+* proof compression: works, but currently using a dockerized C circom binary, want to use all rust or wasm(works, but bug in wasmer llvm compiler makes it impossible to compule and the signle pass compiler produces a slower universal wasm binary)
+* Enforce image id in verification: in progress
 * Enforcing input digest as output of circit: in progress
 * Execution Request: works
-* Claiming: in progress
-* Private Inputs: in progress
+* Claiming: works
+* Private Inputs: testing
 * Fee distribution: basic
+* Prover Slashing
+* Bonsolace: local proving with simple on chain verification(for devs who dont need the prover network)
 
 # Roadmap
 * MPC encryption for private inputs to avoid private input server 
@@ -180,4 +179,4 @@ You will need to run a few components.
 
 Note, currently you need docker installed and the Risc0 zkey, Verification key and .dat file present at the root of the relay directory.  
 See https://github.com/risc0/risc0/tree/e69db8038011dc2e4020d3899cc1c7b40dd3d637/compact_proof for instructions.
-This will change once the all rust prover is working, see relay/risc0 file (the commented out blobs)
+This will change once the all rust prover is working.
