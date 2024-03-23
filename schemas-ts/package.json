@@ -1,0 +1,24 @@
+{
+  "name": "bonsol-schemas",
+  "version": "0.0.0",
+  "deployment": {
+    "distributions" : {
+      "name": "pnpm"
+    }
+  },
+  "scripts": {
+    "build": "tsc"
+  },  
+  "module": "dist/index.js",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "dependencies": {
+    "flatbuffers": "23.5.26"
+  },
+  "devDependencies": {
+    "typescript": "5.3.3"
+  },
+  "author": "austbot",
+  "license": "MIT",
+  "private": true
+}

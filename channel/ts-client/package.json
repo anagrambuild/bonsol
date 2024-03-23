@@ -1,0 +1,39 @@
+{
+  "name": "bonsol-channel-node-sdk",
+  "version": "0.0.0",
+  "scripts": {
+    "lint": "eslint src/ --ext .js,.jsx,.ts,.tsx",
+    "test": "jest --silent=false --watchAll",
+    "clean": "rm -rf dist build package",
+    "ts-node": "ts-node",
+    "docs": "typedoc --entryPoints src/main.ts",
+    "build": "tsc -p tsconfig.json",
+    "build-all": "pnpm run clean && pnpm run build && pnpm run build-browser",
+    "build-browser": "esbuild src/index.ts --bundle --minify --sourcemap=external --outfile=dist/esbuild/browser.js"
+  },
+  "main": "./dist/tsc/main.js",
+  "types": "./dist/tsc/main.d.ts",
+  "browser": "./dist/esbuild/browser.js",
+  "dependencies": {
+    "@solana/functional": "2.0.0-experimental.55e373b",
+    "@solana/rpc-core": "0.0.0-experimental.df45965",
+    "@solana/web3.js": "2.0.0-experimental.0e03ca9",
+    "bonsol-schemas": "workspace:*",
+    "flatbuffers": "23.5.26",
+    "@noble/hashes": "1.4.0"
+  },
+  "devDependencies": {
+    "@luzid/sdk": "*",
+    "@types/jest": "^29.5.12",
+    "@types/node": "^20.11.16",
+    "esbuild": "^0.20.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.2",
+    "ts-node": "^10.9.2",
+    "tslib": "^2.6.2",
+    "typescript": "5.3.3"
+  },
+  "author": "austbot",
+  "license": "MIT",
+  "private": true
+}

@@ -1,0 +1,19 @@
+enum ProgramInputType: uint8 {
+  Unknown = 0,
+  Public = 1,
+  Private = 2,
+}
+
+enum InputType: uint8 {
+  Unknown = 0,
+  PublicData = 1,
+  PublicAccountData = 3,
+  PublicUrl = 4,
+  Private = 5,
+  InputSet = 6,
+}
+
+table Input {
+  input_type: InputType = 1;
+  data: [uint8];
+}

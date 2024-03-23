@@ -1,0 +1,15 @@
+enum StatusTypes: uint8 {
+  Unknown = 0,
+  Queued = 1,
+  Claimed = 2,
+  Completed = 3,
+  Failed = 4,
+}
+
+table StatusV1{
+  status: StatusTypes;
+  proof: [uint8];
+  inputs: [uint8];
+  input_digest: [uint8];
+}
+root_type StatusV1;

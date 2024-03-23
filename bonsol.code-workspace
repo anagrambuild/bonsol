@@ -1,0 +1,23 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../Development/groth16-solana"
+		},
+		{
+			"path": "../circom-compat"
+		},
+		{
+			"path": "../risc0/risc0/groth16"
+		}
+	],
+	"settings": {
+		"rust-analyzer.linkedProjects": [
+			"${workspaceFolder}/Cargo.toml",
+			"${workspaceFolder}/images/simple/Cargo.toml"
+		],
+		"rust-analyzer.cargo.buildScripts.overrideCommand": null
+	}
+}
