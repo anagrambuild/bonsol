@@ -155,6 +155,8 @@ env::commit_slice(digest.as_bytes());
 * Fee distribution: basic
 * Prover Slashing
 * Bonsolace: local proving with simple on chain verification(for devs who dont need the prover network)
+* Zkprogram capacity (compute) calculations and capacity planning for provers: in progress
+* non trivial example zkprograms: in progress
 
 # Roadmap
 * MPC encryption for private inputs to avoid private input server 
