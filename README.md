@@ -47,7 +47,14 @@ sequenceDiagram
 
 
 #### Claim???
-Wait dude why does the prover have to claim before they can start to prove? Well I have a simple answer but you wont like it. Because in the future I want to allow the private inputs to be encrypted so that only the claim winner can have access to the private inputs and I literally dont even know where to start with Homomorphic Encryption inside a ZKvm. FHE is not some silver bullet okay .... The claim mechaism allows "fair" access to the tip. Claims are recorded in order of their slot and multiple provers can have claims. The prover that produces a valid proof within their promised claim window will be paid the tip. The private input server MUST only allow the provers that have submitted a claim the execution request to access the private inputs. They do this by making sure the private input request is signed by the same Key that submitted the claim.
+Wait dude why does the prover have to claim before they can start to prove? Well I have a simple answer but you wont like it. Because in the future I want to allow the private inputs to be encrypted so that only the claim winner can have access to the private inputs and I literally dont even know where to start with Homomorphic Encryption inside a ZKvm. FHE is not some silver bullet okay .... The claim mechaism allows "fair" access to the tip. Claims are recorded in order of their slot and multiple provers can have claims. But only one at a time. The prover that produces a valid proof within their promised claim window will be paid the tip. The private input server MUST only allow the provers that have submitted a claim the execution request to access the private inputs. They do this by making sure the private input request is signed by the same Key that submitted the claim.
+
+I am open to different network models here, things I explored:
+
+Stake base job distrobution,
+Proof of work,
+Just a straight up auction
+
 
 #### "hand waive" auction or time based mechanic to incentivise provers to provide quality service
 This is a sarcastic way of saying that im still figuring this out but I think it will be something like.
@@ -55,6 +62,8 @@ This is a sarcastic way of saying that im still figuring this out but I think it
 Users tip decreases in value from the time a prover claims it. At the slot the prover claims the execution request the tip is at its highest value. And it decreases in value until the slot deadline.
 
 Not producing a proof will result in a loss of claim and a different prover can submit. If the prover submits a proof that is invalid they get some of their stake for that execution slashed. 
+
+When a claim starts there is a curve that the paid out tip will decrease over. If a prover misses their window or provides a bad proof, then any prover that is not the previous can claim and the tip value resets and the curve starts over. This is all until the slot deadline.
 
 I would love feedback on if this is a good idea or not. I think it will incentivise provers to act fast and produce a proof quickly and the proof stake slashing will incentivise provers to produce quality proofs.
 
