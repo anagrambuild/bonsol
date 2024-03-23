@@ -158,6 +158,14 @@ env::commit_slice(digest.as_bytes());
 
 
 ## Local Development
+Prequisites:
+risc0 tooling
+docker
+rust
+solana tooling
+probbably a fast computer
+
+
 You will need to run a few components.
 
 1. Solana validator localnet
@@ -176,6 +184,11 @@ You will need to run a few components.
 #Compiles any local 乃ㄖ几丂ㄖㄥ zkprograms
 ./build-images.sh 
 ```
+
+Currently I have the following flow:
+I run "./build-images.sh".
+
+Then "./validator" and "./run-relay.sh" , and the ts-client tests in `channel` directory with `pnpm test` in three different terminals. This will deploy a zk program and start an execution request which the relay will respond to. I make heavy use of a solana explorer in testing too.
 
 Note, currently you need docker installed and the Risc0 zkey, Verification key and .dat file present at the root of the relay directory.  
 See https://github.com/risc0/risc0/tree/e69db8038011dc2e4020d3899cc1c7b40dd3d637/compact_proof for instructions.
