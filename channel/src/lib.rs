@@ -24,13 +24,6 @@ pub fn deployment_address_seeds<'a>(hash: &'a Hash) -> Vec<&'a [u8]> {
     vec!["deployment".as_bytes(), hash.as_ref()]
 }
 
-pub fn prover_stake_address_seeds<'a>(prover: &'a Pubkey) -> Vec<&'a [u8]> {
-    vec![
-        "prover_stake".as_bytes(),
-        prover.as_ref(),
-    ]
-}
-
 pub fn execution_claim_address_seeds<'a>(
     execution_id: &'a [u8],
 ) -> Vec<&'a [u8]> {
@@ -64,13 +57,6 @@ pub fn execution_claim_address(
 ) -> (Pubkey, u8) {
     Pubkey::find_program_address(
         &execution_claim_address_seeds(execution_id),
-        &crate::ID,
-    )
-}
-
-pub fn prover_stake_address(prover: &Pubkey) -> (Pubkey, u8) {
-    Pubkey::find_program_address(
-        &prover_stake_address_seeds(prover),
         &crate::ID,
     )
 }

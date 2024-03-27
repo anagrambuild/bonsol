@@ -72,6 +72,12 @@ class ClaimV1 {
         const offset = builder.endObject();
         return offset;
     }
+    static finishClaimV1Buffer(builder, offset) {
+        builder.finish(offset);
+    }
+    static finishSizePrefixedClaimV1Buffer(builder, offset) {
+        builder.finish(offset, undefined, true);
+    }
     static createClaimV1(builder, executionIdOffset, blockCommitment) {
         ClaimV1.startClaimV1(builder);
         ClaimV1.addExecutionId(builder, executionIdOffset);

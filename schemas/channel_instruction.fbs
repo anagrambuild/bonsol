@@ -18,4 +18,6 @@ table ChannelInstruction{
   claim_v1: [ubyte] (nested_flatbuffer: "ClaimV1");
 }
 
+
+
 root_type ChannelInstruction;

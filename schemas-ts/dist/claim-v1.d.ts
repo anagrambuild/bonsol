@@ -13,5 +13,7 @@ export declare class ClaimV1 {
     static addExecutionId(builder: flatbuffers.Builder, executionIdOffset: flatbuffers.Offset): void;
     static addBlockCommitment(builder: flatbuffers.Builder, blockCommitment: bigint): void;
     static endClaimV1(builder: flatbuffers.Builder): flatbuffers.Offset;
+    static finishClaimV1Buffer(builder: flatbuffers.Builder, offset: flatbuffers.Offset): void;
+    static finishSizePrefixedClaimV1Buffer(builder: flatbuffers.Builder, offset: flatbuffers.Offset): void;
     static createClaimV1(builder: flatbuffers.Builder, executionIdOffset: flatbuffers.Offset, blockCommitment: bigint): flatbuffers.Offset;
 }

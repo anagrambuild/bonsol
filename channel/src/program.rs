@@ -2,7 +2,7 @@ use std::cell::RefMut;
 
 use crate::error::ChannelError;
 use crate::proof_handling::verify_risc0;
-use crate::{assertions::*, deployment_address_seeds, prover_stake_address_seeds};
+use crate::{assertions::*, deployment_address_seeds};
 use crate::{execution_address_seeds, execution_claim_address_seeds, img_id_hash};
 use anagram_bonsol_schema::{
     parse_ix_data, root_as_deploy_v1, root_as_execution_request_v1, root_as_input_set,
@@ -13,7 +13,7 @@ use bytemuck::{Pod, Zeroable};
 use solana_program::account_info::AccountInfo;
 use solana_program::entrypoint::ProgramResult;
 use solana_program::instruction::{AccountMeta, Instruction};
-use solana_program::program::invoke_signed;
+use solana_program::program::{invoke, invoke_signed};
 use solana_program::program_error::ProgramError;
 use solana_program::program_memory::{sol_memcmp, sol_memcpy, sol_memset};
 use solana_program::pubkey::Pubkey;
@@ -25,12 +25,12 @@ pub struct ClaimAccounts<'a, 'b> {
     pub exec: &'a AccountInfo<'a>,
     pub exec_claim: &'a AccountInfo<'a>,
     pub claimer: &'a AccountInfo<'a>,
-    pub claimer_stake: &'a AccountInfo<'a>,
     pub payer: &'a AccountInfo<'a>,
     pub system_program: &'a AccountInfo<'a>,
     pub execution_id: &'b str,
     pub block_commitment: u64,
-    pub existing_claim: bool
+    pub existing_claim: bool,
+    pub stake: u64,
 }
 
 #[repr(C)]
@@ -44,7 +44,6 @@ pub struct Claim {
 impl Claim {
     pub fn load_claim<'a>(ca_data: &'a mut [u8]) -> Result<&'a Self, ChannelError> {
         bytemuck::try_from_bytes::<Claim>(ca_data).map_err(|_| ChannelError::InvalidClaimAccount)
-        
     }
 
     pub fn from_claim_ix(claimer: &Pubkey, slot: u64, block_commitment: u64) -> Self {
@@ -71,26 +70,25 @@ impl<'a, 'b> ClaimAccounts<'a, 'b> {
                 exec: &accounts[0],
                 exec_claim: &accounts[1],
                 claimer: &accounts[2],
-                claimer_stake: &accounts[3],
-                payer: &accounts[4],
-                system_program: &accounts[5],
+                payer: &accounts[3],
+                system_program: &accounts[4],
                 execution_id: executionid,
                 block_commitment: data.block_commitment(),
                 existing_claim: false,
+                stake: 0,
             };
-            
             check_writable_signer(ca.payer, ChannelError::InvalidPayerAccount)?;
             check_writable_signer(ca.claimer, ChannelError::InvalidClaimerAccount)?;
             check_writeable(ca.exec_claim, ChannelError::InvalidClaimAccount)?;
-            check_writeable(ca.claimer_stake, ChannelError::InvalidStakeAccount)?;
-            check_pda(&prover_stake_address_seeds(ca.claimer.key), ca.claimer.key, ChannelError::InvalidStakeAccount)?;
             check_owner(ca.exec, &crate::ID, ChannelError::InvalidExecutionAccount)?;
             let exec_data = ca
                 .exec
                 .try_borrow_data()
-                .map_err(|_| ChannelError::InvalidExecutionAccount)?;
+                .map_err(|_| ChannelError::CannotBorrowData)?;
+            msg!("here");
             let execution_request = root_as_execution_request_v1(&*exec_data)
                 .map_err(|_| ChannelError::InvalidExecutionAccount)?;
+            msg!("here");
             let expected_eid = execution_request
                 .execution_id()
                 .ok_or(ChannelError::InvalidExecutionAccount)?;
@@ -100,7 +98,8 @@ impl<'a, 'b> ClaimAccounts<'a, 'b> {
             let tip = execution_request.tip();
             if ca.claimer.lamports() < tip {
                 return Err(ChannelError::InsufficientStake.into());
-            } 
+            }
+            ca.stake = tip / 2;
             let mut exec_claim_seeds = execution_claim_address_seeds(executionid.as_bytes());
             let bump = [check_pda(
                 &exec_claim_seeds,
@@ -316,28 +315,25 @@ impl<'a, 'b> ExecuteAccounts<'a, 'b> {
     }
 }
 
-struct StatusAccounts<'a> {
+struct StatusAccounts<'a, 'b> {
     pub requester: &'a AccountInfo<'a>,
     pub exec: &'a AccountInfo<'a>,
     pub prover: &'a AccountInfo<'a>,
     pub callback_program: &'a AccountInfo<'a>,
     pub extra_accounts: &'a [AccountInfo<'a>],
     pub exec_bump: Option<u8>,
-    pub er: ExecutionRequestV1<'a>,
-    pub eid: &'a str,
+    pub eid: &'b str,
 }
 
-impl<'a> StatusAccounts<'a> {
-    fn from_instruction<'b>(
+impl<'a, 'b> StatusAccounts<'a, 'b> {
+    fn from_instruction(
         accounts: &'a [AccountInfo<'a>],
-        _data: &'b StatusV1<'b>,
+        data: &'b StatusV1<'b>,
     ) -> Result<Self, ChannelError> {
-        let ea = accounts[1].clone(); // unfortunately we need to clone this
+        let ea = &accounts[1];
         let prover = &accounts[3];
         let callback_program = &accounts[2];
-        let eadata = ea.data.take();
-        let er = root_as_execution_request_v1(eadata).unwrap();
-        let eid = er
+        let eid = data
             .execution_id()
             .ok_or(ChannelError::InvalidExecutionAccount)?;
         let bmp = Some(check_pda(
@@ -345,27 +341,15 @@ impl<'a> StatusAccounts<'a> {
             ea.key,
             ChannelError::InvalidExecutionAccount,
         )?);
-        let cbp = er
-            .callback_program_id()
-            .map(|b| b.bytes())
-            .unwrap_or(crate::ID.as_ref());
-        check_bytes_match(
-            cbp,
-            callback_program.key.as_ref(),
-            ChannelError::InvalidCallbackProgram,
-        )?;
-
-        let stat: StatusAccounts<'_> = StatusAccounts {
+        let stat = StatusAccounts {
             requester: &accounts[0],
             exec: &accounts[1],
             callback_program,
             prover,
             extra_accounts: &accounts[4..],
             exec_bump: bmp,
-            er,
             eid: eid,
         };
-
         Ok(stat)
     }
 }
@@ -429,6 +413,21 @@ fn payout_tip(exec: &AccountInfo, prover: &AccountInfo, tip: u64) -> Result<(), 
     Ok(())
 }
 
+fn transfer_unowned<'a>(
+    from: &AccountInfo<'a>,
+    to: &AccountInfo<'a>,
+    lamports: u64,
+) -> Result<(), ProgramError> {
+    let ix = system_instruction::transfer(from.key, to.key, lamports);
+    invoke(&ix, &[from.clone(), to.clone()])
+}
+
+fn transfer_owned(from: &AccountInfo, to: &AccountInfo, lamports: u64) -> Result<(), ProgramError> {
+    **from.try_borrow_mut_lamports()? -= lamports;
+    **to.try_borrow_mut_lamports()? += lamports;
+    Ok(())
+}
+
 #[inline]
 pub fn program<'a>(
     _program_id: &Pubkey,
@@ -449,20 +448,24 @@ pub fn program<'a>(
             let cl = cl.unwrap();
             let ca = ClaimAccounts::from_instruction(accounts, &cl)?;
             let current_block = solana_program::clock::Clock::get()?.slot;
-            
+
             if ca.existing_claim {
                 let mut data = ca.exec_claim.try_borrow_mut_data()?;
                 let current_claim = Claim::load_claim(*data)?;
+                transfer_owned(ca.exec_claim, ca.claimer, ca.stake)?;
                 if current_block > current_claim.block_commitment {
                     let claim =
                         Claim::from_claim_ix(&ca.claimer.key, current_block, ca.block_commitment);
+                    drop(data);
                     Claim::save_claim(&claim, ca.exec_claim);
+                    transfer_unowned(ca.claimer, ca.exec_claim, ca.stake)?;
                 } else {
                     return Err(ChannelError::ActiveClaimExists.into());
                 }
             } else {
                 let claim =
                     Claim::from_claim_ix(&ca.claimer.key, current_block, ca.block_commitment);
+                transfer_unowned(ca.claimer, ca.exec_claim, ca.stake)?;
                 Claim::save_claim(&claim, ca.exec_claim);
             }
         }
@@ -504,6 +507,9 @@ pub fn program<'a>(
             }
             let st = st.unwrap();
             let sa = StatusAccounts::from_instruction(accounts, &st)?;
+            let er_ref = sa.exec.try_borrow_data()?;
+            let er = root_as_execution_request_v1(&*er_ref)
+                .map_err(|_| ChannelError::InvalidExecutionAccount)?;
             let pr = st.proof().filter(|x| x.len() == 256);
             let input = st.inputs().filter(|x| x.len() == 128);
             if st.status() == StatusTypes::Completed && pr.is_some() && input.is_some() {
@@ -521,8 +527,18 @@ pub fn program<'a>(
                 if verified {
                     let callback_program_set =
                         sol_memcmp(sa.callback_program.key.as_ref(), crate::ID.as_ref(), 32) != 0;
-                    let ix_prefix_set = sa.er.callback_instruction_prefix().is_some();
+                    let ix_prefix_set = er.callback_instruction_prefix().is_some();
                     if callback_program_set && ix_prefix_set {
+                        let cbp = er
+                            .callback_program_id()
+                            .map(|b| b.bytes())
+                            .unwrap_or(crate::ID.as_ref());
+                        check_bytes_match(
+                            cbp,
+                            sa.callback_program.key.as_ref(),
+                            ChannelError::InvalidCallbackProgram,
+                        )?;
+
                         let b = [sa.exec_bump.unwrap()];
                         let mut seeds =
                             execution_address_seeds(sa.requester.key, sa.eid.as_bytes());
@@ -545,7 +561,7 @@ pub fn program<'a>(
                             }
                         }
 
-                        let payload = sa.er.callback_instruction_prefix().unwrap().bytes();
+                        let payload = er.callback_instruction_prefix().unwrap().bytes();
                         let callback_ix = Instruction::new_with_bytes(
                             *sa.callback_program.key,
                             payload,
@@ -559,7 +575,8 @@ pub fn program<'a>(
                             }
                         }
                     }
-                    let tip = sa.er.tip();
+                    let tip = er.tip();
+                    drop(er_ref);
                     payout_tip(sa.exec, sa.prover, tip)?;
                     cleanup_execution_account(sa.exec, sa.requester, ExitCode::Success as u8)?;
                 } else {

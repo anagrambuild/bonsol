@@ -23,6 +23,7 @@ pub enum SignerConfig {
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct ProverNodeConfig {
+  pub env: Option<String>,
   #[serde(default = "default_bonsol_program")]
   pub bonsol_program: String,
   #[serde(default = "default_risc0_image_folder")]
@@ -115,6 +116,7 @@ fn default_signer_config() -> SignerConfig {
 impl Default for ProverNodeConfig {
   fn default() -> Self {
     ProverNodeConfig {
+      env: Some("dev".to_string()),
       bonsol_program: default_bonsol_program(),
       risc0_image_folder: default_risc0_image_folder(),
       max_image_size_mb: default_max_image_size_mb(),
@@ -134,6 +136,6 @@ impl Default for ProverNodeConfig {
 pub fn load_config(config_path: &str) -> ProverNodeConfig {
   let figment = Figment::new()
   .merge(Toml::file(config_path));
-  figment.extract().unwrap_or_default()
+  figment.extract().unwrap()
   
 }

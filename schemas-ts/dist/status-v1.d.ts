@@ -6,6 +6,8 @@ export declare class StatusV1 {
     __init(i: number, bb: flatbuffers.ByteBuffer): StatusV1;
     static getRootAsStatusV1(bb: flatbuffers.ByteBuffer, obj?: StatusV1): StatusV1;
     static getSizePrefixedRootAsStatusV1(bb: flatbuffers.ByteBuffer, obj?: StatusV1): StatusV1;
+    executionId(): string | null;
+    executionId(optionalEncoding: flatbuffers.Encoding): string | Uint8Array | null;
     status(): StatusTypes;
     mutate_status(value: StatusTypes): boolean;
     proof(index: number): number | null;
@@ -18,6 +20,7 @@ export declare class StatusV1 {
     inputDigestLength(): number;
     inputDigestArray(): Uint8Array | null;
     static startStatusV1(builder: flatbuffers.Builder): void;
+    static addExecutionId(builder: flatbuffers.Builder, executionIdOffset: flatbuffers.Offset): void;
     static addStatus(builder: flatbuffers.Builder, status: StatusTypes): void;
     static addProof(builder: flatbuffers.Builder, proofOffset: flatbuffers.Offset): void;
     static createProofVector(builder: flatbuffers.Builder, data: number[] | Uint8Array): flatbuffers.Offset;
@@ -31,5 +34,5 @@ export declare class StatusV1 {
     static endStatusV1(builder: flatbuffers.Builder): flatbuffers.Offset;
     static finishStatusV1Buffer(builder: flatbuffers.Builder, offset: flatbuffers.Offset): void;
     static finishSizePrefixedStatusV1Buffer(builder: flatbuffers.Builder, offset: flatbuffers.Offset): void;
-    static createStatusV1(builder: flatbuffers.Builder, status: StatusTypes, proofOffset: flatbuffers.Offset, inputsOffset: flatbuffers.Offset, inputDigestOffset: flatbuffers.Offset): flatbuffers.Offset;
+    static createStatusV1(builder: flatbuffers.Builder, executionIdOffset: flatbuffers.Offset, status: StatusTypes, proofOffset: flatbuffers.Offset, inputsOffset: flatbuffers.Offset, inputDigestOffset: flatbuffers.Offset): flatbuffers.Offset;
 }

@@ -123,3 +123,74 @@ impl core::fmt::Debug for ClaimV1<'_> {
       ds.finish()
   }
 }
+#[inline]
+/// Verifies that a buffer of bytes contains a `ClaimV1`
+/// and returns it.
+/// Note that verification is still experimental and may not
+/// catch every error, or be maximally performant. For the
+/// previous, unchecked, behavior use
+/// `root_as_claim_v1_unchecked`.
+pub fn root_as_claim_v1(buf: &[u8]) -> Result<ClaimV1, flatbuffers::InvalidFlatbuffer> {
+  flatbuffers::root::<ClaimV1>(buf)
+}
+#[inline]
+/// Verifies that a buffer of bytes contains a size prefixed
+/// `ClaimV1` and returns it.
+/// Note that verification is still experimental and may not
+/// catch every error, or be maximally performant. For the
+/// previous, unchecked, behavior use
+/// `size_prefixed_root_as_claim_v1_unchecked`.
+pub fn size_prefixed_root_as_claim_v1(buf: &[u8]) -> Result<ClaimV1, flatbuffers::InvalidFlatbuffer> {
+  flatbuffers::size_prefixed_root::<ClaimV1>(buf)
+}
+#[inline]
+/// Verifies, with the given options, that a buffer of bytes
+/// contains a `ClaimV1` and returns it.
+/// Note that verification is still experimental and may not
+/// catch every error, or be maximally performant. For the
+/// previous, unchecked, behavior use
+/// `root_as_claim_v1_unchecked`.
+pub fn root_as_claim_v1_with_opts<'b, 'o>(
+  opts: &'o flatbuffers::VerifierOptions,
+  buf: &'b [u8],
+) -> Result<ClaimV1<'b>, flatbuffers::InvalidFlatbuffer> {
+  flatbuffers::root_with_opts::<ClaimV1<'b>>(opts, buf)
+}
+#[inline]
+/// Verifies, with the given verifier options, that a buffer of
+/// bytes contains a size prefixed `ClaimV1` and returns
+/// it. Note that verification is still experimental and may not
+/// catch every error, or be maximally performant. For the
+/// previous, unchecked, behavior use
+/// `root_as_claim_v1_unchecked`.
+pub fn size_prefixed_root_as_claim_v1_with_opts<'b, 'o>(
+  opts: &'o flatbuffers::VerifierOptions,
+  buf: &'b [u8],
+) -> Result<ClaimV1<'b>, flatbuffers::InvalidFlatbuffer> {
+  flatbuffers::size_prefixed_root_with_opts::<ClaimV1<'b>>(opts, buf)
+}
+#[inline]
+/// Assumes, without verification, that a buffer of bytes contains a ClaimV1 and returns it.
+/// # Safety
+/// Callers must trust the given bytes do indeed contain a valid `ClaimV1`.
+pub unsafe fn root_as_claim_v1_unchecked(buf: &[u8]) -> ClaimV1 {
+  flatbuffers::root_unchecked::<ClaimV1>(buf)
+}
+#[inline]
+/// Assumes, without verification, that a buffer of bytes contains a size prefixed ClaimV1 and returns it.
+/// # Safety
+/// Callers must trust the given bytes do indeed contain a valid size prefixed `ClaimV1`.
+pub unsafe fn size_prefixed_root_as_claim_v1_unchecked(buf: &[u8]) -> ClaimV1 {
+  flatbuffers::size_prefixed_root_unchecked::<ClaimV1>(buf)
+}
+#[inline]
+pub fn finish_claim_v1_buffer<'a, 'b>(
+    fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>,
+    root: flatbuffers::WIPOffset<ClaimV1<'a>>) {
+  fbb.finish(root, None);
+}
+
+#[inline]
+pub fn finish_size_prefixed_claim_v1_buffer<'a, 'b>(fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>, root: flatbuffers::WIPOffset<ClaimV1<'a>>) {
+  fbb.finish_size_prefixed(root, None);
+}

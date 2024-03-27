@@ -7,6 +7,7 @@ enum StatusTypes: uint8 {
 }
 
 table StatusV1{
+  execution_id: string;
   status: StatusTypes;
   proof: [uint8];
   inputs: [uint8];

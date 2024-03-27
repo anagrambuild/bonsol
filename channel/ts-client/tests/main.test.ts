@@ -16,6 +16,7 @@ import { pipe } from '@solana/functional';
 import { createDefaultRpcSubscriptionsTransport } from '@solana/web3.js';
 import { InputType, ProgramInputType } from 'bonsol-schemas';
 import { Execute, Deploy, deploymentAddress } from '../src/';
+import { randomBytes } from '@noble/hashes/utils';
 
 describe('BonsolProgram', () => {
   const SIMPLE_IMAGE_ID = "1133b1185fa60cb4deb91ab7d9368f1539753c0541f544806656c5b00c294df7";
@@ -99,7 +100,8 @@ describe('BonsolProgram', () => {
       lamports: lamports(1000000000n),
       recipientAddress: pub
     })
-    const eid = "test-execution-id"
+    //random uuid 
+    const eid = randomBytes(5).toString();
     const input = JSON.stringify({ "attestation": "test" })
     const ht = await api.getBlockHeight().send()
     const result = await Execute(

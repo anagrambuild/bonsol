@@ -85,6 +85,7 @@ pub struct InflightProof {
     pub image_id: String,
     pub status: ClaimStatus,
     pub expiry: u64,
+    pub requester: Pubkey,
     pub program_callback: Option<ProgramExec>,
 }
 
@@ -251,7 +252,10 @@ impl Risc0Runner {
                             .await
                         }
 
-                        _ => Err(anyhow::anyhow!("Invalid instruction type")),
+                        _ => {
+                            eprintln!("Unknown instruction type");
+                            Ok(())
+                        }
                     };
                     if result.is_err() {
                         eprintln!("Error: {:?}", result);
@@ -279,18 +283,18 @@ async fn handle_claim<'a>(
     loaded_images: LoadedImageMapRef<'a>,
     input_staging_area: InputStagingAreaRef<'a>,
     claim: ClaimV1<'a>,
-    accounts: &[Pubkey],
+    accounts: &[Pubkey], // need to create cannonical parsing of accounts per instruction type for my flatbuffer model or use shank 
 ) -> Result<()> {
-    let claimer = accounts[0];
-    let requester = accounts[1];
-    let execution_id = accounts[2].to_string();
+    eprintln!("Received claim event");
+    let claimer = accounts[2];
+    let execution_id = claim.execution_id().ok_or(Risc0RunnerError::InvalidData)?;
     if &claimer != self_identity {
-        in_flight_proofs.remove(&execution_id);
+        in_flight_proofs.remove(execution_id);
         print!("Claimer is not self, we didnt win the claim.");
         return Ok(());
     }
 
-    let claim_status = in_flight_proofs.remove(&execution_id.to_string());
+    let claim_status = in_flight_proofs.remove(execution_id);
     if let Some((_, mut claim)) = claim_status {
         if let ClaimStatus::Claiming(sig) = claim.status {
             claim.status = ClaimStatus::Accepted;
@@ -301,7 +305,7 @@ async fn handle_claim<'a>(
                 let start = SystemTime::now();
                 let since_the_epoch = start.duration_since(UNIX_EPOCH)?.as_secs();
                 image.last_used = since_the_epoch;
-                let mut inputs = input_staging_area.get_mut(&execution_id).unwrap();
+                let mut inputs = input_staging_area.get_mut(execution_id).unwrap();
 
                 inputs.sort_by(|a, b| a.index().cmp(&b.index()));
 
@@ -323,7 +327,7 @@ async fn handle_claim<'a>(
                             if let ProgramInputType::Private = ui.input_type {
                                 let pir = PrivateInputRequest {
                                     identity: claimer,
-                                    claim_id: execution_id.clone(),
+                                    claim_id: execution_id.to_string(),
                                     input_index: ui.index,
                                 };
                                 let pir_str = serde_json::to_string(&pir)?;
@@ -346,18 +350,22 @@ async fn handle_claim<'a>(
                     while let Some(url) = url_set.join_next().await {
                         match url {
                             Ok(Ok(ri)) => {
-                                let mut isa = input_staging_area.get_mut(&execution_id).unwrap();
+                                let index = ri.index as usize;
+                                eprintln!("Resolved input: {}", index);
+                                inputs[index] = ProgramInput::Resolved(ri);
                             }
                             _ => {
-                                in_flight_proofs.remove(&execution_id);
-                                input_staging_area.remove(&execution_id);
+                                in_flight_proofs.remove(execution_id);
+                                input_staging_area.remove(execution_id);
                                 return Ok(());
                             }
                         }
                     }
                 }
+                drop(inputs);
                 // drain the inputs and own them here
-                let (eid, inputs) = input_staging_area.remove(&execution_id).unwrap();
+                eprintln!("Inputs resolved, generating proof");
+                let (eid, inputs) = input_staging_area.remove(execution_id).unwrap();
                 let mem_image = image.get_memory_image()?;
                 let result: Result<(Journal, CompressedReciept), Risc0RunnerError> =
                     tokio::task::spawn_blocking(move || {
@@ -372,18 +380,18 @@ async fn handle_claim<'a>(
                             })?;
                         Ok((journal, compressed_receipt))
                     })
-                    .await?; // double ? is weird, just sayin
+                    .await?;
 
                 if let Ok((journal, reciept)) = result {
                     let input_digest =
                         solana_sdk::bs58::encode(&journal.as_ref()[0..32]).into_string();
                     let sig = transaction_sender
-                        .submit_proof(
-                            accounts[0],
-                            accounts[1],
+                        .submit_proof(  
+                            &eid,
+                            claim.requester,
                             claim.program_callback,
-                            &reciept.inputs,
                             &reciept.proof,
+                            &reciept.inputs,
                             &input_digest,
                         )
                         .await
@@ -410,7 +418,7 @@ async fn handle_execution_request<'a>(
     accounts: &[Pubkey],
 ) -> Result<()> {
     // current naive implementation is to accept everything we have pending capacity for on this node, but this needs work
-    let inflight = in_flight_proofs.len();
+    let inflight =  in_flight_proofs.len();
     eprintln!(
         "Inflight: {} {}",
         inflight, config.capacity_config.max_inflight_proofs
@@ -507,35 +515,44 @@ async fn handle_execution_request<'a>(
             }
             // ADD SOME CRAZY AGRESSIVE RETRYING HERE
             let sig = transaction_sender
-                .claim(&eid, accounts[0], computable_by)
+                .claim(&eid, accounts[2], computable_by)
                 .await
-                .map_err(|e| Risc0RunnerError::TransactionError(e.to_string()))?;
-            let callback_program = exec
-                .callback_program_id()
-                .and_then::<[u8; 32], _>(|v| v.bytes().try_into().ok())
-                .map(|v| Pubkey::from(v));
-            let callback = if callback_program.is_some() {
-                Some(ProgramExec {
-                    program_id: callback_program.unwrap(),
-                    instruction_prefix: exec
-                        .callback_instruction_prefix()
-                        .map(|v| v.bytes().to_vec())
-                        .unwrap_or(vec![0x1]),
-                })
-            } else {
-                None
-            };
+                .map_err(|e| Risc0RunnerError::TransactionError(e.to_string()));
+            match sig {
+                Ok(sig) => {
+                    let callback_program = exec
+                        .callback_program_id()
+                        .and_then::<[u8; 32], _>(|v| v.bytes().try_into().ok())
+                        .map(|v| Pubkey::from(v));
+                    let callback = if callback_program.is_some() {
+                        Some(ProgramExec {
+                            program_id: callback_program.unwrap(),
+                            instruction_prefix: exec
+                                .callback_instruction_prefix()
+                                .map(|v| v.bytes().to_vec())
+                                .unwrap_or(vec![0x1]),
+                        })
+                    } else {
+                        None
+                    };
 
-            in_flight_proofs.insert(
-                eid.clone(),
-                InflightProof {
-                    execution_id: eid.clone(),
-                    image_id: eid.clone(),
-                    status: ClaimStatus::Claiming(sig),
-                    expiry: expiry,
-                    program_callback: callback,
-                },
-            );
+                    in_flight_proofs.insert(
+                        eid.clone(),
+                        InflightProof {
+                            execution_id: eid.clone(),
+                            image_id: image_id.clone(),
+                            status: ClaimStatus::Claiming(sig),
+                            expiry: expiry,
+                            requester: accounts[0],
+                            program_callback: callback,
+                        },
+                    );
+                }
+                Err(e) => {
+                    eprintln!("Error claiming: {:?}", e);
+                    in_flight_proofs.remove(&eid);
+                }
+            }
         }
     }
     Ok(())
@@ -649,7 +666,6 @@ fn risc0_docker_compress_proof(succint_receipt: SuccinctReceipt) -> Result<Compr
     let seal = stark_to_snark(&sealbytes)?;
     let claim = succint_receipt.claim;
     let digest = claim.digest();
-    let mut input: Vec<u8> = Vec::new();
     let root = hex::decode(ALLOWED_IDS_ROOT).unwrap();
     let rb: [u8; 32] = root.try_into().unwrap();
     let (i0, i1) = split_digest(digest)?;

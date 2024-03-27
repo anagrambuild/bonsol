@@ -2,6 +2,8 @@
 
 import * as flatbuffers from 'flatbuffers';
 
+
+
 export class ClaimV1 {
   bb: flatbuffers.ByteBuffer|null = null;
   bb_pos = 0;
@@ -58,6 +60,14 @@ static addBlockCommitment(builder:flatbuffers.Builder, blockCommitment:bigint) {
 static endClaimV1(builder:flatbuffers.Builder):flatbuffers.Offset {
   const offset = builder.endObject();
   return offset;
+}
+
+static finishClaimV1Buffer(builder:flatbuffers.Builder, offset:flatbuffers.Offset) {
+  builder.finish(offset);
+}
+
+static finishSizePrefixedClaimV1Buffer(builder:flatbuffers.Builder, offset:flatbuffers.Offset) {
+  builder.finish(offset, undefined, true);
 }
 
 static createClaimV1(builder:flatbuffers.Builder, executionIdOffset:flatbuffers.Offset, blockCommitment:bigint):flatbuffers.Offset {

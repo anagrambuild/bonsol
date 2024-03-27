@@ -122,10 +122,11 @@ impl<'a> flatbuffers::Follow<'a> for StatusV1<'a> {
 }
 
 impl<'a> StatusV1<'a> {
-  pub const VT_STATUS: flatbuffers::VOffsetT = 4;
-  pub const VT_PROOF: flatbuffers::VOffsetT = 6;
-  pub const VT_INPUTS: flatbuffers::VOffsetT = 8;
-  pub const VT_INPUT_DIGEST: flatbuffers::VOffsetT = 10;
+  pub const VT_EXECUTION_ID: flatbuffers::VOffsetT = 4;
+  pub const VT_STATUS: flatbuffers::VOffsetT = 6;
+  pub const VT_PROOF: flatbuffers::VOffsetT = 8;
+  pub const VT_INPUTS: flatbuffers::VOffsetT = 10;
+  pub const VT_INPUT_DIGEST: flatbuffers::VOffsetT = 12;
 
   #[inline]
   pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
@@ -140,11 +141,19 @@ impl<'a> StatusV1<'a> {
     if let Some(x) = args.input_digest { builder.add_input_digest(x); }
     if let Some(x) = args.inputs { builder.add_inputs(x); }
     if let Some(x) = args.proof { builder.add_proof(x); }
+    if let Some(x) = args.execution_id { builder.add_execution_id(x); }
     builder.add_status(args.status);
     builder.finish()
   }
 
 
+  #[inline]
+  pub fn execution_id(&self) -> Option<&'a str> {
+    // Safety:
+    // Created from valid Table for this object
+    // which contains a valid value in this slot
+    unsafe { self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(StatusV1::VT_EXECUTION_ID, None)}
+  }
   #[inline]
   pub fn status(&self) -> StatusTypes {
     // Safety:
@@ -182,6 +191,7 @@ impl flatbuffers::Verifiable for StatusV1<'_> {
   ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
     use self::flatbuffers::Verifiable;
     v.visit_table(pos)?
+     .visit_field::<flatbuffers::ForwardsUOffset<&str>>("execution_id", Self::VT_EXECUTION_ID, false)?
      .visit_field::<StatusTypes>("status", Self::VT_STATUS, false)?
      .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, u8>>>("proof", Self::VT_PROOF, false)?
      .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, u8>>>("inputs", Self::VT_INPUTS, false)?
@@ -191,6 +201,7 @@ impl flatbuffers::Verifiable for StatusV1<'_> {
   }
 }
 pub struct StatusV1Args<'a> {
+    pub execution_id: Option<flatbuffers::WIPOffset<&'a str>>,
     pub status: StatusTypes,
     pub proof: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a, u8>>>,
     pub inputs: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a, u8>>>,
@@ -200,6 +211,7 @@ impl<'a> Default for StatusV1Args<'a> {
   #[inline]
   fn default() -> Self {
     StatusV1Args {
+      execution_id: None,
       status: StatusTypes::Unknown,
       proof: None,
       inputs: None,
@@ -213,6 +225,10 @@ pub struct StatusV1Builder<'a: 'b, 'b> {
   start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
 }
 impl<'a: 'b, 'b> StatusV1Builder<'a, 'b> {
+  #[inline]
+  pub fn add_execution_id(&mut self, execution_id: flatbuffers::WIPOffset<&'b  str>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(StatusV1::VT_EXECUTION_ID, execution_id);
+  }
   #[inline]
   pub fn add_status(&mut self, status: StatusTypes) {
     self.fbb_.push_slot::<StatusTypes>(StatusV1::VT_STATUS, status, StatusTypes::Unknown);
@@ -247,6 +263,7 @@ impl<'a: 'b, 'b> StatusV1Builder<'a, 'b> {
 impl core::fmt::Debug for StatusV1<'_> {
   fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
     let mut ds = f.debug_struct("StatusV1");
+      ds.field("execution_id", &self.execution_id());
       ds.field("status", &self.status());
       ds.field("proof", &self.proof());
       ds.field("inputs", &self.inputs());
