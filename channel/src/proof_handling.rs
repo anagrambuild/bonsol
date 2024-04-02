@@ -65,6 +65,7 @@ const CONTROL_ID_1: U256 = u256!(0x15cf3a5f4097269e3a6d921c18625531);
 
 
 pub fn prepare_inputs(
+    image_id: &[u8],
     execution_digest: &[u8],
     output_digest: &[u8],
     system_exit_code: u32,
@@ -73,6 +74,7 @@ pub fn prepare_inputs(
     let digest = hashv(&[
         "risc0.ReceiptClaim".as_bytes(),
         hashv(&[0u32.to_le_bytes().as_ref()]).as_ref(),
+        image_id,
         execution_digest,
         output_digest,
         &system_exit_code.to_le_bytes(),

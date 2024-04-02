@@ -514,12 +514,12 @@ pub fn program<'a>(
             let execution_digest = st.execution_digest();
             let output_digest = st.output_digest();
             if let (Some(proof), Some(exed), Some(outd)) = (pr, execution_digest, output_digest) {
-                let proof: &[u8; 256] = pr
-                    .unwrap()
+                let proof: &[u8; 256] = proof
                     .bytes()
                     .try_into()
                     .map_err(|_| ChannelError::InvalidInstruction)?;
                 let inputs = prepare_inputs(
+                    er.image_id().unwrap().as_bytes(),
                     exed.bytes(),
                     outd.bytes(),
                     st.exit_code_system(),
