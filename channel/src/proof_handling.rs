@@ -1,8 +1,11 @@
 use crate::error::ChannelError;
 use crate::verifying_keys::RISC0_VERIFYINGKEY;
 use ark_serialize::{CanonicalDeserialize, CanonicalSerialize, Compress, Validate};
+use u256_literal::u256;
 use groth16_solana::groth16::Groth16Verifier;
+use primitive_types::U256;
 use std::ops::Neg;
+use solana_program::keccak::hashv;
 
 type G1 = ark_bn254::g1::G1Affine;
 
@@ -55,4 +58,45 @@ pub fn verify_risc0(proof: &[u8], inputs: &[u8]) -> Result<bool, ChannelError> {
     verifier
         .verify()
         .map_err(|_| ChannelError::ProofVerificationFailed)
+}
+
+const CONTROL_ID_0: U256 = u256!(0x39ff805954f4eb2868d338764408f76d);
+const CONTROL_ID_1: U256 = u256!(0x15cf3a5f4097269e3a6d921c18625531);
+
+
+pub fn prepare_inputs(
+    execution_digest: &[u8],
+    output_digest: &[u8],
+    system_exit_code: u32,
+    user_exit_code: u32,
+) -> Result<Vec<u8>, ChannelError> {
+    let digest = hashv(&[
+        "risc0.ReceiptClaim".as_bytes(),
+        hashv(&[0u32.to_le_bytes().as_ref()]).as_ref(),
+        execution_digest,
+        output_digest,
+        &system_exit_code.to_le_bytes(),
+        &user_exit_code.to_le_bytes(),
+        &4u16.to_le_bytes(),
+    ]);
+    let mut digest_bytes = digest.0;
+    digest_bytes.reverse();
+    let (half1, half2) = digest_bytes.split_at(16);
+    let mut control_id0_bytes = Vec::with_capacity(32);
+    let mut control_id1_bytes = Vec::with_capacity(32);
+    let half1 = U256::from_big_endian(&half1);
+    let half2 = U256::from_big_endian(&half2);
+    let mut half1_bytes = Vec::with_capacity(32);
+    half1.to_big_endian(&mut half1_bytes);
+    let mut half2_bytes = Vec::with_capacity(32);
+    half2.to_big_endian(&mut half2_bytes);
+    CONTROL_ID_0.to_big_endian(&mut control_id0_bytes); // todo const this as bytes
+    CONTROL_ID_1.to_big_endian(&mut control_id1_bytes); // todo const this as bytes
+    let inputs = [
+        control_id0_bytes,
+        control_id1_bytes,
+        half1_bytes,
+        half2_bytes,
+    ].concat();
+    Ok(inputs)
 }

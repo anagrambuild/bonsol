@@ -66,7 +66,6 @@ async fn main() -> Result<()> {
         }
         _ => return Err(CliError::InvalidRpcUrl.into()),
     };
-
     //may take time to load images, depending on the number of images TODO put limit
     let mut runner =Risc0Runner::new(
         config.clone(),
@@ -83,17 +82,14 @@ async fn main() -> Result<()> {
             }
         }
     });
-
     select! {
         _ = handle => {
-            
             eprintln!("Runner exited");
         },
         _ = signal::ctrl_c() => {
             
         },
     }
-    
     eprintln!("Exited");
     Ok(())
 }

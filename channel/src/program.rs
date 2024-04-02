@@ -1,7 +1,7 @@
 use std::cell::RefMut;
 
 use crate::error::ChannelError;
-use crate::proof_handling::verify_risc0;
+use crate::proof_handling::{prepare_inputs, verify_risc0};
 use crate::{assertions::*, deployment_address_seeds};
 use crate::{execution_address_seeds, execution_claim_address_seeds, img_id_hash};
 use anagram_bonsol_schema::{
@@ -511,19 +511,21 @@ pub fn program<'a>(
             let er = root_as_execution_request_v1(&*er_ref)
                 .map_err(|_| ChannelError::InvalidExecutionAccount)?;
             let pr = st.proof().filter(|x| x.len() == 256);
-            let input = st.inputs().filter(|x| x.len() == 128);
-            if st.status() == StatusTypes::Completed && pr.is_some() && input.is_some() {
+            let execution_digest = st.execution_digest();
+            let output_digest = st.output_digest();
+            if let (Some(proof), Some(exed), Some(outd)) = (pr, execution_digest, output_digest) {
                 let proof: &[u8; 256] = pr
                     .unwrap()
                     .bytes()
                     .try_into()
                     .map_err(|_| ChannelError::InvalidInstruction)?;
-                let inputs: &[u8; 128] = input
-                    .unwrap()
-                    .bytes()
-                    .try_into()
-                    .map_err(|_| ChannelError::InvalidInstruction)?;
-                let verified = verify_risc0(proof, inputs)?;
+                let inputs = prepare_inputs(
+                    exed.bytes(),
+                    outd.bytes(),
+                    st.exit_code_system(),
+                    st.exit_code_user(),
+                )?;
+                let verified = verify_risc0(proof, &inputs)?;
                 if verified {
                     let callback_program_set =
                         sol_memcmp(sa.callback_program.key.as_ref(), crate::ID.as_ref(), 32) != 0;
@@ -560,11 +562,18 @@ pub fn program<'a>(
                                 accounts.push(AccountMeta::new_readonly(*a.key, a.is_signer));
                             }
                         }
-
-                        let payload = er.callback_instruction_prefix().unwrap().bytes();
+                        let payload = if er.forward_output() && st.committed_outputs().is_some() {
+                            [
+                                er.callback_instruction_prefix().unwrap().bytes(),
+                                st.committed_outputs().unwrap().bytes(),
+                            ]
+                            .concat()
+                        } else {
+                            er.callback_instruction_prefix().unwrap().bytes().to_vec()
+                        };
                         let callback_ix = Instruction::new_with_bytes(
                             *sa.callback_program.key,
-                            payload,
+                            &payload,
                             accounts,
                         );
                         let res = invoke_signed(&callback_ix, &ainfos, &[&seeds]);

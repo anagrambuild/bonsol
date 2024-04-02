@@ -120,8 +120,12 @@ impl TransactionSender {
         requester_account: Pubkey,
         callback_exec: Option<ProgramExec>,
         proof: &[u8],
-        inputs: &[u8],
-        input_digest: &str,
+        execution_digest: &[u8],
+        input_digest: &[u8],
+        output_digest: &[u8],
+        committed_outputs: Option<&[u8]>,
+        exit_code_system: u32,
+        exit_code_user: u32,
     ) -> Result<Signature> {
         let (execution_request_data_account, _) = execution_address(&requester_account, &execution_id.as_bytes());
         let (id, additional_accounts) = match callback_exec {
@@ -142,18 +146,27 @@ impl TransactionSender {
         accounts.extend(additional_accounts);
         let mut fbb = FlatBufferBuilder::new();
         let proof_vec = fbb.create_vector(proof);
-        let inputs_vec = fbb.create_vector(inputs);
-        let digest = fbb.create_vector(input_digest.as_bytes());
+        let execution_digest = fbb.create_vector(execution_digest);
+        let input_digest = fbb.create_vector(input_digest);
+        let output_digest = fbb.create_vector(output_digest);
         let eid = fbb.create_string(execution_id);
+        let out = match committed_outputs {
+            None => None,
+            Some(o) => Some(fbb.create_vector(o))
+        };
         let stat = StatusV1::create(
             &mut fbb,
             &StatusV1Args {
-                execution_id: Some(eid),
-                status: StatusTypes::Completed,
-                proof: Some(proof_vec),
-                inputs: Some(inputs_vec),
-                input_digest: Some(digest),
-            },
+                execution_id: Some(eid), //0-?? bytes lets say 16
+                status: StatusTypes::Completed, //1 byte
+                proof: Some(proof_vec), //256 bytes
+                execution_digest: Some(execution_digest), //32 bytes
+                input_digest: Some(input_digest), //32 bytes
+                output_digest: Some(output_digest), //32 bytes
+                committed_outputs: out, //0-?? bytes lets say 32
+                exit_code_system, //4 byte
+                exit_code_user, //4 byte
+            }, //total ~408 bytes plenty of room for more stuff
         );
         fbb.finish(stat, None);
         let statbytes = fbb.finished_data();

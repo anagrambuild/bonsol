@@ -12,7 +12,7 @@ use figment::error;
 use futures_util::SinkExt;
 use reqwest::{RequestBuilder, Url};
 use risc0_binfmt::MemoryImage;
-use risc0_zkvm::{Journal, SuccinctReceipt};
+use risc0_zkvm::{ExitCode, Journal, SuccinctReceipt};
 use serde::{Deserialize, Serialize};
 use solana_rpc_client_api::request;
 use solana_sdk::pubkey::Pubkey;
@@ -86,6 +86,7 @@ pub struct InflightProof {
     pub status: ClaimStatus,
     pub expiry: u64,
     pub requester: Pubkey,
+    pub forward_output: bool,
     pub program_callback: Option<ProgramExec>,
 }
 
@@ -283,7 +284,7 @@ async fn handle_claim<'a>(
     loaded_images: LoadedImageMapRef<'a>,
     input_staging_area: InputStagingAreaRef<'a>,
     claim: ClaimV1<'a>,
-    accounts: &[Pubkey], // need to create cannonical parsing of accounts per instruction type for my flatbuffer model or use shank 
+    accounts: &[Pubkey], // need to create cannonical parsing of accounts per instruction type for my flatbuffer model or use shank
 ) -> Result<()> {
     eprintln!("Received claim event");
     let claimer = accounts[2];
@@ -383,16 +384,25 @@ async fn handle_claim<'a>(
                     .await?;
 
                 if let Ok((journal, reciept)) = result {
-                    let input_digest =
-                        solana_sdk::bs58::encode(&journal.as_ref()[0..32]).into_string();
+                    let (input_digest, committed_outputs) = journal.bytes.split_at(32);
+
+                    let out = if claim.forward_output {
+                        Some(committed_outputs)
+                    } else {
+                        None
+                    };
                     let sig = transaction_sender
-                        .submit_proof(  
+                        .submit_proof(
                             &eid,
                             claim.requester,
                             claim.program_callback,
                             &reciept.proof,
-                            &reciept.inputs,
+                            &reciept.execution_digest,
                             &input_digest,
+                            &journal.digest().as_bytes(),
+                            out,
+                            reciept.exit_code_system,
+                            reciept.exit_code_user,
                         )
                         .await
                         .map_err(|e| Risc0RunnerError::TransactionError(e.to_string()))?;
@@ -418,7 +428,7 @@ async fn handle_execution_request<'a>(
     accounts: &[Pubkey],
 ) -> Result<()> {
     // current naive implementation is to accept everything we have pending capacity for on this node, but this needs work
-    let inflight =  in_flight_proofs.len();
+    let inflight = in_flight_proofs.len();
     eprintln!(
         "Inflight: {} {}",
         inflight, config.capacity_config.max_inflight_proofs
@@ -446,7 +456,6 @@ async fn handle_execution_request<'a>(
         if computable_by < expiry {
             //the way this is done can cause race conditions where so many request come in a short time that we accept
             // them before we change the value of g so we optimistically change to inflight and we will decrement if we dont win the claim
-
             let inputs = exec.input().ok_or(Risc0RunnerError::InvalidData)?;
             let mut url_set = JoinSet::new();
             //TODO handle input sets
@@ -545,6 +554,7 @@ async fn handle_execution_request<'a>(
                             expiry: expiry,
                             requester: accounts[0],
                             program_callback: callback,
+                            forward_output: exec.forward_output(),
                         },
                     );
                 }
@@ -655,7 +665,9 @@ fn risc0_prove(
     Ok((receipt.journal, ident_receipt))
 }
 pub struct CompressedReciept {
-    pub inputs: Vec<u8>,
+    pub execution_digest: Vec<u8>,
+    pub exit_code_system: u32,
+    pub exit_code_user: u32,
     pub proof: Vec<u8>,
 }
 /// Compresses the proof to be sent to the blockchain
@@ -665,30 +677,43 @@ fn risc0_docker_compress_proof(succint_receipt: SuccinctReceipt) -> Result<Compr
     // to be replaced with non docker thing
     let seal = stark_to_snark(&sealbytes)?;
     let claim = succint_receipt.claim;
-    let digest = claim.digest();
-    let root = hex::decode(ALLOWED_IDS_ROOT).unwrap();
-    let rb: [u8; 32] = root.try_into().unwrap();
-    let (i0, i1) = split_digest(digest)?;
-    let (c0, c1) = split_digest(Digest::from(rb))?;
-    let mut i0v = Vec::with_capacity(32);
-    i0.serialize_uncompressed(&mut i0v).unwrap();
-    let mut i1v = Vec::with_capacity(32);
-    i1.serialize_uncompressed(&mut i1v).unwrap();
-    let mut c0v: Vec<_> = Vec::with_capacity(32);
-    c0.serialize_uncompressed(&mut c0v).unwrap();
-    let mut c1v = Vec::with_capacity(32);
-    c1.serialize_uncompressed(&mut c1v).unwrap();
-    let mut input_vec = Vec::with_capacity(128);
-    c0v.reverse();
-    c1v.reverse();
-    i0v.reverse();
-    i1v.reverse();
-    input_vec.extend_from_slice(&c0v);
-    input_vec.extend_from_slice(&c1v);
-    input_vec.extend_from_slice(&i0v);
-    input_vec.extend_from_slice(&i1v);
+    let digest = claim.post.digest();
+    let mut claim_bytes = Vec::new();
+    claim
+        .encode(&mut claim_bytes)
+        .map_err(|e| Risc0RunnerError::ProofCompressionError)?;
+    // let root = hex::decode(ALLOWED_IDS_ROOT).unwrap();
+    // let rb: [u8; 32] = root.try_into().unwrap();
+    // let (i0, i1) = split_digest(digest)?;
+    // let (c0, c1) = split_digest(Digest::from(rb))?;
+    // let mut i0v = Vec::with_capacity(32);
+    // i0.serialize_uncompressed(&mut i0v).unwrap();
+    // let mut i1v = Vec::with_capacity(32);
+    // i1.serialize_uncompressed(&mut i1v).unwrap();
+    // let mut c0v: Vec<_> = Vec::with_capacity(32);
+    // c0.serialize_uncompressed(&mut c0v).unwrap();
+    // let mut c1v = Vec::with_capacity(32);
+    // c1.serialize_uncompressed(&mut c1v).unwrap();
+    // let mut input_vec = Vec::with_capacity(128);
+    // c0v.reverse();
+    // c1v.reverse();
+    // i0v.reverse();
+    // i1v.reverse();
+    // input_vec.extend_from_slice(&c0v);
+    // input_vec.extend_from_slice(&c1v);
+    // input_vec.extend_from_slice(&i0v);
+    // input_vec.extend_from_slice(&i1v);
+    
+    let (system, user) = match claim.exit_code {
+        ExitCode::Halted(user_exit) => (0, user_exit), // can panic if user_exit is not in range 0 to 255
+        ExitCode::Paused(user_exit) => (1, user_exit),
+        ExitCode::SystemSplit => (2, 0),
+        ExitCode::SessionLimit => (2, 2),
+    };
     Ok(CompressedReciept {
-        inputs: input_vec,
+        execution_digest: digest.as_bytes().to_vec(),
+        exit_code_system: system,
+        exit_code_user: user,
         proof: seal.to_vec(),
     })
 }
