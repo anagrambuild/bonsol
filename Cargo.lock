@@ -145,6 +145,7 @@ dependencies = [
  "bytemuck",
  "flatbuffers",
  "groth16-solana",
+ "hex",
  "primitive-types",
  "solana-program",
  "solana-program-test",

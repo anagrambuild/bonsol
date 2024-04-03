@@ -678,14 +678,12 @@ fn risc0_docker_compress_proof(succint_receipt: SuccinctReceipt) -> Result<Compr
     let seal = stark_to_snark(&sealbytes)?;
     let claim = succint_receipt.claim;
     let digest = claim.post.digest();
-    let mut claim_bytes = Vec::new();
-    claim
-        .encode(&mut claim_bytes)
-        .map_err(|e| Risc0RunnerError::ProofCompressionError)?;
+    eprint!("Claim: {:?}", claim.digest());
+    eprint!("pre: {:?}",claim.pre.digest());
     // let root = hex::decode(ALLOWED_IDS_ROOT).unwrap();
     // let rb: [u8; 32] = root.try_into().unwrap();
     // let (i0, i1) = split_digest(digest)?;
-    // let (c0, c1) = split_digest(Digest::from(rb))?;
+   // let (c0, c1) = split_digest(Digest::from(rb))?;
     // let mut i0v = Vec::with_capacity(32);
     // i0.serialize_uncompressed(&mut i0v).unwrap();
     // let mut i1v = Vec::with_capacity(32);

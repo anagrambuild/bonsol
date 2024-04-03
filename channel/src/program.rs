@@ -525,6 +525,7 @@ pub fn program<'a>(
                     st.exit_code_system(),
                     st.exit_code_user(),
                 )?;
+                msg!("here lasy");
                 let verified = verify_risc0(proof, &inputs)?;
                 if verified {
                     let callback_program_set =

@@ -1,9 +1,10 @@
 use crate::error::ChannelError;
 use crate::verifying_keys::RISC0_VERIFYINGKEY;
 use ark_serialize::{CanonicalDeserialize, CanonicalSerialize, Compress, Validate};
+use solana_program::msg;
 use u256_literal::u256;
 use groth16_solana::groth16::Groth16Verifier;
-use primitive_types::U256;
+use primitive_types::{U128, U256};
 use std::ops::Neg;
 use solana_program::keccak::hashv;
 
@@ -73,27 +74,34 @@ pub fn prepare_inputs(
 ) -> Result<Vec<u8>, ChannelError> {
     let digest = hashv(&[
         "risc0.ReceiptClaim".as_bytes(),
-        hashv(&[0u32.to_le_bytes().as_ref()]).as_ref(),
-        image_id,
+        &[0u8;32],
+        hashv(&[image_id]).as_ref(),
         execution_digest,
         output_digest,
         &system_exit_code.to_le_bytes(),
         &user_exit_code.to_le_bytes(),
         &4u16.to_le_bytes(),
     ]);
+    msg!("digest: {:?}", hex::encode(digest.0));
     let mut digest_bytes = digest.0;
     digest_bytes.reverse();
     let (half1, half2) = digest_bytes.split_at(16);
-    let mut control_id0_bytes = Vec::with_capacity(32);
-    let mut control_id1_bytes = Vec::with_capacity(32);
-    let half1 = U256::from_big_endian(&half1);
-    let half2 = U256::from_big_endian(&half2);
-    let mut half1_bytes = Vec::with_capacity(32);
+    let mut control_id0_bytes = [0u8; 32];
+    let mut control_id1_bytes = [0u8; 32];
+    let half1 = U128::from_big_endian(half1.try_into().unwrap());
+    let half2 = U128::from_big_endian(half2.try_into().unwrap());
+    let half1 = U256::from(half1);
+    let half2 = U256::from(half2);
+    let mut half1_bytes = [0u8; 32];
     half1.to_big_endian(&mut half1_bytes);
-    let mut half2_bytes = Vec::with_capacity(32);
+    let mut half2_bytes = [0u8; 32];
     half2.to_big_endian(&mut half2_bytes);
     CONTROL_ID_0.to_big_endian(&mut control_id0_bytes); // todo const this as bytes
     CONTROL_ID_1.to_big_endian(&mut control_id1_bytes); // todo const this as bytes
+    half1_bytes.reverse();
+    half2_bytes.reverse();
+    control_id0_bytes.reverse();
+    control_id1_bytes.reverse();
     let inputs = [
         control_id0_bytes,
         control_id1_bytes,
