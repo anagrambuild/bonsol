@@ -5,10 +5,6 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[features]
-proof-compression-docker = []
-proof-compression-wasm = []
-
 [dependencies]
 figment = {version = "0.10.14", features = ["toml"]}
 fnv = "1.0.7"
@@ -21,7 +17,7 @@ reqwest = { version = "0.11.26", features = [
   "stream",
   "native-tls-vendored",
 ] }
-anagram-bonsol-channel = { path = "../channel" , features = ["no-entrypoint"]}
+# anagram-bonsol-channel-utils = { path = "../onchain/channel-utils"}
 tokio-util = { version = "0.7.10", features = ["codec"] }
 flatbuffers = { workspace = true }
 wasmer = { version = "=4.2.6", features = ["compiler"] }
@@ -36,7 +32,6 @@ futures-util = { version = "0.3.30" }
 thiserror = { workspace = true }
 anyhow = { version = "1.0.79" }
 bonsai-sdk = { version = "0.6.1" }
-ark-circom = { path = "../../circom-compat", features = ["default"] }
 ark-bn254 = { version = "=0.4.0" }
 ark-relations = { version = "=0.4.0" }
 ark-std = { version = "=0.4.0" }
@@ -58,3 +53,7 @@ bincode = "=2.0.0-rc.3"
 
 [lints]
 workspace = true
+
+
+[build-dependencies]
+witness = { path = "../../circom-witness-rs", features = ["build-witness"]}
