@@ -9,9 +9,7 @@ use {
     anyhow::Result,
     config::*,
     risc0::Risc0Runner,
-    solana_sdk::{
-        pubkey::Pubkey, signature::{read_keypair_file, Keypair}, signer::Signer, transaction::Transaction
-    },
+    solana_sdk::{pubkey::Pubkey, signature::read_keypair_file, signer::Signer},
     std::{str::FromStr, sync::Arc},
     thiserror::Error,
     tokio::{select, signal},
@@ -67,12 +65,13 @@ async fn main() -> Result<()> {
         _ => return Err(CliError::InvalidRpcUrl.into()),
     };
     //may take time to load images, depending on the number of images TODO put limit
-    let mut runner =Risc0Runner::new(
+    let mut runner = Risc0Runner::new(
         config.clone(),
         signer_identity,
-        config.risc0_image_folder, 
-        Arc::new(transaction_sender)
-    ).await?;
+        config.risc0_image_folder,
+        Arc::new(transaction_sender),
+    )
+    .await?;
     let runner_chan = runner.start()?;
     let mut ingester_chan = ingester.start(program)?;
     let handle = tokio::spawn(async move {
@@ -87,7 +86,7 @@ async fn main() -> Result<()> {
             eprintln!("Runner exited");
         },
         _ = signal::ctrl_c() => {
-            
+
         },
     }
     eprintln!("Exited");

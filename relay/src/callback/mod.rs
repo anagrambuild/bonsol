@@ -1,13 +1,13 @@
-use std::{f64::consts::E, str::FromStr, sync::Arc};
-
-use anagram_bonsol_channel::{execution_address, execution_claim_address};
-use anagram_bonsol_schema::{
-    ChannelInstruction, ChannelInstructionArgs, ChannelInstructionIxType, ClaimV1, ClaimV1Args,
-    StatusTypes, StatusV1, StatusV1Args,
+use {
+    anagram_bonsol_channel::{execution_address, execution_claim_address},
+    anagram_bonsol_schema::{
+        ChannelInstruction, ChannelInstructionArgs, ChannelInstructionIxType, ClaimV1, ClaimV1Args,
+        StatusTypes, StatusV1, StatusV1Args,
+    },
+    flatbuffers::FlatBufferBuilder,
+    solana_rpc_client_api::config::RpcSendTransactionConfig,
+    solana_sdk::{commitment_config::CommitmentConfig, signature::Signature, system_program},
 };
-use flatbuffers::FlatBufferBuilder;
-use solana_rpc_client_api::{config::RpcSendTransactionConfig, request};
-use solana_sdk::{address_lookup_table::instruction, commitment_config::CommitmentConfig, signature::Signature, system_instruction::transfer, system_program};
 
 use {
     anyhow::Result,
@@ -18,13 +18,6 @@ use {
         signature::Keypair,
         signer::Signer,
         transaction::Transaction,
-    },
-    tokio::{
-        sync::{
-            mpsc::{unbounded_channel, UnboundedSender},
-            Semaphore,
-        },
-        task::JoinHandle,
     },
 };
 
@@ -104,11 +97,12 @@ impl TransactionSender {
         );
 
         self.rpc_client
-            .send_transaction_with_config(&tx,
-                RpcSendTransactionConfig{
+            .send_transaction_with_config(
+                &tx,
+                RpcSendTransactionConfig {
                     skip_preflight: true,
                     ..Default::default()
-                }
+                },
             )
             .await
             .map_err(|e| anyhow::anyhow!("Failed to send transaction: {:?}", e))
@@ -127,7 +121,8 @@ impl TransactionSender {
         exit_code_system: u32,
         exit_code_user: u32,
     ) -> Result<Signature> {
-        let (execution_request_data_account, _) = execution_address(&requester_account, &execution_id.as_bytes());
+        let (execution_request_data_account, _) =
+            execution_address(&requester_account, &execution_id.as_bytes());
         let (id, additional_accounts) = match callback_exec {
             None => (self.bonsol_program, vec![]),
             Some(pe) => {
@@ -152,20 +147,20 @@ impl TransactionSender {
         let eid = fbb.create_string(execution_id);
         let out = match committed_outputs {
             None => None,
-            Some(o) => Some(fbb.create_vector(o))
+            Some(o) => Some(fbb.create_vector(o)),
         };
         let stat = StatusV1::create(
             &mut fbb,
             &StatusV1Args {
-                execution_id: Some(eid), //0-?? bytes lets say 16
-                status: StatusTypes::Completed, //1 byte
-                proof: Some(proof_vec), //256 bytes
+                execution_id: Some(eid),                  //0-?? bytes lets say 16
+                status: StatusTypes::Completed,           //1 byte
+                proof: Some(proof_vec),                   //256 bytes
                 execution_digest: Some(execution_digest), //32 bytes
-                input_digest: Some(input_digest), //32 bytes
-                output_digest: Some(output_digest), //32 bytes
-                committed_outputs: out, //0-?? bytes lets say 32
-                exit_code_system, //4 byte
-                exit_code_user, //4 byte
+                input_digest: Some(input_digest),         //32 bytes
+                output_digest: Some(output_digest),       //32 bytes
+                committed_outputs: out,                   //0-?? bytes lets say 32
+                exit_code_system,                         //4 byte
+                exit_code_user,                           //4 byte
             }, //total ~408 bytes plenty of room for more stuff
         );
         fbb.finish(stat, None);
@@ -198,12 +193,13 @@ impl TransactionSender {
         );
 
         self.rpc_client
-            .send_and_confirm_transaction_with_spinner_and_config(&tx,
+            .send_and_confirm_transaction_with_spinner_and_config(
+                &tx,
                 CommitmentConfig::confirmed(),
-                RpcSendTransactionConfig{
+                RpcSendTransactionConfig {
                     skip_preflight: true,
                     ..Default::default()
-                }
+                },
             )
             .await
             .map_err(|e| anyhow::anyhow!("Failed to send transaction: {:?}", e))

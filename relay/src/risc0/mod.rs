@@ -1,58 +1,48 @@
 mod image;
 
-use crate::callback::TransactionSender;
-use crate::{config::ProverNodeConfig, util::get_body_max_size};
+use crate::{callback::TransactionSender, config::ProverNodeConfig, util::get_body_max_size};
 
 use self::image::Image;
 
-use anagram_bonsol_schema::{ClaimV1, DeployV1, ExecutionRequestV1, InputType, ProgramInputType};
-use ark_bn254::Bn254;
-use dashmap::DashMap;
-use figment::error;
-use futures_util::SinkExt;
-use reqwest::{RequestBuilder, Url};
-use risc0_binfmt::MemoryImage;
-use risc0_zkvm::{ExitCode, Journal, SuccinctReceipt};
-use serde::{Deserialize, Serialize};
-use solana_rpc_client_api::request;
-use solana_sdk::pubkey::Pubkey;
-use solana_sdk::signature::Signature;
-use std::fs;
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
-use std::{collections::HashMap, str::from_utf8, sync::Arc};
-use std::{convert::TryInto, f64::consts::E};
-use tokio::sync::Mutex;
+use {
+    anagram_bonsol_schema::{ClaimV1, DeployV1, ExecutionRequestV1, InputType, ProgramInputType},
+    ark_bn254::Bn254,
+    dashmap::DashMap,
+};
+
+use {
+    futures_util::SinkExt,
+    reqwest::Url,
+    risc0_binfmt::MemoryImage,
+    risc0_zkvm::{ExitCode, Journal, SuccinctReceipt},
+    serde::{Deserialize, Serialize},
+};
+
+use {
+    solana_sdk::{pubkey::Pubkey, signature::Signature},
+    std::{
+        convert::TryInto,
+        fs,
+        str::from_utf8,
+        sync::Arc,
+        time::{Duration, SystemTime, UNIX_EPOCH},
+    },
+};
+
 use tokio::task::JoinSet;
-use tokio::time::{self, Instant};
-use tokio_util::codec::{BytesCodec, FramedRead};
-use wasmer::wasmparser::{Frame, Payload};
-use wasmer::Memory;
-use wasmer_wasix::journal;
 
 use {
     crate::types::{BonsolInstruction, ProgramExec},
-    ark_groth16::Groth16,
-    ark_serialize::CanonicalSerialize,
-    risc0_zkvm::{
-        compute_image_id, get_prover_server,
-        recursion::identity_p254,
-        sha::{Digest, Digestible},
-        ExecutorEnv, ExecutorImpl, ProverOpts, VerifierContext, ALLOWED_IDS_ROOT,
-    },
-    tokio::{sync::mpsc::UnboundedSender, task::JoinHandle},
-};
-use {
-    anagram_bonsol_schema::{
-        parse_ix_data, ChannelInstruction, ChannelInstructionArgs, ChannelInstructionIxType,
-        StatusTypes, StatusV1, StatusV1Args,
-    },
+    anagram_bonsol_schema::{parse_ix_data, ChannelInstructionIxType},
     anyhow::Result,
-    flatbuffers::FlatBufferBuilder,
-};
-use {
-    risc0_groth16::{docker::stark_to_snark, split_digest},
-    risc0_zkvm::CompactReceipt,
+    ark_groth16::Groth16,
+    risc0_groth16::docker::stark_to_snark,
+    risc0_zkvm::{
+        get_prover_server, recursion::identity_p254, sha::Digestible, ExecutorEnv, ExecutorImpl,
+        ProverOpts, VerifierContext,
+    },
     thiserror::Error,
+    tokio::{sync::mpsc::UnboundedSender, task::JoinHandle},
 };
 type GrothBn = Groth16<Bn254>;
 
@@ -297,7 +287,7 @@ async fn handle_claim<'a>(
 
     let claim_status = in_flight_proofs.remove(execution_id);
     if let Some((_, mut claim)) = claim_status {
-        if let ClaimStatus::Claiming(sig) = claim.status {
+        if let ClaimStatus::Claiming(_sig) = claim.status {
             claim.status = ClaimStatus::Accepted;
             if let Some(mut image) = loaded_images.get_mut(&claim.image_id) {
                 // load image if we shucked it off to disk
@@ -423,7 +413,7 @@ async fn handle_execution_request<'a>(
     transaction_sender: &TransactionSender,
     loaded_images: LoadedImageMapRef<'a>,
     input_staging_area: InputStagingAreaRef<'a>,
-    execution_block: u64,
+    _execution_block: u64,
     exec: ExecutionRequestV1<'a>,
     accounts: &[Pubkey],
 ) -> Result<()> {
@@ -679,11 +669,11 @@ fn risc0_docker_compress_proof(succint_receipt: SuccinctReceipt) -> Result<Compr
     let claim = succint_receipt.claim;
     let digest = claim.post.digest();
     eprint!("Claim: {:?}", claim.digest());
-    eprint!("pre: {:?}",claim.pre.digest());
+    eprint!("pre: {:?}", claim.pre.digest());
     // let root = hex::decode(ALLOWED_IDS_ROOT).unwrap();
     // let rb: [u8; 32] = root.try_into().unwrap();
     // let (i0, i1) = split_digest(digest)?;
-   // let (c0, c1) = split_digest(Digest::from(rb))?;
+    // let (c0, c1) = split_digest(Digest::from(rb))?;
     // let mut i0v = Vec::with_capacity(32);
     // i0.serialize_uncompressed(&mut i0v).unwrap();
     // let mut i1v = Vec::with_capacity(32);
@@ -701,7 +691,7 @@ fn risc0_docker_compress_proof(succint_receipt: SuccinctReceipt) -> Result<Compr
     // input_vec.extend_from_slice(&c1v);
     // input_vec.extend_from_slice(&i0v);
     // input_vec.extend_from_slice(&i1v);
-    
+
     let (system, user) = match claim.exit_code {
         ExitCode::Halted(user_exit) => (0, user_exit), // can panic if user_exit is not in range 0 to 255
         ExitCode::Paused(user_exit) => (1, user_exit),

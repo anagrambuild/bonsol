@@ -12,6 +12,7 @@ no-entrypoint = []
 test-sbf = []
 
 [dependencies]
+hex-literal = "0.4.1"
 hex = "0.4.2"
 ark-bn254 = "0.4.0"
 ark-serialize = "0.4.0"

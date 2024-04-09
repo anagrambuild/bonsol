@@ -1,11 +1,12 @@
 use std::path::PathBuf;
 
-use anyhow::Result;
-use bytes::Bytes;
-use risc0_zkvm::{GUEST_MAX_MEM, PAGE_SIZE};
-use risc0_binfmt::{MemoryImage, Program};
-use tokio::fs::read;
-
+use {
+    anyhow::Result,
+    bytes::Bytes,
+    risc0_binfmt::{MemoryImage, Program},
+    risc0_zkvm::{GUEST_MAX_MEM, PAGE_SIZE},
+    tokio::fs::read,
+};
 
 pub struct Image {
     pub id: String,
@@ -16,7 +17,6 @@ pub struct Image {
 }
 
 impl Image {
-
     fn load_elf(elf: &[u8]) -> Result<Program> {
         let program = Program::load_elf(elf, GUEST_MAX_MEM as u32)?;
         Ok(program)
@@ -43,7 +43,7 @@ impl Image {
         let data = read(&path).await?;
         let program = Image::load_elf(&data)?;
         let img = Image::mem_img(&program)?;
-       
+
         Ok(Image {
             id: img.compute_id().map(|d| d.to_string())?,
             data: Some(program),
@@ -68,7 +68,10 @@ impl Image {
     }
 
     pub fn get_memory_image(&self) -> Result<MemoryImage> {
-        let program = self.data.as_ref().ok_or_else(|| anyhow::anyhow!("No data"))?;
+        let program = self
+            .data
+            .as_ref()
+            .ok_or_else(|| anyhow::anyhow!("No data"))?;
         let image = Image::mem_img(program)?;
         Ok(image)
     }

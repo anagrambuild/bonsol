@@ -7,6 +7,4 @@ else
     solana-keygen new --outfile $RKP
 fi
 solana -u http://localhost:8899 airdrop 1 --keypair relaykp.json
-(cd relay;
-cargo run --release -- -f ./Node.toml
-)
+docker build -t relay . && docker run -it --rm -v $(pwd):/app relay

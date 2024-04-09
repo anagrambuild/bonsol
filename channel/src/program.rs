@@ -1,13 +1,12 @@
-use std::cell::RefMut;
-
+use crate::assertions::*;
 use crate::error::ChannelError;
 use crate::proof_handling::{prepare_inputs, verify_risc0};
-use crate::{assertions::*, deployment_address_seeds};
-use crate::{execution_address_seeds, execution_claim_address_seeds, img_id_hash};
+use crate::{
+    deployment_address_seeds, execution_address_seeds, execution_claim_address_seeds, img_id_hash,
+};
 use anagram_bonsol_schema::{
     parse_ix_data, root_as_deploy_v1, root_as_execution_request_v1, root_as_input_set,
-    ChannelInstructionIxType, ClaimV1, DeployV1, ExecutionRequestV1, ExitCode, InputType,
-    StatusTypes, StatusV1,
+    ChannelInstructionIxType, ClaimV1, DeployV1, ExecutionRequestV1, ExitCode, InputType, StatusV1,
 };
 use bytemuck::{Pod, Zeroable};
 use solana_program::account_info::AccountInfo;

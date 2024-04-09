@@ -1,4 +1,3 @@
-use anagram_bonsol_schema::error;
 use solana_program::program_error::ProgramError;
 use thiserror::Error;
 

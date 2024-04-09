@@ -1,12 +1,14 @@
 use crate::error::ChannelError;
 use crate::verifying_keys::RISC0_VERIFYINGKEY;
 use ark_serialize::{CanonicalDeserialize, CanonicalSerialize, Compress, Validate};
-use solana_program::msg;
-use u256_literal::u256;
 use groth16_solana::groth16::Groth16Verifier;
 use primitive_types::{U128, U256};
-use std::ops::Neg;
 use solana_program::keccak::hashv;
+use solana_program::msg;
+use std::ops::Neg;
+use u256_literal::u256;
+use hex_literal::hex;
+
 
 type G1 = ark_bn254::g1::G1Affine;
 
@@ -61,9 +63,11 @@ pub fn verify_risc0(proof: &[u8], inputs: &[u8]) -> Result<bool, ChannelError> {
         .map_err(|_| ChannelError::ProofVerificationFailed)
 }
 
-const CONTROL_ID_0: U256 = u256!(0x39ff805954f4eb2868d338764408f76d);
-const CONTROL_ID_1: U256 = u256!(0x15cf3a5f4097269e3a6d921c18625531);
 
+
+const CONTROL_ID_0_BYTES: [u8;16] = hex!("51a3d73938c3681118ba0a2549f7c188");
+const CONTROL_ID_1_BYTES: [u8;16] = hex!("44f39e6e6cef91de6d743e7f5b7a1e67");
+const BN254_CONTROL_ID_BYTES: [u8;32] = hex!("10ff834dbef62ccbba201ecd26a772e3036a075aacbaf47200679a11dcdcf10d");
 
 pub fn prepare_inputs(
     image_id: &[u8],
@@ -72,16 +76,19 @@ pub fn prepare_inputs(
     system_exit_code: u32,
     user_exit_code: u32,
 ) -> Result<Vec<u8>, ChannelError> {
+    
+    let predigest = hashv(&[image_id]);
     let digest = hashv(&[
         "risc0.ReceiptClaim".as_bytes(),
-        &[0u8;32],
-        hashv(&[image_id]).as_ref(),
+        &[0u8; 32],
+        predigest.as_ref(),
         execution_digest,
         output_digest,
         &system_exit_code.to_le_bytes(),
         &user_exit_code.to_le_bytes(),
         &4u16.to_le_bytes(),
     ]);
+    msg!("predigest: {:?}", hex::encode(predigest.as_ref()));
     msg!("digest: {:?}", hex::encode(digest.0));
     let mut digest_bytes = digest.0;
     digest_bytes.reverse();
@@ -96,8 +103,8 @@ pub fn prepare_inputs(
     half1.to_big_endian(&mut half1_bytes);
     let mut half2_bytes = [0u8; 32];
     half2.to_big_endian(&mut half2_bytes);
-    CONTROL_ID_0.to_big_endian(&mut control_id0_bytes); // todo const this as bytes
-    CONTROL_ID_1.to_big_endian(&mut control_id1_bytes); // todo const this as bytes
+    control_id0_bytes[16..32].copy_from_slice(&CONTROL_ID_0_BYTES);
+    control_id1_bytes[16..32].copy_from_slice(&CONTROL_ID_1_BYTES);
     half1_bytes.reverse();
     half2_bytes.reverse();
     control_id0_bytes.reverse();
@@ -107,6 +114,8 @@ pub fn prepare_inputs(
         control_id1_bytes,
         half1_bytes,
         half2_bytes,
-    ].concat();
+        BN254_CONTROL_ID_BYTES,
+    ]
+    .concat();
     Ok(inputs)
 }
