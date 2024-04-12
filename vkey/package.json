@@ -1,0 +1,14 @@
+{
+  "name": "vkey-to-rust",
+  "version": "1.0.0",
+  "description": "",
+  "main": "parse_pvk_to_bytes_254.js",
+  "scripts": {
+    "parse-vk": "node parse_vk_to_rust.js",
+    "format": "prettier --write \"*.{ts,js}\""
+  },
+  "author": "",
+  "dependencies": {
+    "ffjavascript": "^0.2.48"
+  }
+}

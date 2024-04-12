@@ -6,12 +6,10 @@ pub mod types;
 pub mod util;
 use {
     crate::{callback::TransactionSender, ingest::Ingester},
-    anyhow::Result,
+    anyhow::{Ok, Result},
     config::*,
     risc0::Risc0Runner,
-    solana_sdk::{
-        pubkey::Pubkey, signature::{read_keypair_file, Keypair}, signer::Signer, transaction::Transaction
-    },
+    solana_sdk::{pubkey::Pubkey, signature::read_keypair_file, signer::Signer},
     std::{str::FromStr, sync::Arc},
     thiserror::Error,
     tokio::{select, signal},
@@ -35,6 +33,7 @@ pub enum CliError {
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    
     let args: Vec<String> = std::env::args().collect();
     if args.len() < 3 || args[1] != "-f" {
         eprintln!("Usage: relay -f <config_file>");
@@ -66,14 +65,14 @@ async fn main() -> Result<()> {
         }
         _ => return Err(CliError::InvalidRpcUrl.into()),
     };
-
     //may take time to load images, depending on the number of images TODO put limit
-    let mut runner =Risc0Runner::new(
+    let mut runner = Risc0Runner::new(
         config.clone(),
         signer_identity,
-        config.risc0_image_folder, 
-        Arc::new(transaction_sender)
-    ).await?;
+        config.risc0_image_folder,
+        Arc::new(transaction_sender),
+    )
+    .await?;
     let runner_chan = runner.start()?;
     let mut ingester_chan = ingester.start(program)?;
     let handle = tokio::spawn(async move {
@@ -83,17 +82,14 @@ async fn main() -> Result<()> {
             }
         }
     });
-
     select! {
         _ = handle => {
-            
             eprintln!("Runner exited");
         },
         _ = signal::ctrl_c() => {
-            
+
         },
     }
-    
     eprintln!("Exited");
     Ok(())
 }

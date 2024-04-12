@@ -10,7 +10,7 @@ proof-compression-docker = []
 proof-compression-wasm = []
 
 [dependencies]
-figment = {version = "0.10.14", features = ["toml"]}
+figment = { version = "0.10.14", features = ["toml"] }
 fnv = "1.0.7"
 num = "=0.4.1"
 dashmap = "5.5.3"
@@ -21,11 +21,9 @@ reqwest = { version = "0.11.26", features = [
   "stream",
   "native-tls-vendored",
 ] }
-anagram-bonsol-channel = { path = "../channel" , features = ["no-entrypoint"]}
+anagram-bonsol-channel-utils = { path = "../onchain/channel-utils" }
 tokio-util = { version = "0.7.10", features = ["codec"] }
 flatbuffers = { workspace = true }
-wasmer = { version = "=4.2.6", features = ["compiler"] }
-wasmer-wasix = { version = "0.18.1" }
 tokio = { version = "1.36.0", features = ["full"] }
 solana-sdk = { workspace = true }
 solana-rpc-client = { workspace = true }
@@ -35,24 +33,34 @@ solana-transaction-status = { workspace = true }
 futures-util = { version = "0.3.30" }
 thiserror = { workspace = true }
 anyhow = { version = "1.0.79" }
-bonsai-sdk = { version = "0.6.1" }
-ark-circom = { path = "../../circom-compat", features = ["default"] }
-ark-bn254 = { version = "=0.4.0" }
-ark-relations = { version = "=0.4.0" }
-ark-std = { version = "=0.4.0" }
-ark-crypto-primitives = { version = "=0.4.0" }
-ark-groth16 = { version = "=0.4.0" }
+ark-ff = { version = "0.4.2" }
+ark-bn254 = { version = "0.4.0" }
+ark-relations = { version = "0.4.0" }
+ark-std = { version = "0.4.0" }
+ark-crypto-primitives = { version = "0.4.0" }
+ark-groth16 = { version = "0.4.0" }
 rand = { version = "0.8.4" }
-risc0-zkvm = { version = "0.21.0", features = ["prove"] }
+risc0-zkvm = { workspace = true, features = ["prove"] }
 ark-serialize = "0.4.0"
-risc0-groth16 = { version = "0.21.0", features = ["prove"]}
-risc0-binfmt = { version = "0.21.0" }
+risc0-core = { workspace = true }
+risc0-zkp = { workspace = true }
+risc0-circuit-recursion = { workspace = true}
+risc0-groth16 = { workspace = true, features = ["prove"] }
+risc0-binfmt = { workspace = true }
+iop = { path = "../iop"}
 anagram-bonsol-schema = { path = "../schemas-rust" }
 serde = { version = "1.0.197" }
 serde_json = { version = "1.0.114" }
 hex = "0.4.3"
-redb = "1.5.0"
-bincode = "=2.0.0-rc.3"
+bytemuck = "1.15.0"
+tempfile = "3.10.1"
+num-bigint = "0.4.4"
+num-traits = "0.2.18"
+byteorder = "1.5.0"
+hex-literal = "0.4.1"
+ark-ec = { version = "0.4.2" }
+memmap = "0.7.0"
+
 [dev-dependencies]
 
 

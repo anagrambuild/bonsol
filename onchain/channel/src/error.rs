@@ -1,4 +1,3 @@
-use anagram_bonsol_schema::error;
 use solana_program::program_error::ProgramError;
 use thiserror::Error;
 
@@ -52,6 +51,10 @@ pub enum ChannelError {
     InvalidStakeAccount,
     #[error("Insufficient Stake")]
     InsufficientStake,
+    #[error("Inputs dont match")]
+    InputsDontMatch,
+    #[error("Invalid Field Element")]
+    InvalidFieldElement,
 }
 
 impl From<ChannelError> for ProgramError {
