@@ -8,5 +8,6 @@ else
 fi
 solana -u http://localhost:8899 airdrop 1 --keypair relaykp.json
 (cd relay;
+ulimit -s unlimited
 cargo run --release -- -f ./Node.toml
 )

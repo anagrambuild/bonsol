@@ -19,7 +19,7 @@ import { Execute, Deploy, deploymentAddress } from '../src/';
 import { randomBytes } from '@noble/hashes/utils';
 
 describe('BonsolProgram', () => {
-  const SIMPLE_IMAGE_ID = "1133b1185fa60cb4deb91ab7d9368f1539753c0541f544806656c5b00c294df7";
+  const SIMPLE_IMAGE_ID = "111fd1d8f623c845a1d5ac7a6625159b6a0e935561de3e2bab94d9b8abfbdccc";
 
   const tsp = createDefaultRpcTransport({ url: Cluster.Development.apiUrl })
   const ssp = createDefaultRpcSubscriptionsTransport({

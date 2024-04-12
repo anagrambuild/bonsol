@@ -61,17 +61,17 @@ proofArray():Uint8Array|null {
   return offset ? new Uint8Array(this.bb!.bytes().buffer, this.bb!.bytes().byteOffset + this.bb!.__vector(this.bb_pos + offset), this.bb!.__vector_len(this.bb_pos + offset)) : null;
 }
 
-inputs(index: number):number|null {
+executionDigest(index: number):number|null {
   const offset = this.bb!.__offset(this.bb_pos, 10);
   return offset ? this.bb!.readUint8(this.bb!.__vector(this.bb_pos + offset) + index) : 0;
 }
 
-inputsLength():number {
+executionDigestLength():number {
   const offset = this.bb!.__offset(this.bb_pos, 10);
   return offset ? this.bb!.__vector_len(this.bb_pos + offset) : 0;
 }
 
-inputsArray():Uint8Array|null {
+executionDigestArray():Uint8Array|null {
   const offset = this.bb!.__offset(this.bb_pos, 10);
   return offset ? new Uint8Array(this.bb!.bytes().buffer, this.bb!.bytes().byteOffset + this.bb!.__vector(this.bb_pos + offset), this.bb!.__vector_len(this.bb_pos + offset)) : null;
 }
@@ -91,8 +91,70 @@ inputDigestArray():Uint8Array|null {
   return offset ? new Uint8Array(this.bb!.bytes().buffer, this.bb!.bytes().byteOffset + this.bb!.__vector(this.bb_pos + offset), this.bb!.__vector_len(this.bb_pos + offset)) : null;
 }
 
+committedOutputs(index: number):number|null {
+  const offset = this.bb!.__offset(this.bb_pos, 14);
+  return offset ? this.bb!.readUint8(this.bb!.__vector(this.bb_pos + offset) + index) : 0;
+}
+
+committedOutputsLength():number {
+  const offset = this.bb!.__offset(this.bb_pos, 14);
+  return offset ? this.bb!.__vector_len(this.bb_pos + offset) : 0;
+}
+
+committedOutputsArray():Uint8Array|null {
+  const offset = this.bb!.__offset(this.bb_pos, 14);
+  return offset ? new Uint8Array(this.bb!.bytes().buffer, this.bb!.bytes().byteOffset + this.bb!.__vector(this.bb_pos + offset), this.bb!.__vector_len(this.bb_pos + offset)) : null;
+}
+
+assumptionDigest(index: number):number|null {
+  const offset = this.bb!.__offset(this.bb_pos, 16);
+  return offset ? this.bb!.readUint8(this.bb!.__vector(this.bb_pos + offset) + index) : 0;
+}
+
+assumptionDigestLength():number {
+  const offset = this.bb!.__offset(this.bb_pos, 16);
+  return offset ? this.bb!.__vector_len(this.bb_pos + offset) : 0;
+}
+
+assumptionDigestArray():Uint8Array|null {
+  const offset = this.bb!.__offset(this.bb_pos, 16);
+  return offset ? new Uint8Array(this.bb!.bytes().buffer, this.bb!.bytes().byteOffset + this.bb!.__vector(this.bb_pos + offset), this.bb!.__vector_len(this.bb_pos + offset)) : null;
+}
+
+exitCodeSystem():number {
+  const offset = this.bb!.__offset(this.bb_pos, 18);
+  return offset ? this.bb!.readUint32(this.bb_pos + offset) : 0;
+}
+
+mutate_exit_code_system(value:number):boolean {
+  const offset = this.bb!.__offset(this.bb_pos, 18);
+
+  if (offset === 0) {
+    return false;
+  }
+
+  this.bb!.writeUint32(this.bb_pos + offset, value);
+  return true;
+}
+
+exitCodeUser():number {
+  const offset = this.bb!.__offset(this.bb_pos, 20);
+  return offset ? this.bb!.readUint32(this.bb_pos + offset) : 0;
+}
+
+mutate_exit_code_user(value:number):boolean {
+  const offset = this.bb!.__offset(this.bb_pos, 20);
+
+  if (offset === 0) {
+    return false;
+  }
+
+  this.bb!.writeUint32(this.bb_pos + offset, value);
+  return true;
+}
+
 static startStatusV1(builder:flatbuffers.Builder) {
-  builder.startObject(5);
+  builder.startObject(9);
 }
 
 static addExecutionId(builder:flatbuffers.Builder, executionIdOffset:flatbuffers.Offset) {
@@ -119,11 +181,11 @@ static startProofVector(builder:flatbuffers.Builder, numElems:number) {
   builder.startVector(1, numElems, 1);
 }
 
-static addInputs(builder:flatbuffers.Builder, inputsOffset:flatbuffers.Offset) {
-  builder.addFieldOffset(3, inputsOffset, 0);
+static addExecutionDigest(builder:flatbuffers.Builder, executionDigestOffset:flatbuffers.Offset) {
+  builder.addFieldOffset(3, executionDigestOffset, 0);
 }
 
-static createInputsVector(builder:flatbuffers.Builder, data:number[]|Uint8Array):flatbuffers.Offset {
+static createExecutionDigestVector(builder:flatbuffers.Builder, data:number[]|Uint8Array):flatbuffers.Offset {
   builder.startVector(1, data.length, 1);
   for (let i = data.length - 1; i >= 0; i--) {
     builder.addInt8(data[i]!);
@@ -131,7 +193,7 @@ static createInputsVector(builder:flatbuffers.Builder, data:number[]|Uint8Array)
   return builder.endVector();
 }
 
-static startInputsVector(builder:flatbuffers.Builder, numElems:number) {
+static startExecutionDigestVector(builder:flatbuffers.Builder, numElems:number) {
   builder.startVector(1, numElems, 1);
 }
 
@@ -151,6 +213,46 @@ static startInputDigestVector(builder:flatbuffers.Builder, numElems:number) {
   builder.startVector(1, numElems, 1);
 }
 
+static addCommittedOutputs(builder:flatbuffers.Builder, committedOutputsOffset:flatbuffers.Offset) {
+  builder.addFieldOffset(5, committedOutputsOffset, 0);
+}
+
+static createCommittedOutputsVector(builder:flatbuffers.Builder, data:number[]|Uint8Array):flatbuffers.Offset {
+  builder.startVector(1, data.length, 1);
+  for (let i = data.length - 1; i >= 0; i--) {
+    builder.addInt8(data[i]!);
+  }
+  return builder.endVector();
+}
+
+static startCommittedOutputsVector(builder:flatbuffers.Builder, numElems:number) {
+  builder.startVector(1, numElems, 1);
+}
+
+static addAssumptionDigest(builder:flatbuffers.Builder, assumptionDigestOffset:flatbuffers.Offset) {
+  builder.addFieldOffset(6, assumptionDigestOffset, 0);
+}
+
+static createAssumptionDigestVector(builder:flatbuffers.Builder, data:number[]|Uint8Array):flatbuffers.Offset {
+  builder.startVector(1, data.length, 1);
+  for (let i = data.length - 1; i >= 0; i--) {
+    builder.addInt8(data[i]!);
+  }
+  return builder.endVector();
+}
+
+static startAssumptionDigestVector(builder:flatbuffers.Builder, numElems:number) {
+  builder.startVector(1, numElems, 1);
+}
+
+static addExitCodeSystem(builder:flatbuffers.Builder, exitCodeSystem:number) {
+  builder.addFieldInt32(7, exitCodeSystem, 0);
+}
+
+static addExitCodeUser(builder:flatbuffers.Builder, exitCodeUser:number) {
+  builder.addFieldInt32(8, exitCodeUser, 0);
+}
+
 static endStatusV1(builder:flatbuffers.Builder):flatbuffers.Offset {
   const offset = builder.endObject();
   return offset;
@@ -164,13 +266,17 @@ static finishSizePrefixedStatusV1Buffer(builder:flatbuffers.Builder, offset:flat
   builder.finish(offset, undefined, true);
 }
 
-static createStatusV1(builder:flatbuffers.Builder, executionIdOffset:flatbuffers.Offset, status:StatusTypes, proofOffset:flatbuffers.Offset, inputsOffset:flatbuffers.Offset, inputDigestOffset:flatbuffers.Offset):flatbuffers.Offset {
+static createStatusV1(builder:flatbuffers.Builder, executionIdOffset:flatbuffers.Offset, status:StatusTypes, proofOffset:flatbuffers.Offset, executionDigestOffset:flatbuffers.Offset, inputDigestOffset:flatbuffers.Offset, committedOutputsOffset:flatbuffers.Offset, assumptionDigestOffset:flatbuffers.Offset, exitCodeSystem:number, exitCodeUser:number):flatbuffers.Offset {
   StatusV1.startStatusV1(builder);
   StatusV1.addExecutionId(builder, executionIdOffset);
   StatusV1.addStatus(builder, status);
   StatusV1.addProof(builder, proofOffset);
-  StatusV1.addInputs(builder, inputsOffset);
+  StatusV1.addExecutionDigest(builder, executionDigestOffset);
   StatusV1.addInputDigest(builder, inputDigestOffset);
+  StatusV1.addCommittedOutputs(builder, committedOutputsOffset);
+  StatusV1.addAssumptionDigest(builder, assumptionDigestOffset);
+  StatusV1.addExitCodeSystem(builder, exitCodeSystem);
+  StatusV1.addExitCodeUser(builder, exitCodeUser);
   return StatusV1.endStatusV1(builder);
 }
 }

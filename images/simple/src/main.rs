@@ -25,7 +25,6 @@ fn main() {
             privatei2.as_bytes(),
         ].concat(),
     );
-    //Type argument here is optional but hepls enforce the type of the output
     env::commit_slice(digest.as_bytes());
     env::commit_slice(&[res as u8]);
 }

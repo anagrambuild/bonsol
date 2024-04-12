@@ -1,4 +1,1 @@
-/target
-stark_verify.*
-stark_verify_final.*  
-*.wasmu
+stark/*

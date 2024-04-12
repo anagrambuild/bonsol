@@ -8,3 +8,7 @@ edition = "2021"
 [dependencies]
 gjson = "0.8"
 risc0-zkvm = {version = "0.21.0", default-features = false, features = ["std"]}
+
+[dependencies.sha2]
+git = "https://github.com/risc0/RustCrypto-hashes"
+tag = "sha2-v0.10.6-risczero.0"

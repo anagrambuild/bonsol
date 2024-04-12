@@ -1,0 +1,16 @@
+[package]
+name = "anagram-bonsol-channel-utils"
+version = "0.0.1"
+description = "Bonsol Channel Utils"
+authors = ["anagram build team"]
+repository = "https://github.com/anagrambuild/bonsol"
+license = "MIT"
+edition = "2021"
+
+[dependencies]
+solana-program = { workspace = true, optional = true}
+solana-sdk = { workspace = true, optional = true }
+
+[features]
+on-chain = ["solana-program"]
+default = ["solana-sdk"]

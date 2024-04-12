@@ -124,12 +124,10 @@ async fn ingest(
     program: Pubkey,
     txchan: UnboundedSender<Vec<BonsolInstruction>>,
 ) -> IngesterResult {
-    let c = PubsubClient::new(&rpc_url)
-        .await
-        .map_err(|e| IngestError {
-            code: IngestErrorType::RpcError,
-            message: e.to_string(),
-        })?;
+    let c = PubsubClient::new(&rpc_url).await.map_err(|e| IngestError {
+        code: IngestErrorType::RpcError,
+        message: e.to_string(),
+    })?;
 
     let (mut stream, _unsub) = c
         .block_subscribe(
@@ -172,11 +170,7 @@ impl Ingester for RpcIngester {
         self.op_handle = Some(tokio::spawn(async move {
             let mut retry = 10;
             loop {
-                let res = ingest(
-                    rpc_url.clone(), 
-                    program, 
-                    txchan.clone(),
-                ).await;
+                let res = ingest(rpc_url.clone(), program, txchan.clone()).await;
                 if let Err(e) = res {
                     eprintln!("Error in ingester: {:?} retrying ", e);
                     tokio::time::sleep(tokio::time::Duration::from_secs(5)).await;
