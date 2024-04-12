@@ -19,12 +19,12 @@ export declare class StatusV1 {
     inputDigest(index: number): number | null;
     inputDigestLength(): number;
     inputDigestArray(): Uint8Array | null;
-    outputDigest(index: number): number | null;
-    outputDigestLength(): number;
-    outputDigestArray(): Uint8Array | null;
     committedOutputs(index: number): number | null;
     committedOutputsLength(): number;
     committedOutputsArray(): Uint8Array | null;
+    assumptionDigest(index: number): number | null;
+    assumptionDigestLength(): number;
+    assumptionDigestArray(): Uint8Array | null;
     exitCodeSystem(): number;
     mutate_exit_code_system(value: number): boolean;
     exitCodeUser(): number;
@@ -41,16 +41,16 @@ export declare class StatusV1 {
     static addInputDigest(builder: flatbuffers.Builder, inputDigestOffset: flatbuffers.Offset): void;
     static createInputDigestVector(builder: flatbuffers.Builder, data: number[] | Uint8Array): flatbuffers.Offset;
     static startInputDigestVector(builder: flatbuffers.Builder, numElems: number): void;
-    static addOutputDigest(builder: flatbuffers.Builder, outputDigestOffset: flatbuffers.Offset): void;
-    static createOutputDigestVector(builder: flatbuffers.Builder, data: number[] | Uint8Array): flatbuffers.Offset;
-    static startOutputDigestVector(builder: flatbuffers.Builder, numElems: number): void;
     static addCommittedOutputs(builder: flatbuffers.Builder, committedOutputsOffset: flatbuffers.Offset): void;
     static createCommittedOutputsVector(builder: flatbuffers.Builder, data: number[] | Uint8Array): flatbuffers.Offset;
     static startCommittedOutputsVector(builder: flatbuffers.Builder, numElems: number): void;
+    static addAssumptionDigest(builder: flatbuffers.Builder, assumptionDigestOffset: flatbuffers.Offset): void;
+    static createAssumptionDigestVector(builder: flatbuffers.Builder, data: number[] | Uint8Array): flatbuffers.Offset;
+    static startAssumptionDigestVector(builder: flatbuffers.Builder, numElems: number): void;
     static addExitCodeSystem(builder: flatbuffers.Builder, exitCodeSystem: number): void;
     static addExitCodeUser(builder: flatbuffers.Builder, exitCodeUser: number): void;
     static endStatusV1(builder: flatbuffers.Builder): flatbuffers.Offset;
     static finishStatusV1Buffer(builder: flatbuffers.Builder, offset: flatbuffers.Offset): void;
     static finishSizePrefixedStatusV1Buffer(builder: flatbuffers.Builder, offset: flatbuffers.Offset): void;
-    static createStatusV1(builder: flatbuffers.Builder, executionIdOffset: flatbuffers.Offset, status: StatusTypes, proofOffset: flatbuffers.Offset, executionDigestOffset: flatbuffers.Offset, inputDigestOffset: flatbuffers.Offset, outputDigestOffset: flatbuffers.Offset, committedOutputsOffset: flatbuffers.Offset, exitCodeSystem: number, exitCodeUser: number): flatbuffers.Offset;
+    static createStatusV1(builder: flatbuffers.Builder, executionIdOffset: flatbuffers.Offset, status: StatusTypes, proofOffset: flatbuffers.Offset, executionDigestOffset: flatbuffers.Offset, inputDigestOffset: flatbuffers.Offset, committedOutputsOffset: flatbuffers.Offset, assumptionDigestOffset: flatbuffers.Offset, exitCodeSystem: number, exitCodeUser: number): flatbuffers.Offset;
 }

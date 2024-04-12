@@ -96,27 +96,27 @@ class StatusV1 {
         const offset = this.bb.__offset(this.bb_pos, 12);
         return offset ? new Uint8Array(this.bb.bytes().buffer, this.bb.bytes().byteOffset + this.bb.__vector(this.bb_pos + offset), this.bb.__vector_len(this.bb_pos + offset)) : null;
     }
-    outputDigest(index) {
-        const offset = this.bb.__offset(this.bb_pos, 14);
-        return offset ? this.bb.readUint8(this.bb.__vector(this.bb_pos + offset) + index) : 0;
-    }
-    outputDigestLength() {
-        const offset = this.bb.__offset(this.bb_pos, 14);
-        return offset ? this.bb.__vector_len(this.bb_pos + offset) : 0;
-    }
-    outputDigestArray() {
-        const offset = this.bb.__offset(this.bb_pos, 14);
-        return offset ? new Uint8Array(this.bb.bytes().buffer, this.bb.bytes().byteOffset + this.bb.__vector(this.bb_pos + offset), this.bb.__vector_len(this.bb_pos + offset)) : null;
-    }
     committedOutputs(index) {
-        const offset = this.bb.__offset(this.bb_pos, 16);
+        const offset = this.bb.__offset(this.bb_pos, 14);
         return offset ? this.bb.readUint8(this.bb.__vector(this.bb_pos + offset) + index) : 0;
     }
     committedOutputsLength() {
-        const offset = this.bb.__offset(this.bb_pos, 16);
+        const offset = this.bb.__offset(this.bb_pos, 14);
         return offset ? this.bb.__vector_len(this.bb_pos + offset) : 0;
     }
     committedOutputsArray() {
+        const offset = this.bb.__offset(this.bb_pos, 14);
+        return offset ? new Uint8Array(this.bb.bytes().buffer, this.bb.bytes().byteOffset + this.bb.__vector(this.bb_pos + offset), this.bb.__vector_len(this.bb_pos + offset)) : null;
+    }
+    assumptionDigest(index) {
+        const offset = this.bb.__offset(this.bb_pos, 16);
+        return offset ? this.bb.readUint8(this.bb.__vector(this.bb_pos + offset) + index) : 0;
+    }
+    assumptionDigestLength() {
+        const offset = this.bb.__offset(this.bb_pos, 16);
+        return offset ? this.bb.__vector_len(this.bb_pos + offset) : 0;
+    }
+    assumptionDigestArray() {
         const offset = this.bb.__offset(this.bb_pos, 16);
         return offset ? new Uint8Array(this.bb.bytes().buffer, this.bb.bytes().byteOffset + this.bb.__vector(this.bb_pos + offset), this.bb.__vector_len(this.bb_pos + offset)) : null;
     }
@@ -192,21 +192,8 @@ class StatusV1 {
     static startInputDigestVector(builder, numElems) {
         builder.startVector(1, numElems, 1);
     }
-    static addOutputDigest(builder, outputDigestOffset) {
-        builder.addFieldOffset(5, outputDigestOffset, 0);
-    }
-    static createOutputDigestVector(builder, data) {
-        builder.startVector(1, data.length, 1);
-        for (let i = data.length - 1; i >= 0; i--) {
-            builder.addInt8(data[i]);
-        }
-        return builder.endVector();
-    }
-    static startOutputDigestVector(builder, numElems) {
-        builder.startVector(1, numElems, 1);
-    }
     static addCommittedOutputs(builder, committedOutputsOffset) {
-        builder.addFieldOffset(6, committedOutputsOffset, 0);
+        builder.addFieldOffset(5, committedOutputsOffset, 0);
     }
     static createCommittedOutputsVector(builder, data) {
         builder.startVector(1, data.length, 1);
@@ -216,6 +203,19 @@ class StatusV1 {
         return builder.endVector();
     }
     static startCommittedOutputsVector(builder, numElems) {
+        builder.startVector(1, numElems, 1);
+    }
+    static addAssumptionDigest(builder, assumptionDigestOffset) {
+        builder.addFieldOffset(6, assumptionDigestOffset, 0);
+    }
+    static createAssumptionDigestVector(builder, data) {
+        builder.startVector(1, data.length, 1);
+        for (let i = data.length - 1; i >= 0; i--) {
+            builder.addInt8(data[i]);
+        }
+        return builder.endVector();
+    }
+    static startAssumptionDigestVector(builder, numElems) {
         builder.startVector(1, numElems, 1);
     }
     static addExitCodeSystem(builder, exitCodeSystem) {
@@ -234,15 +234,15 @@ class StatusV1 {
     static finishSizePrefixedStatusV1Buffer(builder, offset) {
         builder.finish(offset, undefined, true);
     }
-    static createStatusV1(builder, executionIdOffset, status, proofOffset, executionDigestOffset, inputDigestOffset, outputDigestOffset, committedOutputsOffset, exitCodeSystem, exitCodeUser) {
+    static createStatusV1(builder, executionIdOffset, status, proofOffset, executionDigestOffset, inputDigestOffset, committedOutputsOffset, assumptionDigestOffset, exitCodeSystem, exitCodeUser) {
         StatusV1.startStatusV1(builder);
         StatusV1.addExecutionId(builder, executionIdOffset);
         StatusV1.addStatus(builder, status);
         StatusV1.addProof(builder, proofOffset);
         StatusV1.addExecutionDigest(builder, executionDigestOffset);
         StatusV1.addInputDigest(builder, inputDigestOffset);
-        StatusV1.addOutputDigest(builder, outputDigestOffset);
         StatusV1.addCommittedOutputs(builder, committedOutputsOffset);
+        StatusV1.addAssumptionDigest(builder, assumptionDigestOffset);
         StatusV1.addExitCodeSystem(builder, exitCodeSystem);
         StatusV1.addExitCodeUser(builder, exitCodeUser);
         return StatusV1.endStatusV1(builder);

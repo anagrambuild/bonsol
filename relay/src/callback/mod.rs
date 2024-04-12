@@ -1,5 +1,7 @@
+use solana_sdk::compute_budget::{self, ComputeBudgetInstruction};
+
 use {
-    anagram_bonsol_channel::{execution_address, execution_claim_address},
+    anagram_bonsol_channel_utils::{execution_address, execution_claim_address},
     anagram_bonsol_schema::{
         ChannelInstruction, ChannelInstructionArgs, ChannelInstructionIxType, ClaimV1, ClaimV1Args,
         StatusTypes, StatusV1, StatusV1Args,
@@ -116,8 +118,8 @@ impl TransactionSender {
         proof: &[u8],
         execution_digest: &[u8],
         input_digest: &[u8],
-        output_digest: &[u8],
-        committed_outputs: Option<&[u8]>,
+        assumption_digest: &[u8],
+        committed_outputs: &[u8],
         exit_code_system: u32,
         exit_code_user: u32,
     ) -> Result<Signature> {
@@ -143,12 +145,9 @@ impl TransactionSender {
         let proof_vec = fbb.create_vector(proof);
         let execution_digest = fbb.create_vector(execution_digest);
         let input_digest = fbb.create_vector(input_digest);
-        let output_digest = fbb.create_vector(output_digest);
+        let assumption_digest = fbb.create_vector(assumption_digest);
         let eid = fbb.create_string(execution_id);
-        let out = match committed_outputs {
-            None => None,
-            Some(o) => Some(fbb.create_vector(o)),
-        };
+        let out = fbb.create_vector(committed_outputs);
         let stat = StatusV1::create(
             &mut fbb,
             &StatusV1Args {
@@ -157,8 +156,8 @@ impl TransactionSender {
                 proof: Some(proof_vec),                   //256 bytes
                 execution_digest: Some(execution_digest), //32 bytes
                 input_digest: Some(input_digest),         //32 bytes
-                output_digest: Some(output_digest),       //32 bytes
-                committed_outputs: out,                   //0-?? bytes lets say 32
+                assumption_digest: Some(assumption_digest),       //32 bytes
+                committed_outputs: Some(out),                   //0-?? bytes lets say 32
                 exit_code_system,                         //4 byte
                 exit_code_user,                           //4 byte
             }, //total ~408 bytes plenty of room for more stuff

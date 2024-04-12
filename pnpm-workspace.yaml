@@ -1,3 +1,5 @@
 packages:
   - "schemas-ts"
-  - "channel/ts-client"
+  - "onchain/channel/ts-client"
+  - "vkey"
+  

@@ -12,8 +12,8 @@ table StatusV1{
   proof: [uint8];
   execution_digest: [uint8];
   input_digest: [uint8];
-  output_digest: [uint8];
   committed_outputs: [uint8];
+  assumption_digest: [uint8];
   exit_code_system: uint32;
   exit_code_user: uint32;
 }

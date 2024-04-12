@@ -127,8 +127,8 @@ impl<'a> StatusV1<'a> {
   pub const VT_PROOF: flatbuffers::VOffsetT = 8;
   pub const VT_EXECUTION_DIGEST: flatbuffers::VOffsetT = 10;
   pub const VT_INPUT_DIGEST: flatbuffers::VOffsetT = 12;
-  pub const VT_OUTPUT_DIGEST: flatbuffers::VOffsetT = 14;
-  pub const VT_COMMITTED_OUTPUTS: flatbuffers::VOffsetT = 16;
+  pub const VT_COMMITTED_OUTPUTS: flatbuffers::VOffsetT = 14;
+  pub const VT_ASSUMPTION_DIGEST: flatbuffers::VOffsetT = 16;
   pub const VT_EXIT_CODE_SYSTEM: flatbuffers::VOffsetT = 18;
   pub const VT_EXIT_CODE_USER: flatbuffers::VOffsetT = 20;
 
@@ -144,8 +144,8 @@ impl<'a> StatusV1<'a> {
     let mut builder = StatusV1Builder::new(_fbb);
     builder.add_exit_code_user(args.exit_code_user);
     builder.add_exit_code_system(args.exit_code_system);
+    if let Some(x) = args.assumption_digest { builder.add_assumption_digest(x); }
     if let Some(x) = args.committed_outputs { builder.add_committed_outputs(x); }
-    if let Some(x) = args.output_digest { builder.add_output_digest(x); }
     if let Some(x) = args.input_digest { builder.add_input_digest(x); }
     if let Some(x) = args.execution_digest { builder.add_execution_digest(x); }
     if let Some(x) = args.proof { builder.add_proof(x); }
@@ -191,18 +191,18 @@ impl<'a> StatusV1<'a> {
     unsafe { self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, u8>>>(StatusV1::VT_INPUT_DIGEST, None)}
   }
   #[inline]
-  pub fn output_digest(&self) -> Option<flatbuffers::Vector<'a, u8>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, u8>>>(StatusV1::VT_OUTPUT_DIGEST, None)}
-  }
-  #[inline]
   pub fn committed_outputs(&self) -> Option<flatbuffers::Vector<'a, u8>> {
     // Safety:
     // Created from valid Table for this object
     // which contains a valid value in this slot
     unsafe { self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, u8>>>(StatusV1::VT_COMMITTED_OUTPUTS, None)}
+  }
+  #[inline]
+  pub fn assumption_digest(&self) -> Option<flatbuffers::Vector<'a, u8>> {
+    // Safety:
+    // Created from valid Table for this object
+    // which contains a valid value in this slot
+    unsafe { self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, u8>>>(StatusV1::VT_ASSUMPTION_DIGEST, None)}
   }
   #[inline]
   pub fn exit_code_system(&self) -> u32 {
@@ -232,8 +232,8 @@ impl flatbuffers::Verifiable for StatusV1<'_> {
      .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, u8>>>("proof", Self::VT_PROOF, false)?
      .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, u8>>>("execution_digest", Self::VT_EXECUTION_DIGEST, false)?
      .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, u8>>>("input_digest", Self::VT_INPUT_DIGEST, false)?
-     .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, u8>>>("output_digest", Self::VT_OUTPUT_DIGEST, false)?
      .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, u8>>>("committed_outputs", Self::VT_COMMITTED_OUTPUTS, false)?
+     .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, u8>>>("assumption_digest", Self::VT_ASSUMPTION_DIGEST, false)?
      .visit_field::<u32>("exit_code_system", Self::VT_EXIT_CODE_SYSTEM, false)?
      .visit_field::<u32>("exit_code_user", Self::VT_EXIT_CODE_USER, false)?
      .finish();
@@ -246,8 +246,8 @@ pub struct StatusV1Args<'a> {
     pub proof: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a, u8>>>,
     pub execution_digest: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a, u8>>>,
     pub input_digest: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a, u8>>>,
-    pub output_digest: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a, u8>>>,
     pub committed_outputs: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a, u8>>>,
+    pub assumption_digest: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a, u8>>>,
     pub exit_code_system: u32,
     pub exit_code_user: u32,
 }
@@ -260,8 +260,8 @@ impl<'a> Default for StatusV1Args<'a> {
       proof: None,
       execution_digest: None,
       input_digest: None,
-      output_digest: None,
       committed_outputs: None,
+      assumption_digest: None,
       exit_code_system: 0,
       exit_code_user: 0,
     }
@@ -294,12 +294,12 @@ impl<'a: 'b, 'b> StatusV1Builder<'a, 'b> {
     self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(StatusV1::VT_INPUT_DIGEST, input_digest);
   }
   #[inline]
-  pub fn add_output_digest(&mut self, output_digest: flatbuffers::WIPOffset<flatbuffers::Vector<'b , u8>>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(StatusV1::VT_OUTPUT_DIGEST, output_digest);
-  }
-  #[inline]
   pub fn add_committed_outputs(&mut self, committed_outputs: flatbuffers::WIPOffset<flatbuffers::Vector<'b , u8>>) {
     self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(StatusV1::VT_COMMITTED_OUTPUTS, committed_outputs);
+  }
+  #[inline]
+  pub fn add_assumption_digest(&mut self, assumption_digest: flatbuffers::WIPOffset<flatbuffers::Vector<'b , u8>>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(StatusV1::VT_ASSUMPTION_DIGEST, assumption_digest);
   }
   #[inline]
   pub fn add_exit_code_system(&mut self, exit_code_system: u32) {
@@ -332,8 +332,8 @@ impl core::fmt::Debug for StatusV1<'_> {
       ds.field("proof", &self.proof());
       ds.field("execution_digest", &self.execution_digest());
       ds.field("input_digest", &self.input_digest());
-      ds.field("output_digest", &self.output_digest());
       ds.field("committed_outputs", &self.committed_outputs());
+      ds.field("assumption_digest", &self.assumption_digest());
       ds.field("exit_code_system", &self.exit_code_system());
       ds.field("exit_code_user", &self.exit_code_user());
       ds.finish()

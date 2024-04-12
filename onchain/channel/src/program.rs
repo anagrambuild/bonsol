@@ -1,7 +1,7 @@
 use crate::assertions::*;
 use crate::error::ChannelError;
-use crate::proof_handling::{prepare_inputs, verify_risc0};
-use crate::{
+use crate::proof_handling::{output_digest, prepare_inputs, verify_risc0};
+use anagram_bonsol_channel_utils::{
     deployment_address_seeds, execution_address_seeds, execution_claim_address_seeds, img_id_hash,
 };
 use anagram_bonsol_schema::{
@@ -18,7 +18,7 @@ use solana_program::program_memory::{sol_memcmp, sol_memcpy, sol_memset};
 use solana_program::pubkey::Pubkey;
 use solana_program::rent::Rent;
 use solana_program::sysvar::Sysvar;
-use solana_program::{bpf_loader_upgradeable, msg, system_instruction, system_program};
+use solana_program::{bpf_loader_upgradeable, msg, system_instruction, system_program}; // Add this line
 
 pub struct ClaimAccounts<'a, 'b> {
     pub exec: &'a AccountInfo<'a>,
@@ -84,10 +84,8 @@ impl<'a, 'b> ClaimAccounts<'a, 'b> {
                 .exec
                 .try_borrow_data()
                 .map_err(|_| ChannelError::CannotBorrowData)?;
-            msg!("here");
             let execution_request = root_as_execution_request_v1(&*exec_data)
                 .map_err(|_| ChannelError::InvalidExecutionAccount)?;
-            msg!("here");
             let expected_eid = execution_request
                 .execution_id()
                 .ok_or(ChannelError::InvalidExecutionAccount)?;
@@ -509,22 +507,33 @@ pub fn program<'a>(
             let er_ref = sa.exec.try_borrow_data()?;
             let er = root_as_execution_request_v1(&*er_ref)
                 .map_err(|_| ChannelError::InvalidExecutionAccount)?;
-            let pr = st.proof().filter(|x| x.len() == 256);
-            let execution_digest = st.execution_digest();
-            let output_digest = st.output_digest();
-            if let (Some(proof), Some(exed), Some(outd)) = (pr, execution_digest, output_digest) {
+            let pr_v = st.proof().filter(|x| x.len() == 256);
+            let execution_digest_v = st.execution_digest().map(|x| x.bytes());
+            let input_digest_v = st.input_digest().map(|x| x.bytes());
+            let assumption_digest_v = st.assumption_digest().map(|x| x.bytes());
+            let committed_outputs_v = st.committed_outputs().map(|x| x.bytes());
+            if let (Some(proof), Some(exed), Some(asud), Some(input), Some(co)) = (
+                pr_v,
+                execution_digest_v,
+                assumption_digest_v,
+                input_digest_v,
+                committed_outputs_v,
+            ) {
                 let proof: &[u8; 256] = proof
                     .bytes()
                     .try_into()
                     .map_err(|_| ChannelError::InvalidInstruction)?;
+                if er.verify_input_hash(){
+                    er.input_digest().map(|x| check_bytes_match(x.bytes(), input, ChannelError::InputsDontMatch));
+                }
+                let output_digest = output_digest(input, co, asud);
                 let inputs = prepare_inputs(
-                    er.image_id().unwrap().as_bytes(),
-                    exed.bytes(),
-                    outd.bytes(),
+                    er.image_id().unwrap(),
+                    exed,
+                    output_digest.as_ref(),
                     st.exit_code_system(),
                     st.exit_code_user(),
                 )?;
-                msg!("here lasy");
                 let verified = verify_risc0(proof, &inputs)?;
                 if verified {
                     let callback_program_set =

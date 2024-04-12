@@ -1,23 +1,20 @@
 mod image;
-
-use crate::{callback::TransactionSender, config::ProverNodeConfig, util::get_body_max_size};
-
+mod utils;
+use std::{any::Any, env::consts::ARCH, io::Cursor, path::Path};
+use crate::{callback::TransactionSender, config::ProverNodeConfig, risc0::utils::async_to_json, util::get_body_max_size};
 use self::image::Image;
-
 use {
     anagram_bonsol_schema::{ClaimV1, DeployV1, ExecutionRequestV1, InputType, ProgramInputType},
     ark_bn254::Bn254,
+    ark_serialize::CanonicalSerialize,
     dashmap::DashMap,
 };
-
 use {
-    futures_util::SinkExt,
     reqwest::Url,
     risc0_binfmt::MemoryImage,
     risc0_zkvm::{ExitCode, Journal, SuccinctReceipt},
     serde::{Deserialize, Serialize},
 };
-
 use {
     solana_sdk::{pubkey::Pubkey, signature::Signature},
     std::{
@@ -29,14 +26,18 @@ use {
     },
 };
 
-use tokio::task::JoinSet;
+use risc0_circuit_recursion::control_id::BN254_CONTROL_ID;
+use risc0_groth16::{split_digest, ProofJson, Seal};
+use risc0_zkp::verify::VerificationError;
+use risc0_zkvm::{sha::Digest, Assumptions, CompositeReceipt, MaybePruned, Output, Receipt, ALLOWED_IDS_ROOT};
+use tempfile::tempdir;
+use tokio::{fs::File, io::AsyncReadExt, process::Command, task::JoinSet};
 
 use {
     crate::types::{BonsolInstruction, ProgramExec},
     anagram_bonsol_schema::{parse_ix_data, ChannelInstructionIxType},
     anyhow::Result,
     ark_groth16::Groth16,
-    risc0_groth16::docker::stark_to_snark,
     risc0_zkvm::{
         get_prover_server, recursion::identity_p254, sha::Digestible, ExecutorEnv, ExecutorImpl,
         ProverOpts, VerifierContext,
@@ -242,7 +243,9 @@ impl Risc0Runner {
                             )
                             .await
                         }
-
+                        ChannelInstructionIxType::StatusV1 => {
+                            Ok(())
+                        }
                         _ => {
                             eprintln!("Unknown instruction type");
                             Ok(())
@@ -291,7 +294,6 @@ async fn handle_claim<'a>(
             claim.status = ClaimStatus::Accepted;
             if let Some(mut image) = loaded_images.get_mut(&claim.image_id) {
                 // load image if we shucked it off to disk
-
                 image.load().await?;
                 let start = SystemTime::now();
                 let since_the_epoch = start.duration_since(UNIX_EPOCH)?.as_secs();
@@ -358,41 +360,35 @@ async fn handle_claim<'a>(
                 eprintln!("Inputs resolved, generating proof");
                 let (eid, inputs) = input_staging_area.remove(execution_id).unwrap();
                 let mem_image = image.get_memory_image()?;
-                let result: Result<(Journal, CompressedReciept), Risc0RunnerError> =
+                let result: Result<(Journal, Digest,SuccinctReceipt), Risc0RunnerError> =
                     tokio::task::spawn_blocking(move || {
-                        let (journal, reciept) = risc0_prove(mem_image, inputs).map_err(|e| {
+                        risc0_prove(mem_image, inputs).map_err(|e| {
                             eprintln!("Error generating proof: {:?}", e);
                             Risc0RunnerError::ProofGenerationError
-                        })?;
-                        let compressed_receipt =
-                            risc0_docker_compress_proof(reciept).map_err(|e| {
-                                eprintln!("Error compressing proof: {:?}", e);
-                                Risc0RunnerError::ProofCompressionError
-                            })?;
-                        Ok((journal, compressed_receipt))
+                        })
                     })
                     .await?;
 
-                if let Ok((journal, reciept)) = result {
+                if let Ok((journal, assumptions_digest, reciept)) = result {
+                    let compressed_receipt =
+                        risc0_docker_compress_proof(reciept).await.map_err(|e| {
+                            eprintln!("Error compressing proof: {:?}", e);
+                            Risc0RunnerError::ProofCompressionError
+                        })?;
+                        
                     let (input_digest, committed_outputs) = journal.bytes.split_at(32);
-
-                    let out = if claim.forward_output {
-                        Some(committed_outputs)
-                    } else {
-                        None
-                    };
                     let sig = transaction_sender
                         .submit_proof(
                             &eid,
                             claim.requester,
                             claim.program_callback,
-                            &reciept.proof,
-                            &reciept.execution_digest,
-                            &input_digest,
-                            &journal.digest().as_bytes(),
-                            out,
-                            reciept.exit_code_system,
-                            reciept.exit_code_user,
+                            &compressed_receipt.proof,
+                            &compressed_receipt.execution_digest,
+                            input_digest,
+                            assumptions_digest.as_bytes(),
+                            committed_outputs,
+                            compressed_receipt.exit_code_system,
+                            compressed_receipt.exit_code_user,
                         )
                         .await
                         .map_err(|e| Risc0RunnerError::TransactionError(e.to_string()))?;
@@ -628,7 +624,7 @@ async fn handle_image_deployment<'a>(
 fn risc0_prove(
     memory_image: MemoryImage,
     sorted_inputs: Vec<ProgramInput>,
-) -> Result<(Journal, SuccinctReceipt)> {
+) -> Result<(Journal, Digest, SuccinctReceipt)> {
     let mut env_builder = ExecutorEnv::builder();
     for input in sorted_inputs.into_iter() {
         match input {
@@ -652,7 +648,17 @@ fn risc0_prove(
     let composite_receipt = receipt.inner.composite().unwrap();
     let succinct_receipt = prover.compress(composite_receipt).unwrap();
     let ident_receipt = identity_p254(&succinct_receipt).unwrap();
-    Ok((receipt.journal, ident_receipt))
+    let assumptions = assumptions_claim(composite_receipt)?;
+    Ok((receipt.journal, assumptions.digest(), ident_receipt))
+}
+
+fn assumptions_claim(cr:&CompositeReceipt) -> Result<Assumptions, VerificationError> {
+    Ok(Assumptions(
+        cr.assumptions
+            .iter()
+            .map(|a| Ok(a.get_claim()?.into()))
+            .collect::<Result<Vec<_>, _>>()?,
+    ))
 }
 pub struct CompressedReciept {
     pub execution_digest: Vec<u8>,
@@ -662,44 +668,58 @@ pub struct CompressedReciept {
 }
 /// Compresses the proof to be sent to the blockchain
 /// This is a temporary solution until the wasm groth16 prover or a rust impl is working
-fn risc0_docker_compress_proof(succint_receipt: SuccinctReceipt) -> Result<CompressedReciept> {
+async fn risc0_docker_compress_proof(
+    succint_receipt: SuccinctReceipt,
+) -> Result<CompressedReciept> {
     let sealbytes = succint_receipt.get_seal_bytes();
-    // to be replaced with non docker thing
-    let seal = stark_to_snark(&sealbytes)?;
+    if !(ARCH == "x86_64" || ARCH == "x86") {
+        panic!("X86 only");
+    }
+    let tmp = tempdir()?;
+    let prove_dir = tmp.path();
+    let mut cursor = Cursor::new(&sealbytes);
+    let inputs = prove_dir.join("input.json");
+    let witness = prove_dir.join("out.wtns");
+    let input_file = File::create(&inputs).await?;
+    async_to_json(&mut cursor, input_file).await?;
+    let status = Command::new("stark/stark_verify")
+        .arg(inputs.clone())
+        .arg(witness.clone())
+        .output()
+        .await?;
+    if !status.status.success() {
+        eprintln!("witness {:?}", status);
+        return Err(Risc0RunnerError::ProofCompressionError.into());
+    }
+    let zkey = Path::new("stark/stark_verify_final.zkey");
+    let proof_out = prove_dir.join("proof.json");
+    let public = prove_dir.join("public.json");
+    let snark_status = Command::new("stark/rapidsnark")
+        .arg(zkey)
+        .arg(witness)
+        .arg(proof_out.clone())
+        .arg(public)
+        .output()
+        .await?;
+    if !snark_status.status.success() {
+        eprintln!("snark {:?}", snark_status);
+        return Err(Risc0RunnerError::ProofCompressionError.into());
+    }
+    let mut proof_fd = File::open(proof_out).await?;
+    let mt = proof_fd.metadata().await?;
+    let mut bytes = Vec::with_capacity(mt.len() as usize);
+    proof_fd.read_to_end(&mut bytes).await?;
+    let proof: ProofJson = serde_json::from_slice(&bytes)?;
+    let seal: Seal = proof.try_into()?;
     let claim = succint_receipt.claim;
-    let digest = claim.post.digest();
-    eprint!("Claim: {:?}", claim.digest());
-    eprint!("pre: {:?}", claim.pre.digest());
-    // let root = hex::decode(ALLOWED_IDS_ROOT).unwrap();
-    // let rb: [u8; 32] = root.try_into().unwrap();
-    // let (i0, i1) = split_digest(digest)?;
-    // let (c0, c1) = split_digest(Digest::from(rb))?;
-    // let mut i0v = Vec::with_capacity(32);
-    // i0.serialize_uncompressed(&mut i0v).unwrap();
-    // let mut i1v = Vec::with_capacity(32);
-    // i1.serialize_uncompressed(&mut i1v).unwrap();
-    // let mut c0v: Vec<_> = Vec::with_capacity(32);
-    // c0.serialize_uncompressed(&mut c0v).unwrap();
-    // let mut c1v = Vec::with_capacity(32);
-    // c1.serialize_uncompressed(&mut c1v).unwrap();
-    // let mut input_vec = Vec::with_capacity(128);
-    // c0v.reverse();
-    // c1v.reverse();
-    // i0v.reverse();
-    // i1v.reverse();
-    // input_vec.extend_from_slice(&c0v);
-    // input_vec.extend_from_slice(&c1v);
-    // input_vec.extend_from_slice(&i0v);
-    // input_vec.extend_from_slice(&i1v);
-
     let (system, user) = match claim.exit_code {
-        ExitCode::Halted(user_exit) => (0, user_exit), // can panic if user_exit is not in range 0 to 255
+        ExitCode::Halted(user_exit) => (0, user_exit),
         ExitCode::Paused(user_exit) => (1, user_exit),
         ExitCode::SystemSplit => (2, 0),
         ExitCode::SessionLimit => (2, 2),
     };
     Ok(CompressedReciept {
-        execution_digest: digest.as_bytes().to_vec(),
+        execution_digest: claim.post.digest().as_bytes().to_vec(),
         exit_code_system: system,
         exit_code_user: user,
         proof: seal.to_vec(),

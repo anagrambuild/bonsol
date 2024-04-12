@@ -6,7 +6,7 @@ pub mod types;
 pub mod util;
 use {
     crate::{callback::TransactionSender, ingest::Ingester},
-    anyhow::Result,
+    anyhow::{Ok, Result},
     config::*,
     risc0::Risc0Runner,
     solana_sdk::{pubkey::Pubkey, signature::read_keypair_file, signer::Signer},
@@ -33,6 +33,7 @@ pub enum CliError {
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    
     let args: Vec<String> = std::env::args().collect();
     if args.len() < 3 || args[1] != "-f" {
         eprintln!("Usage: relay -f <config_file>");
