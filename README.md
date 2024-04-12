@@ -132,7 +132,6 @@ fn main() {
 Specifically 
 
 ```rust
-
 use risc0_zkvm::{guest::{env, sha::Impl},sha::{Digest, Sha256}};
 ...
 let digest = Impl::hash_bytes(
@@ -143,30 +142,20 @@ let digest = Impl::hash_bytes(
     );
 env::commit_slice(digest.as_bytes());
 ```
+You can see that in the guest program we are hashing the public and private inputs and commiting the hash to the zkvm. This is how we insure that the prover ran this over your actual imput data which you previously hashed and sent into the execution request.
 
-## Development Status
-* Proving and verifying a proof: works
-* proof compression: works, but currently using a dockerized C circom binary, want to use all rust or wasm(works, but bug in wasmer llvm compiler makes it impossible to compule and the signle pass compiler produces a slower universal wasm binary)
-* Enforce image id in verification: in progress
-* Enforcing input digest as output of circit: in progress
-* Execution Request: works
-* Claiming: works
-* Private Inputs: testing
-* Fee distribution: basic
-* Prover Slashing
+# Roadmap
+* More TXN sender configs
+* More ingester configs
 * Bonsolace: local proving with simple on chain verification(for devs who dont need the prover network)
 * Zkprogram capacity (compute) calculations and capacity planning for provers: in progress
 * non trivial example zkprograms: in progress
-
-# Roadmap
 * MPC encryption for private inputs to avoid private input server 
 * Auction or time based mechanic to incentivise provers to provide quality service
 * Other proof systems SP1, Spartan etc ...
 * More dynamic input types
     * Solana transaction history
     * Interactive Browser Proofs
-
-
 
 ## Local Development
 Prequisites:
@@ -175,7 +164,6 @@ docker
 rust
 solana tooling
 probbably a fast computer
-
 
 You will need to run a few components.
 
@@ -186,6 +174,9 @@ You will need to run a few components.
 5. (Soon) Private input server
 
 ```bash
+#Download and setup the system with the needed binaries and keys to run the groth16 prover over the risc0 FRI
+./setup.sh
+
 #Compiles the 乃ㄖ几丂ㄖㄥ on chain program and starts a localnet with the program loaded
 ./validator.sh 
 
@@ -199,8 +190,8 @@ You will need to run a few components.
 Currently I have the following flow:
 I run "./build-images.sh".
 
-Then "./validator" and "./run-relay.sh" , and the ts-client tests in `channel` directory with `pnpm test` in three different terminals. This will deploy a zk program and start an execution request which the relay will respond to. I make heavy use of a solana explorer in testing too.
+Then "./validator" and "./run-relay.sh" , and run the ts-client tests in `channel` directory with `pnpm test` in three different terminals. This will deploy a zk program and start an execution request which the relay will respond to.
 
-Note, currently you need docker installed and the Risc0 zkey, Verification key and .dat file present at the root of the relay directory.  
-See https://github.com/risc0/risc0/tree/e69db8038011dc2e4020d3899cc1c7b40dd3d637/compact_proof for instructions.
-This will change once the all rust prover is working.
+# Running a Prover Node
+The prover node is a binary that comes from the relay package. You configure it with the Node.toml file. There are a variety of options in there. `relay/src/config.rs` shows all the configurations. There are alot of defaults.
+The key parts are the keypair, transaction sender and the ingester config. Because the groth16 prover is a heavy process the node that you run the prover on needs to allow alow a high stack limit. In the `./run-relay.sh` we use `ulimit -s unlimited` to allow the prover to run.
