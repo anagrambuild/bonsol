@@ -3,7 +3,7 @@ import {keccak_256} from "@noble/hashes/sha3";
 export * from "./execute";
 export * from "./deploy";
 
-export const BONSOL_PROGRAM_ID = "BoNSrwTtTM4PRkbbPvehk1XzHC65cKfdNSod9FyTejRn";
+export const BONSOL_PROGRAM_ID = "BoNsHRcyLLNdtnoDf8hiCNZpyehMC4FDMxs6NTxFi3ew";
 
 export async function executionAddress(
   requester: Address,
