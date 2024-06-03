@@ -7,7 +7,7 @@ pub mod program;
 pub mod proof_handling;
 mod verifying_key;
 
-declare_id!("BoNSrwTtTM4PRkbbPvehk1XzHC65cKfdNSod9FyTejRn");
+declare_id!("BoNsHRcyLLNdtnoDf8hiCNZpyehMC4FDMxs6NTxFi3ew");
 
 #[cfg(not(feature = "no-entrypoint"))]
 mod entrypoint;
