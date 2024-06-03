@@ -68,7 +68,7 @@ fn default_capacity_config() -> CapacityConfig {
 }
 
 fn default_bonsol_program() -> String {
-    "BoNSrwTtTM4PRkbbPvehk1XzHC65cKfdNSod9FyTejRn".to_string()
+    "BoNsHRcyLLNdtnoDf8hiCNZpyehMC4FDMxs6NTxFi3ew".to_string()
 }
 
 fn default_risc0_image_folder() -> String {
