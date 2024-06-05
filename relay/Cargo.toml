@@ -62,6 +62,8 @@ ark-ec = { version = "0.4.2" }
 memmap = "0.7.0"
 tonic = "0.11.0"
 prost = "0.12.6"
+yellowstone-grpc-client = "1.15.0"
+yellowstone-grpc-proto = "1.14.0"
 
 [dev-dependencies]
 
