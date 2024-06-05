@@ -4,3 +4,5 @@ risc0_image_folder = "../elf"
   Rpc = { rpc_url = "http://localhost:8899" }
 [signer_config]
   KeypairFile = { path = "../relaykp.json" }
+[ingester_config]
+  GrpcSub = { grpc_url = "http://localhost:8080" }

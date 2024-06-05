@@ -51,7 +51,6 @@ async fn main() -> Result<()> {
     };
     let signer_identity = signer.pubkey();
 
-    //Todo traitify ingester
     let mut ingester: Box<dyn Ingester> = match config.ingester_config.clone() {
         IngesterConfig::RpcBlockSubscription { wss_rpc_url } => {
             Box::new(ingest::RpcIngester::new(wss_rpc_url))
