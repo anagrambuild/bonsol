@@ -60,6 +60,20 @@ impl RpcIngester {
     }
 }
 
+pub struct GrpcIngester {
+    grpc_url: String,
+    op_handle: Option<JoinHandle<()>>,
+}
+
+impl GrpcIngester {
+    pub fn new(grpc_url: String) -> GrpcIngester {
+        GrpcIngester {
+            op_handle: None,
+            grpc_url,
+        }
+    }
+}
+
 // todo find a way to consume without clone
 fn filter_txs(
     program: &Pubkey,
@@ -187,5 +201,15 @@ impl Ingester for RpcIngester {
     fn stop(&mut self) -> Result<()> {
         self.op_handle.as_mut().map(|t| t.abort());
         Ok(())
+    }
+}
+
+impl Ingester for GrpcIngester {
+    fn start(&mut self, program: Pubkey) -> Result<TxChannel> {
+        todo!()
+    }
+
+    fn stop(&mut self) -> Result<()> {
+        todo!()
     }
 }

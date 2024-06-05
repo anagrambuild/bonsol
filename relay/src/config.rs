@@ -9,8 +9,8 @@ use {
 #[derive(Debug, Deserialize, Clone)]
 pub enum IngesterConfig {
     RpcBlockSubscription { wss_rpc_url: String },
+    GrpcSub { grpc_url: String },
     //--- below not implemented yet
-    GrpcSub,      //not implemented
     WebsocketSub, //not implemented
 }
 

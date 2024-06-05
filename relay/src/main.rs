@@ -52,9 +52,12 @@ async fn main() -> Result<()> {
     let signer_identity = signer.pubkey();
 
     //Todo traitify ingester
-    let mut ingester = match config.ingester_config.clone() {
+    let mut ingester: Box<dyn Ingester> = match config.ingester_config.clone() {
         IngesterConfig::RpcBlockSubscription { wss_rpc_url } => {
-            ingest::RpcIngester::new(wss_rpc_url)
+            Box::new(ingest::RpcIngester::new(wss_rpc_url))
+        }
+        IngesterConfig::GrpcSub { grpc_url } => {
+            Box::new(ingest::GrpcIngester::new(grpc_url))
         }
         _ => return Err(CliError::InvalidIngester.into()),
     };
