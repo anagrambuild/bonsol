@@ -1,12 +1,12 @@
 [workspace]
-members = [ "iop",
+members = [ 
+  "iop",
   "onchain/channel",
   "onchain/channel-utils", 
   "relay",
   "schemas-rust",
 ]
 exclude = [
-  "iop"
 ]
 resolver = "2"
 
