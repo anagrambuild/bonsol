@@ -417,9 +417,9 @@ async fn handle_execution_request<'a>(
     let inflight = in_flight_proofs.len();
     eprintln!(
         "Inflight: {} {}",
-        inflight, config.capacity_config.max_inflight_proofs
+        inflight, config.maximum_concurrent_proofs
     );
-    if inflight < config.capacity_config.max_inflight_proofs as usize {
+    if inflight < config.maximum_concurrent_proofs as usize {
         let eid = exec
             .execution_id()
             .map(|d| d.to_string())
