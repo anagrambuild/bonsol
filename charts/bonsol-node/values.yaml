@@ -25,8 +25,8 @@ ingester_config:
   wss_rpc_url: "ws://localhost:8900"
 signer_config:
   type: "KeyPairFile"
-  path: "/opt/bonsol/keys/signer.json"
-risc0_image_folder: "/opt/bonsol/risc0_images" 
+  path: "/opt/bonsol/keys/signer.json" #reccomended to be a volume to share between pods
+risc0_image_folder: "/opt/bonsol/risc0_images" #reccomended to be a volume to share between pods
 
 imagePullSecrets: []
 nameOverride: ""
@@ -90,21 +90,9 @@ autoscaling:
   targetCPUUtilizationPercentage: 80
   # targetMemoryUtilizationPercentage: 80
 
-# Additional volumes on the output Deployment definition.
-volumes: 
-- name: config
-  secret:
-    secretName: mysecret
-    optional: false
 
-# Additional volumeMounts on the output Deployment definition.
+volumes: []
 volumeMounts: []
-# - name: foo
-#   mountPath: "/etc/foo"
-#   readOnly: true
-
 nodeSelector: {}
-
 tolerations: []
-
 affinity: {}

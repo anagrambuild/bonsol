@@ -36,6 +36,7 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["/opt/bonsol/relay", "-f /opt/bonsol/Node.toml"]
           ports:
             - name: http
               containerPort: {{ .Values.service.port }}
@@ -46,14 +47,26 @@ spec:
             {{- toYaml .Values.readinessProbe | nindent 12 }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-          {{- with .Values.volumeMounts }}
+         
           volumeMounts:
+            - name: key # only works with keypair signer for now
+              mountPath: {{ .Values.signer_config.path }}
+            - name: images
+              mountPath:  {{ .Values.risc0_image_folder }}
+            - name: config
+              mountPath: /opt/bonsol/
+            {{- with .Values.volumeMounts }}
             {{- toYaml . | nindent 12 }}
-          {{- end }}
-      {{- with .Values.volumes }}
+            {{- end }}
       volumes:
+        - name: config
+          secret:
+            secretName: {{ include "bonsol-node.fullname" . }}-config
+            secretKey: Node.toml
+
+        {{- with .Values.volumes }}
         {{- toYaml . | nindent 8 }}
-      {{- end }}
+        {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
