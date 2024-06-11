@@ -29,6 +29,7 @@ solana-rpc-client = { workspace = true }
 solana-rpc-client-api = { workspace = true }
 solana-pubsub-client = { workspace = true }
 solana-transaction-status = { workspace = true }
+yellowstone-grpc-client = { workspace = true }
 futures-util = { version = "0.3.30" }
 thiserror = { workspace = true }
 anyhow = { version = "1.0.79" }
