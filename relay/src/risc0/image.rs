@@ -31,7 +31,7 @@ impl Image {
         let program = Image::load_elf(&bytes)?;
         let img = Image::mem_img(&program)?;
         Ok(Image {
-            id: img.compute_id().to_string(),
+            id: img.compute_id()?.to_string(),
             data: Some(program),
             size: img.pages.len() as u64 * PAGE_SIZE as u64,
             path: PathBuf::new(),
@@ -45,7 +45,7 @@ impl Image {
         let img = Image::mem_img(&program)?;
 
         Ok(Image {
-            id: img.compute_id().to_string(),
+            id: img.compute_id()?.to_string(),
             data: Some(program),
             size: img.pages.len() as u64 * PAGE_SIZE as u64,
             path,

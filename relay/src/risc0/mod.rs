@@ -26,10 +26,9 @@ use {
     },
 };
 
-use risc0_circuit_recursion::control_id::BN254_CONTROL_ID;
-use risc0_groth16::{split_digest, ProofJson, Seal};
+use risc0_groth16::{ProofJson, Seal};
 use risc0_zkp::verify::VerificationError;
-use risc0_zkvm::{sha::Digest, Assumptions, CompositeReceipt, MaybePruned, Output, Receipt, ALLOWED_IDS_ROOT};
+use risc0_zkvm::{sha::Digest, Assumptions, CompositeReceipt};
 use tempfile::tempdir;
 use tokio::{fs::File, io::AsyncReadExt, process::Command, task::JoinSet};
 

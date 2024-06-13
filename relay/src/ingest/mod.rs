@@ -1,5 +1,7 @@
 use tokio::sync::mpsc::UnboundedSender;
 mod rpc;
+mod dragon;
+pub use dragon::GrpcIngester;
 pub use rpc::RpcIngester;
 use {
     anyhow::Result,
