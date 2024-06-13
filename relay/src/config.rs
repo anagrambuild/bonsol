@@ -9,10 +9,12 @@ use {
 #[derive(Debug, Deserialize, Clone)]
 pub enum IngesterConfig {
     RpcBlockSubscription { wss_rpc_url: String },
-    //--- below not implemented yet
     GrpcSub {
         grpc_url: String,
-    },      //not implemented
+        connection_timeout_secs: u32,
+        timeout_secs: u32,
+        token: String,
+    },
     WebsocketSub, //not implemented
 }
 

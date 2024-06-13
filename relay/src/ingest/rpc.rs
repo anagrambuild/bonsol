@@ -31,6 +31,7 @@ fn filter_txs(
   tx: EncodedTransactionWithStatusMeta,
 ) -> Vec<BonsolInstruction> {
   let mut res = vec![];
+
   if let Some(dtx) = tx.transaction.decode() {
       let scc = dtx.message.static_account_keys();
       if let Some(meta) = tx.meta {
@@ -57,7 +58,7 @@ fn filter_txs(
                                   let data = bs58::decode(&instruction.data).into_vec();
                                   if let Ok(data) = data {
                                       res.push(BonsolInstruction {
-                                          cpi: false,
+                                          cpi: true,
                                           accounts: instruction
                                               .accounts
                                               .iter()

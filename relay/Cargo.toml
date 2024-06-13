@@ -20,6 +20,7 @@ reqwest = { version = "0.11.26", features = [
   "stream",
   "native-tls-vendored",
 ] }
+futures = { version = "0.3.30"}
 anagram-bonsol-channel-utils = { path = "../onchain/channel-utils" }
 tokio-util = { version = "0.7.10", features = ["codec"] }
 flatbuffers = { workspace = true }
@@ -29,6 +30,7 @@ solana-rpc-client = { workspace = true }
 solana-rpc-client-api = { workspace = true }
 solana-pubsub-client = { workspace = true }
 solana-transaction-status = { workspace = true }
+yellowstone-grpc-proto =  { workspace = true }
 yellowstone-grpc-client = { workspace = true }
 futures-util = { version = "0.3.30" }
 thiserror = { workspace = true }
