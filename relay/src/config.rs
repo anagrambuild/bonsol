@@ -9,7 +9,7 @@ use {
 #[derive(Debug, Deserialize, Clone)]
 pub enum IngesterConfig {
     RpcBlockSubscription { wss_rpc_url: String },
-    GrpcSub {
+    GrpcSubscription {
         grpc_url: String,
         connection_timeout_secs: u32,
         timeout_secs: u32,
