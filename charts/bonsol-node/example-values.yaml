@@ -11,7 +11,7 @@ transaction_sending_config:
   type: "Rpc"
   rpc_url: "http://localhost:8899"
 ingester_config:
-  type: "GrpcSub"
+  type: "GrpcSubscription"
   grpc_url: "http://{your yellow stone grpc}"
   token: "your token here"
   connection_timeout_secs: 10
