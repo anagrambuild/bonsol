@@ -11,6 +11,9 @@ importers:
       '@noble/hashes':
         specifier: 1.4.0
         version: 1.4.0
+      '@solana/errors':
+        specifier: 2.0.0-preview.3
+        version: 2.0.0-preview.3
       '@solana/functional':
         specifier: 2.0.0-preview.3
         version: 2.0.0-preview.3

@@ -1,14 +1,16 @@
-mod callback;
-pub mod config;
-mod ingest;
-mod risc0;
 pub mod types;
 pub mod util;
+mod ingest;
+
+mod callback;
+pub mod config;
+mod prover;
 use {
-    crate::{callback::TransactionSender, ingest::Ingester},
+    callback::{TransactionSender,RpcTransactionSender},
+    ingest::{GrpcIngester, Ingester, RpcIngester},
     anyhow::{Ok, Result},
     config::*,
-    risc0::Risc0Runner,
+    prover::Risc0Runner,
     solana_sdk::{pubkey::Pubkey, signature::read_keypair_file, signer::Signer},
     std::{str::FromStr, sync::Arc},
     thiserror::Error,
@@ -54,7 +56,7 @@ async fn main() -> Result<()> {
     //Todo traitify ingester
     let mut ingester: Box<dyn Ingester> = match config.ingester_config.clone() {
         IngesterConfig::RpcBlockSubscription { wss_rpc_url } => {
-            Box::new(ingest::RpcIngester::new(wss_rpc_url))
+            Box::new(RpcIngester::new(wss_rpc_url))
         }
         IngesterConfig::GrpcSubscription { 
             grpc_url, 
@@ -63,18 +65,19 @@ async fn main() -> Result<()> {
             timeout_secs
          } => {
             Box::new(
-                ingest::GrpcIngester::new(grpc_url, token, Some(connection_timeout_secs), Some(timeout_secs))
+                GrpcIngester::new(grpc_url, token, Some(connection_timeout_secs), Some(timeout_secs))
             )
         }
         _ => return Err(CliError::InvalidIngester.into()),
     };
 
-    let transaction_sender = match config.transaction_sender_config.clone() {
+    let mut transaction_sender = match config.transaction_sender_config.clone() {
         TransactionSenderConfig::Rpc { rpc_url } => {
-            TransactionSender::new(rpc_url, program, signer)
+            RpcTransactionSender::new(rpc_url, program, signer)
         }
         _ => return Err(CliError::InvalidRpcUrl.into()),
     };
+    transaction_sender.start();
     //may take time to load images, depending on the number of images TODO put limit
     let mut runner = Risc0Runner::new(
         config.clone(),

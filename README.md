@@ -195,3 +195,19 @@ Then "./validator" and "./run-relay.sh" , and run the ts-client tests in `channe
 # Running a Prover Node
 The prover node is a binary that comes from the relay package. You configure it with the Node.toml file. There are a variety of options in there. `relay/src/config.rs` shows all the configurations. There are alot of defaults.
 The key parts are the keypair, transaction sender and the ingester config. Because the groth16 prover is a heavy process the node that you run the prover on needs to allow alow a high stack limit. In the `./run-relay.sh` we use `ulimit -s unlimited` to allow the prover to run.
+You will need a relay keypair in order for the node to function, and this keypar must have some SOL in it for JIT staking of Execution requests and for sol transaction fees.
+
+You can make a new keypair using the solana cli tools.
+`
+solana-keygen new -o relay-keypair.json
+`
+Fund that keypair with sol, and keep it secret, currently we only support the local keypair signing, but in the future other options will be available, such as remote signing from an hsm device or a mpc signer cluster.
+
+# Deploying the Helm Chart 
+A helm chart exists for this project. You can deploy it to a kubernetes cluster. You will need to have a kubernetes cluster and helm installed. 
+```bash
+helm install --set signer_config.local_signer_keypair_path=$(cat ./relaykp.json) bonsol ./charts/bonsol-node -f ./charts/bonsol-node/secret-values.yaml
+```
+Ensure you set ```local_signer_keypair_content``` with the content of the relay kp. An example values file is in the helm directory at ```example-values.yaml```.
+
+In a production scenario you will want to use the ```GrpcSubscription``` ingester type to avoid the need for a colocated Solana node. Triton One or Helius offer GRPC streams of solana transactions. We reccomend triton for this as they created the Yellowstone library in use for the Grpc Ingest option in this prover node.

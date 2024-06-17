@@ -9,7 +9,7 @@ image_compression_ttl_hours: 24
 env: "devnet"
 transaction_sending_config:
   type: "Rpc"
-  rpc_url: "http://localhost:8899"
+  rpc_url: "http://{your solana rpc}"
 ingester_config:
   type: "GrpcSubscription"
   grpc_url: "http://{your yellow stone grpc}"
