@@ -1,26 +1,16 @@
-use tokio::sync::mpsc::UnboundedSender;
-mod rpc;
 mod dragon;
+mod rpc;
+use anyhow::Result;
 pub use dragon::GrpcIngester;
 pub use rpc::RpcIngester;
-use {
-    anyhow::Result,
-    futures_util::StreamExt,
-    solana_pubsub_client::nonblocking::pubsub_client::PubsubClient,
-    solana_rpc_client_api::config::{RpcBlockSubscribeConfig, RpcBlockSubscribeFilter},
-    solana_sdk::{bs58, commitment_config::CommitmentConfig},
-};
 
 use {
     solana_sdk::pubkey::Pubkey,
-    solana_transaction_status::{
-        EncodedTransactionWithStatusMeta, UiInnerInstructions, UiInstruction, UiTransactionEncoding,
-    },
     std::{
         error::Error,
         fmt::{self, Display, Formatter},
     },
-    tokio::{sync::mpsc::UnboundedReceiver, task::JoinHandle},
+    tokio::sync::mpsc::UnboundedReceiver,
 };
 
 use crate::types::BonsolInstruction;

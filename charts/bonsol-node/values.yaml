@@ -25,6 +25,7 @@ ingester_config:
   wss_rpc_url: "ws://localhost:8900"
 signer_config:
   type: "KeyPairFile"
+  local_signer_keypair_content: ""
   path: "/opt/bonsol/keys/signer.json" #reccomended to be a volume to share between pods
 risc0_image_folder: "/opt/bonsol/risc0_images" #reccomended to be a volume to share between pods
 

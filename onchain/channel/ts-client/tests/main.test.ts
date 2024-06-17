@@ -13,7 +13,10 @@ import {
   appendTransactionMessageInstruction,
   compileTransaction
 } from '@solana/web3.js';
-
+import {
+  isSolanaError,
+  SOLANA_ERROR__JSON_RPC__SERVER_ERROR_SEND_TRANSACTION_PREFLIGHT_FAILURE
+} from '@solana/errors';
 
 import { pipe } from '@solana/functional';
 import { createDefaultRpcSubscriptionsTransport } from '@solana/web3.js';
@@ -39,12 +42,13 @@ describe('BonsolProgram', () => {
 
   beforeEach(async () => {
     const depl = await deploymentAddress(SIMPLE_IMAGE_ID);
-    console.log(depl)
+
     const deployAccount = await api.getAccountInfo(depl, { commitment: "confirmed", encoding: "base64" }).send();
     if (!deployAccount.value) {
       //deploy
       const keyPair = await kp();
       const pub = await getAddressFromPublicKey(keyPair.publicKey);
+      
       if (process.env.RPC_ENDPOINT == null || process.env.RPC_ENDPOINT == "http://localhost:8899") {
         await api.requestAirdrop(pub, lamports(1000000000n)).send();
       }
@@ -69,20 +73,22 @@ describe('BonsolProgram', () => {
         tx => compileTransaction(tx),
       );
       const signed = await signTransaction([keyPair], txn)
-      const send = pipe(
-        getBase64EncodedWireTransaction(signed),
-        async tx => {
-          await api.sendTransaction(await tx, { skipPreflight: false }).send()
-          return tx;
-        },
-      )
+      try {
+        await api.sendTransaction(getBase64EncodedWireTransaction(signed), { skipPreflight: false, encoding: 'base64' }).send()
+        await api.confirmTransaction(getSignatureFromTransaction(signed), { commitment: "confirmed" }).send()
+      } catch (e) {
+        if (isSolanaError(e, SOLANA_ERROR__JSON_RPC__SERVER_ERROR_SEND_TRANSACTION_PREFLIGHT_FAILURE)) {
+          console.log(e.context)
+        }
+      }
+      
       await pipe(
         api.getTransaction(getSignatureFromTransaction(signed), {
           commitment: "confirmed",
           maxSupportedTransactionVersion: 0
         }).send(),
         async tx => {
-          console.log((await tx)?.meta?.logMessages)
+          console.log("logs", (await tx)?.meta?.logMessages)
           return tx;
         })
 
@@ -91,8 +97,6 @@ describe('BonsolProgram', () => {
 
   it('should create valid execution requests', async () => {
     const keyPair = await kp()
-
-
     const pub = await getAddressFromPublicKey(keyPair.publicKey);
     if (process.env.RPC_ENDPOINT == null || process.env.RPC_ENDPOINT == "http://localhost:8899") {
       await api.requestAirdrop(pub, lamports(1000000000n)).send();
@@ -131,21 +135,20 @@ describe('BonsolProgram', () => {
       );
 
       const signed = await signTransaction([keyPair], txn)
-      const send = pipe(
-        getBase64EncodedWireTransaction(signed),
-        async tx => {
-          await api.sendTransaction(await tx, { skipPreflight: false }).send();
-          return tx;
-        },
-
-      );
+      try {
+        await api.sendTransaction(getBase64EncodedWireTransaction(signed), { skipPreflight: false, encoding: 'base64' }).send()
+      } catch (e) {
+       
+          console.log(e)
+      }
+    
       await pipe(
         api.getTransaction(getSignatureFromTransaction(signed), {
           commitment: "confirmed",
           maxSupportedTransactionVersion: 0
         }).send(),
         async tx => {
-          console.log((await tx)?.meta?.logMessages)
+          console.log("logs",((await tx)?.meta?.logMessages))
           return tx;
         }
       )

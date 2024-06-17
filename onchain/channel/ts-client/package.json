@@ -15,6 +15,7 @@
   "types": "./dist/tsc/main.d.ts",
   "browser": "./dist/esbuild/browser.js",
   "dependencies": {
+    "@solana/errors": "2.0.0-preview.3",
     "@solana/functional":"2.0.0-preview.3",
     "@solana/web3.js": "2.0.0-preview.3",
     "@solana/keys": "2.0.0-preview.3",
