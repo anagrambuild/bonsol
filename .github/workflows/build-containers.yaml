@@ -31,10 +31,8 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Extract Version from Cargo.toml
-        run: echo "VERSION=$GITHUB_HEAD_REF-$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[0].version')" >> $GITHUB_ENV
+        run: echo "VERSION=${{ github.head_ref }}-$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[0].version')" >> $GITHUB_ENV
         working-directory: ./relay  
-        env:
-          GITHUB_HEAD_REF: ${{ github.head_ref }}
 
       - name: Build and Push Docker Image
         uses: docker/build-push-action@v3
