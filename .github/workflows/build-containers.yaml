@@ -31,7 +31,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Extract Version from Cargo.toml
-        run: echo "VERSION=$GITHUB_BRANCH-$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[0].version')" >> $GITHUB_ENV
+        run: echo "VERSION=$GITHUB_HEAD_REF-$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[0].version')" >> $GITHUB_ENV
         working-directory: ./relay  
 
       - name: Build and Push Docker Image
