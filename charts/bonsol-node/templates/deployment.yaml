@@ -64,12 +64,12 @@ spec:
             path: /opt/bonsol/risc0_images/
             type: DirectoryOrCreate
         - name: config
-          secret:
-            secretName: {{ include "bonsol-node.fullname" . }}-config
-            secretKey: Node.toml
+          configMap:
+            name: {{ include "bonsol-node.fullname" . }}-config
+            key: Node.toml
         - name: key
           secret:
-            secretName: {{ include "bonsol-node.fullname" . }}-config
+            secretName: {{ include "bonsol-node.fullname" . }}-secrets
             secretKey: signer.json
 
         {{- with .Values.volumes }}
