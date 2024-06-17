@@ -36,7 +36,7 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command: ["/opt/bonsol/relay", "-f /opt/bonsol/Node.toml"]
+          command: ["/usr/opt/bonsol", "-f /opt/bonsol/Node.toml"]
           ports:
             - name: http
               containerPort: {{ .Values.service.port }}

@@ -32,7 +32,7 @@ COPY --from=builder /app/target/release/relay /usr/opt/bonsol
 COPY --from=risczero/risc0-groth16-prover:v2024-04-03.2 /app/stark_verify /usr/opt/bonsol/stark/stark_verify
 COPY --from=risczero/risc0-groth16-prover:v2024-04-03.2 /app/stark_verify.dat /usr/opt/bonsol/stark/stark_verify.dat
 COPY --from=risczero/risc0-groth16-prover:v2024-04-03.2 /app/stark_verify_final.zkey /usr/opt/bonsol/stark/stark_verify_final.zkey
-COPY --from=risczero/risc0-groth16-prover:v2024-04-03.2 /usr/local/sbin/rapidsnark /app/stark/rapidsnark
+COPY --from=risczero/risc0-groth16-prover:v2024-04-03.2 /usr/local/sbin/rapidsnark /usr/opt/bonsol/stark/rapidsnark
 WORKDIR /usr/opt/bonsol
 ENTRYPOINT ["relay"]
 
