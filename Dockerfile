@@ -36,6 +36,6 @@ COPY --from=risczero/risc0-groth16-prover:v2024-04-03.2 /usr/local/sbin/rapidsna
 WORKDIR /usr/opt/bonsol
 ENTRYPOINT ["relay"]
 
-
-
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates \
+&&  rm -rf /var/lib/apt/lists/*
 
