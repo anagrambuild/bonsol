@@ -5,10 +5,10 @@
 replicaCount: 1
 
 image:
-  repository: 
+  repository: ghcr.io/anagrambuild/bonsol
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: ""
+  tag: cuda-latest
 
 max_input_size_mb: 10
 image_download_timeout_secs: 60

@@ -211,3 +211,9 @@ helm install --set signer_config.local_signer_keypair_path=$(cat ./relaykp.json)
 Ensure you set ```local_signer_keypair_content``` with the content of the relay kp. An example values file is in the helm directory at ```example-values.yaml```.
 
 In a production scenario you will want to use the ```GrpcSubscription``` ingester type to avoid the need for a colocated Solana node. Triton One or Helius offer GRPC streams of solana transactions. We reccomend triton for this as they created the Yellowstone library in use for the Grpc Ingest option in this prover node.
+
+## Running Tests
+There are a few tests in the channel directory. You can run them with `pnpm test`. This will deploy a zk program and start an execution request which the relay will respond to.
+In a locall environment you need to run `solana-test-validator` and then airdrop some money to your relay keypair `solana -u http://localhost:8899 airdrop 1 --keypair relaykp.json`. Then you can run the tests.
+
+For a public network jsut set the `KP` and `RPC_ENDPOINT` env variables to the path of your keypair and run the tests.
