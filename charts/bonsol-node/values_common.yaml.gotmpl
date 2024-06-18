@@ -1,0 +1,37 @@
+{{ $signer_config_path := "/opt/bonsol/keys/signer.json" }}
+{{ $risc0_image_folder := "/opt/bonsol/risc0_images" }}
+---
+image:
+#  repository:  docker.io/zerocomputing/zkp
+#  tag: bonsol-0.1.1
+  repository:  ghcr.io/anagrambuild/bonsol
+  tag: cuda-latest
+
+#service:
+#  type: ClusterIP
+#  port: 80
+
+config_filename: /opt/bonsol/Node.toml
+signer_config_path: {{ $signer_config_path }}
+risc0_image_folder: {{ $risc0_image_folder }}
+
+config: |
+  risc0_image_folder = "{{ $risc0_image_folder }}"
+  max_input_size_mb = 10
+  image_download_timeout_secs = 60
+  input_download_timeout_secs = 60
+  maximum_concurrent_proofs = 1
+  max_image_size_mb = 4
+  image_compression_ttl_hours = 24
+  env = "dev"
+
+  [transaction_sender_config]
+    Rpc = { rpc_url = "https://austbot-devnet-8b12.devnet.rpcpool.com/35c1f5ef-5135-4bc5-9079-198fc968dad1" }
+  [signer_config]
+    KeypairFile = { path = "{{ $signer_config_path }}" }
+  [ingester_config]
+    GrpcSubscription = { grpc_url = "https://austbot-devnet-8b12.devnet.rpcpool.com", token = "35c1f5ef-5135-4bc5-9079-198fc968dad1", connection_timeout_secs = 10, timeout_secs = 10 }
+
+resources:
+ limits:
+   nvidia.com/gpu: 1

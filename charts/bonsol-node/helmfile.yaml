@@ -1,0 +1,25 @@
+helmDefaults:
+  kubeContext: zkp-{{ .Environment.Name }}
+  cleanupOnFail: false
+  atomic: false
+  wait: false
+  createNamespace: true
+
+releases:
+- name: sol
+  namespace: default
+  chart: .
+  values:
+  - values_common.yaml.gotmpl
+
+# Values of resources provisioned by terraform are to be retrieved from AWS parameter store.
+# The paramer name in AWS parameter store containing JSON values is "helmfile_parameters". If the name
+# changes in terraform code, variable $ssmAddr needs to be updated.
+
+environments:
+  {{ .Environment.Name }}:
+    values:
+    #- env/{{ .Environment.Name }}/values.yaml
+    secrets:
+    #- env/{{ .Environment.Name }}/secrets.yaml
+
