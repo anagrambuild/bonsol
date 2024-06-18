@@ -61,7 +61,7 @@ spec:
       volumes:
         - name: images
           hostPath:
-            path: /opt/bonsol/risc0_images/
+            path: {{ .Values.risc0_image_folder }}
             type: DirectoryOrCreate
         - name: config
           configMap:

@@ -4,4 +4,4 @@ target
 test-ledger
 relay/stark_verify
 node_modules
-helm/bonsol-node/secret-values.yaml
+chart/bonsol-node/secret-values.yaml
