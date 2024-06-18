@@ -206,7 +206,7 @@ Fund that keypair with sol, and keep it secret, currently we only support the lo
 # Deploying the Helm Chart 
 A helm chart exists for this project. You can deploy it to a kubernetes cluster. You will need to have a kubernetes cluster and helm installed. 
 ```bash
-helm install --set signer_config.local_signer_keypair_path=$(cat ./relaykp.json) bonsol ./charts/bonsol-node -f ./charts/bonsol-node/secret-values.yaml
+helm install --set-file signer_config.local_signer_keypair_content=relaykp.json bonsol ./charts/bonsol-node -f ./charts/bonsol-node/secret-values.yaml
 ```
 Ensure you set ```local_signer_keypair_content``` with the content of the relay kp. An example values file is in the helm directory at ```example-values.yaml```.
 

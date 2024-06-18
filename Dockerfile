@@ -50,7 +50,7 @@ RUN if [ "$FLAVOR" = "cuda" ]; then \
         apt-get -y install cuda-toolkit-12-5; \
     fi
 WORKDIR /usr/opt/bonsol
-ENTRYPOINT ["relay"]
+CMD ["relay"]
 
 
 

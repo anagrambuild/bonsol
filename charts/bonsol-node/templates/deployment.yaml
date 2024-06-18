@@ -36,7 +36,7 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command: ["/usr/opt/bonsol", "-f /opt/bonsol/Node.toml"]
+          command: ["/usr/opt/bonsol/relay","-f", "/opt/bonsol/Node.toml"]
           ports:
             - name: http
               containerPort: {{ .Values.service.port }}
@@ -54,7 +54,7 @@ spec:
             - name: images
               mountPath:  {{ .Values.risc0_image_folder }}
             - name: config
-              mountPath: /opt/bonsol/
+              mountPath: /opt/bonsol/Node.toml
             {{- with .Values.volumeMounts }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
