@@ -2,9 +2,11 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use dashmap::DashMap;
-use futures::TryFutureExt;
 use itertools::Itertools;
-use solana_sdk::transaction;
+use solana_sdk::{
+    message::{v0, VersionedMessage},
+    transaction::VersionedTransaction,
+};
 use solana_transaction_status::TransactionStatus;
 use tokio::task::JoinHandle;
 use {
@@ -146,13 +148,8 @@ impl TransactionSender for RpcTransactionSender {
                 return Err(anyhow::anyhow!("Failed to get blockhash: {:?}", e));
             }
         };
-        let tx = Transaction::new_signed_with_payer(
-            &[instruction],
-            Some(&self.signer.pubkey()),
-            &[&self.signer],
-            blockhash,
-        );
-
+        let msg = v0::Message::try_compile(&self.signer.pubkey(), &[instruction], &[], blockhash)?;
+        let tx = VersionedTransaction::try_new(VersionedMessage::V0(msg), &[&self.signer])?;
         let sig = self
             .rpc_client
             .send_transaction_with_config(
@@ -242,12 +239,8 @@ impl TransactionSender for RpcTransactionSender {
                 return Err(anyhow::anyhow!("Failed to get blockhash: {:?}", e));
             }
         };
-        let tx = Transaction::new_signed_with_payer(
-            &[instruction],
-            Some(&self.signer.pubkey()),
-            &[&self.signer],
-            blockhash,
-        );
+        let msg = v0::Message::try_compile(&self.signer.pubkey(), &[instruction], &[], blockhash)?;
+        let tx = VersionedTransaction::try_new(VersionedMessage::V0(msg), &[&self.signer])?;
 
         let sig = self
             .rpc_client

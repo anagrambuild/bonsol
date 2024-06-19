@@ -1,12 +1,9 @@
 use crate::error::ChannelError;
 use crate::verifying_key::VERIFYINGKEY;
-use ark_bn254::Fr;
 use ark_serialize::{CanonicalDeserialize, CanonicalSerialize, Compress, Validate};
 use groth16_solana::groth16::Groth16Verifier;
 use hex_literal::hex;
-use num_bigint::BigUint;
 use solana_program::hash::hashv;
-use solana_program::msg;
 use std::ops::Neg;
 type G1 = ark_bn254::g1::G1Affine;
 

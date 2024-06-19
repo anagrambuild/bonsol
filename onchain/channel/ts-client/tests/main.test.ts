@@ -119,6 +119,7 @@ describe('BonsolProgram', () => {
             input: Buffer.from("https://echoserver.dev/server?response=N4IgFgpghgJhBOBnEAuA2mkBjA9gOwBcJCBaAgTwAcIQAaEIgDwIHpKAbKASzxAF0+9AEY4Y5VKArVUDCMzogYUAlBlFEBEAF96G5QFdkKAEwAGU1qA", 'utf-8')
           }
         ],
+        tip: 1000000,
         expiry: ht + 800n, // 400s from now
         requester: pub
       }

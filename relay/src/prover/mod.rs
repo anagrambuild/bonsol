@@ -167,7 +167,6 @@ impl Risc0Runner {
     pub fn start(&mut self) -> Result<UnboundedSender<BonsolInstruction>> {
         let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel::<BonsolInstruction>();
         let loaded_images = self.loaded_images.clone();
-        let txn_sender = self.txn_sender.clone();
 
         let img_client = Arc::new(
             reqwest::Client::builder()
@@ -194,6 +193,7 @@ impl Risc0Runner {
             let mut interval = tokio::time::interval(Duration::from_secs(1));
             loop {
                 let current_block = txn_sender.get_current_block().await.unwrap_or(0);
+                eprintln!("Inflight Proofs {:?}", inflight_proofs.len());
                 inflight_proofs.retain(|_, v| {
                     if v.expiry < current_block {
                         eprintln!("Proof expired: {}", v.execution_id);
@@ -202,8 +202,13 @@ impl Risc0Runner {
                     if let ClaimStatus::Claiming(sig) = &v.status {
                         let status = txn_sender.get_signature_status(sig);
                         return match status {
-                            None => false,
-                            Some(status) => status.err.is_some(),
+                            None => true,
+                            Some(status) => {
+                                if  status.err.is_some() {
+                                    eprintln!("Claim failed");
+                                }
+                                !status.err.is_some()
+                            }
                         };
                     }
                     true
@@ -224,8 +229,10 @@ impl Risc0Runner {
                 let self_id = self_id.clone();
                 let input_staging_area = input_staging_area.clone();
                 let inflight_proofs = inflight_proofs.clone();
+                eprint!("Received instruction");
                 tokio::spawn(async move {
                     let bonsol_ix_type = parse_ix_data(&bix.data)?;
+                    
                     let result = match bonsol_ix_type.ix_type() {
                         ChannelInstructionIxType::DeployV1 => {
                             eprintln!("Received deploy request");
@@ -256,7 +263,7 @@ impl Risc0Runner {
                             .await
                         }
                         ChannelInstructionIxType::ClaimV1 => {
-                            eprintln!("Received deploy request");
+                            eprintln!("Claim Event");
                             let payload = bonsol_ix_type
                                 .claim_v1_nested_flatbuffer()
                                 .ok_or(Risc0RunnerError::EmptyInstruction)?;
@@ -444,7 +451,7 @@ async fn handle_execution_request<'a>(
     // current naive implementation is to accept everything we have pending capacity for on this node, but this needs work
     let inflight = in_flight_proofs.len();
     eprintln!(
-        "Inflight: {} {}",
+        "Inflight: {} Max {}",
         inflight, config.maximum_concurrent_proofs
     );
     if inflight < config.maximum_concurrent_proofs as usize {
