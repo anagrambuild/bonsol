@@ -28,7 +28,6 @@ signer_config:
   local_signer_keypair_content: ""
   path: "/opt/bonsol/keys/signer.json" #reccomended to be a volume to share between pods
 risc0_image_folder: "/opt/bonsol/risc0_images" #reccomended to be a volume to share between pods
-
 imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
