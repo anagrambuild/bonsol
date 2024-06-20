@@ -55,7 +55,14 @@ pub struct ProverNodeConfig {
     pub transaction_sender_config: TransactionSenderConfig,
     #[serde(default = "default_signer_config")]
     pub signer_config: SignerConfig,
+    #[serde(default = "default_stark_compression_tools_path")]
+    pub stark_compression_tools_path: String,
 }
+
+fn default_stark_compression_tools_path() -> String {
+    "./stark ".to_string()
+}
+
 fn default_bonsol_program() -> String {
     "BoNsHRcyLLNdtnoDf8hiCNZpyehMC4FDMxs6NTxFi3ew".to_string()
 }
@@ -120,7 +127,8 @@ impl Default for ProverNodeConfig {
             maximum_concurrent_proofs: default_maximum_concurrent_proofs(),
             ingester_config: default_ingester_config(),
             transaction_sender_config: default_transaction_sender_config(),
-            signer_config: default_signer_config()
+            signer_config: default_signer_config(),
+            stark_compression_tools_path: default_stark_compression_tools_path(),
         }
     }
 }

@@ -7,12 +7,12 @@ use crate::execution_request_v1_generated::*;
 use crate::status_v1_generated::*;
 use crate::claim_v1_generated::*;
 use crate::deploy_v1_generated::*;
-use crate::input_type_generated::*;
-use core::mem;
-use core::cmp::Ordering;
+
+
+
 
 extern crate flatbuffers;
-use self::flatbuffers::{EndianScalar, Follow};
+use self::flatbuffers::{Follow};
 
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
 pub const ENUM_MIN_CHANNEL_INSTRUCTION_IX_TYPE: u8 = 0;
@@ -226,7 +226,7 @@ impl flatbuffers::Verifiable for ChannelInstruction<'_> {
   fn run_verifier(
     v: &mut flatbuffers::Verifier, pos: usize
   ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
-    use self::flatbuffers::Verifiable;
+    
     v.visit_table(pos)?
      .visit_field::<ChannelInstructionIxType>("ix_type", Self::VT_IX_TYPE, false)?
      .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, u8>>>("execute_v1", Self::VT_EXECUTE_V1, false)?

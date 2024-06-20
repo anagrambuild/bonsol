@@ -59,16 +59,15 @@ pub fn verify_risc0(proof: &[u8], inputs: &[u8]) -> Result<bool, ChannelError> {
         .map_err(|_| ChannelError::ProofVerificationFailed)
 }
 
-const CONTROL_ID_0_BYTES: [u8; 32] =
-    hex!("0000000000000000000000000000000051a3d73938c3681118ba0a2549f7c188");
-const CONTROL_ID_1_BYTES: [u8; 32] =
-    hex!("0000000000000000000000000000000044f39e6e6cef91de6d743e7f5b7a1e67");
+const CONTROL_ROOT: [u8; 32] =
+    hex!("a516a057c9fbf5629106300934d48e0e775d4230e41e503347cad96fcbde7e2e");
 const BN254_CONTROL_ID_BYTES: [u8; 32] =
-    hex!("10ff834dbef62ccbba201ecd26a772e3036a075aacbaf47200679a11dcdcf10d");
+    hex!("0eb6febcf06c5df079111be116f79bd8c7e85dc9448776ef9a59aaf2624ab551");
 const OUTPUT_HASH: [u8; 32] =
     hex!("77eafeb366a78b47747de0d7bb176284085ff5564887009a5be63da32d3559d4");
 const RECIEPT_CLAIM_HASH: [u8; 32] =
     hex!("cb1fefcd1f2d9a64975cbbbf6e161e2914434b0cbb9960b84df5d717e86b48af");
+
 pub fn output_digest(
     input_digest: &[u8],
     committed_outputs: &[u8],
@@ -104,11 +103,12 @@ pub fn prepare_inputs(
         &4u16.to_le_bytes(),
     ])
     .to_bytes();
+    let (c0,c1) = split_digest(&mut CONTROL_ROOT.clone()).map_err(|_| ChannelError::InvalidFieldElement)?;
     let (half1_bytes, half2_bytes) =
         split_digest(&mut digest).map_err(|_| ChannelError::InvalidFieldElement)?;
     let inputs = [
-        CONTROL_ID_0_BYTES,
-        CONTROL_ID_1_BYTES,
+        c0,
+        c1,
         half1_bytes.try_into().unwrap(),
         half2_bytes.try_into().unwrap(),
         BN254_CONTROL_ID_BYTES,
@@ -117,13 +117,15 @@ pub fn prepare_inputs(
     Ok(inputs)
 }
 
-pub fn split_digest(d: &mut [u8]) -> Result<(Vec<u8>, Vec<u8>), ChannelError> {
+pub fn split_digest(d: &mut [u8]) -> Result<([u8;32], [u8;32]), ChannelError> {
     d.reverse();
-    let (a, b) = d.split_at_mut(16);
+    let (a, b) = d.split_at(16);
     let af = to_fixed_array(a.to_vec());
     let bf = to_fixed_array(b.to_vec());
-    Ok((bf.to_vec(), af.to_vec()))
+    Ok((bf, af))
 }
+
+
 
 fn to_fixed_array(input: Vec<u8>) -> [u8; 32] {
     let mut fixed_array = [0u8; 32];

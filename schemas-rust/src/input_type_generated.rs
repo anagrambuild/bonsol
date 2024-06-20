@@ -3,11 +3,11 @@
 
 // @generated
 
-use core::mem;
-use core::cmp::Ordering;
+
+
 
 extern crate flatbuffers;
-use self::flatbuffers::{EndianScalar, Follow};
+
 
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
 pub const ENUM_MIN_PROGRAM_INPUT_TYPE: u8 = 0;
@@ -255,7 +255,7 @@ impl flatbuffers::Verifiable for Input<'_> {
   fn run_verifier(
     v: &mut flatbuffers::Verifier, pos: usize
   ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
-    use self::flatbuffers::Verifiable;
+    
     v.visit_table(pos)?
      .visit_field::<InputType>("input_type", Self::VT_INPUT_TYPE, false)?
      .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, u8>>>("data", Self::VT_DATA, false)?
