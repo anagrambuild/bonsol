@@ -1,0 +1,98 @@
+# Default values for bonsol-node.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  repository: ghcr.io/anagrambuild/bonsol
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: cuda-latest
+
+max_input_size_mb: 10
+image_download_timeout_secs: 60
+input_download_timeout_secs: 60
+maximum_concurrent_proofs: 1
+max_image_size_mb: 4
+image_compression_ttl_hours: 24
+bonsol_env: "dev"
+transaction_sending_config:
+  type: "Rpc"
+  rpc_url: "http://localhost:8899"
+ingester_config:
+  type: "RpcBlockSubscription"
+  wss_rpc_url: "ws://localhost:8900"
+signer_config:
+  type: "KeyPairFile"
+  local_signer_keypair_content: ""
+  path: "/opt/bonsol/keys/signer.json" #reccomended to be a volume to share between pods
+risc0_image_folder: "/opt/bonsol/risc0_images" #reccomended to be a volume to share between pods
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Automatically mount a ServiceAccount's API credentials?
+  automount: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+service:
+  type: ClusterIP
+  port: 80
+
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+livenessProbe:
+  httpGet:
+    path: /
+    port: http
+readinessProbe:
+  httpGet:
+    path: /
+    port: http
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+
+volumes: []
+volumeMounts: []
+nodeSelector: {}
+tolerations: []
+affinity: {}

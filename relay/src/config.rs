@@ -9,8 +9,12 @@ use {
 #[derive(Debug, Deserialize, Clone)]
 pub enum IngesterConfig {
     RpcBlockSubscription { wss_rpc_url: String },
-    //--- below not implemented yet
-    GrpcSub,      //not implemented
+    GrpcSubscription {
+        grpc_url: String,
+        connection_timeout_secs: u32,
+        timeout_secs: u32,
+        token: String,
+    },
     WebsocketSub, //not implemented
 }
 
@@ -51,20 +55,12 @@ pub struct ProverNodeConfig {
     pub transaction_sender_config: TransactionSenderConfig,
     #[serde(default = "default_signer_config")]
     pub signer_config: SignerConfig,
-    #[serde(default = "default_capacity_config")]
-    pub capacity_config: CapacityConfig,
+    #[serde(default = "default_stark_compression_tools_path")]
+    pub stark_compression_tools_path: String,
 }
 
-#[derive(Debug, Deserialize, Clone)]
-pub struct CapacityConfig {
-    pub max_inflight_proofs: u32,
-}
-
-fn default_capacity_config() -> CapacityConfig {
-    CapacityConfig {
-        max_inflight_proofs: 100,
-        //support for other capacity configs pending
-    }
+fn default_stark_compression_tools_path() -> String {
+    "./stark ".to_string()
 }
 
 fn default_bonsol_program() -> String {
@@ -132,7 +128,7 @@ impl Default for ProverNodeConfig {
             ingester_config: default_ingester_config(),
             transaction_sender_config: default_transaction_sender_config(),
             signer_config: default_signer_config(),
-            capacity_config: default_capacity_config(),
+            stark_compression_tools_path: default_stark_compression_tools_path(),
         }
     }
 }

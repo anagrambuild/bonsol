@@ -215,7 +215,6 @@ impl<'a, 'b> ExecuteAccounts<'a, 'b> {
                 execution_id: evec,
                 exec_bump: None,
             };
-
             check_writable_signer(ea.requester, ChannelError::InvalidRequesterAccount)?;
             check_writable_signer(ea.payer, ChannelError::InvalidPayerAccount)?;
             check_writeable(ea.exec, ChannelError::InvalidExecutionAccount)?;

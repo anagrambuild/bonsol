@@ -1,0 +1,26 @@
+image:
+  repository: ghcr.io/anagrambuild/bonsol
+  pullPolicy: IfNotPresent
+  tag: cuda-slim
+replicaCount: 1
+max_input_size_mb: 10
+image_download_timeout_secs: 60
+input_download_timeout_secs: 60
+maximum_concurrent_proofs: 1
+max_image_size_mb: 4
+image_compression_ttl_hours: 24
+env: "devnet"
+transaction_sending_config:
+  type: "Rpc"
+  rpc_url: "http://{your solana rpc}"
+ingester_config:
+  type: "GrpcSubscription"
+  grpc_url: "http://{your yellow stone grpc}"
+  token: "your token here"
+  connection_timeout_secs: 10
+  timeout_secs: 10
+signer_config:
+  type: "KeyPairFile"
+  path: "/opt/bonsol/keys/signer.json" 
+risc0_image_folder: "/opt/bonsol/risc0_images"
+

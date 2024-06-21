@@ -1,12 +1,16 @@
 mod image;
 mod utils;
-use std::{any::Any, env::consts::ARCH, io::Cursor, path::Path};
-use crate::{callback::TransactionSender, config::ProverNodeConfig, risc0::utils::async_to_json, util::get_body_max_size};
 use self::image::Image;
+use crate::{
+    callback::{RpcTransactionSender, TransactionSender},
+    config::ProverNodeConfig,
+    prover::utils::async_to_json,
+    util::get_body_max_size,
+};
+use std::{env::consts::ARCH, io::Cursor, path::Path};
 use {
     anagram_bonsol_schema::{ClaimV1, DeployV1, ExecutionRequestV1, InputType, ProgramInputType},
     ark_bn254::Bn254,
-    ark_serialize::CanonicalSerialize,
     dashmap::DashMap,
 };
 use {
@@ -26,10 +30,11 @@ use {
     },
 };
 
-use risc0_circuit_recursion::control_id::BN254_CONTROL_ID;
-use risc0_groth16::{split_digest, ProofJson, Seal};
+use risc0_groth16::{ProofJson, Seal};
 use risc0_zkp::verify::VerificationError;
-use risc0_zkvm::{sha::Digest, Assumptions, CompositeReceipt, MaybePruned, Output, Receipt, ALLOWED_IDS_ROOT};
+use risc0_zkvm::{
+    sha::Digest, Assumptions, CompositeReceipt, InnerReceipt, MaybePruned, ReceiptClaim,
+};
 use tempfile::tempdir;
 use tokio::{fs::File, io::AsyncReadExt, process::Command, task::JoinSet};
 
@@ -124,7 +129,8 @@ pub struct Risc0Runner {
     config: Arc<ProverNodeConfig>,
     loaded_images: LoadedImageMap,
     worker_handle: Option<JoinHandle<Result<()>>>,
-    txn_sender: Arc<TransactionSender>,
+    inflight_proof_worker_handle: Option<JoinHandle<Result<()>>>,
+    txn_sender: Arc<RpcTransactionSender>,
     input_staging_area: InputStagingArea,
     self_identity: Arc<Pubkey>,
     inflight_proofs: InflightProofs,
@@ -135,7 +141,7 @@ impl Risc0Runner {
         config: ProverNodeConfig,
         self_identity: Pubkey,
         image_dir: String,
-        txn_sender: Arc<TransactionSender>,
+        txn_sender: Arc<RpcTransactionSender>,
     ) -> Result<Risc0Runner> {
         let dir = fs::read_dir(image_dir)?;
         let loaded_images = DashMap::new();
@@ -152,6 +158,7 @@ impl Risc0Runner {
             config: Arc::new(config),
             loaded_images: Arc::new(loaded_images),
             worker_handle: None,
+            inflight_proof_worker_handle: None,
             txn_sender,
             input_staging_area: Arc::new(DashMap::new()),
             self_identity: Arc::new(self_identity),
@@ -162,7 +169,6 @@ impl Risc0Runner {
     pub fn start(&mut self) -> Result<UnboundedSender<BonsolInstruction>> {
         let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel::<BonsolInstruction>();
         let loaded_images = self.loaded_images.clone();
-        let txn_sender = self.txn_sender.clone();
 
         let img_client = Arc::new(
             reqwest::Client::builder()
@@ -184,6 +190,37 @@ impl Risc0Runner {
         let self_id = self.self_identity.clone();
         let input_staging_area = self.input_staging_area.clone();
         let inflight_proofs = self.inflight_proofs.clone();
+        let txn_sender = self.txn_sender.clone();
+        self.inflight_proof_worker_handle = Some(tokio::spawn(async move {
+            let mut interval = tokio::time::interval(Duration::from_secs(1));
+            loop {
+                let current_block = txn_sender.get_current_block().await.unwrap_or(0);
+                eprintln!("Inflight Proofs {:?}", inflight_proofs.len());
+                inflight_proofs.retain(|_, v| {
+                    if v.expiry < current_block {
+                        eprintln!("Proof expired: {}", v.execution_id);
+                        return false;
+                    }
+                    if let ClaimStatus::Claiming(sig) = &v.status {
+                        let status = txn_sender.get_signature_status(sig);
+                        return match status {
+                            None => true,
+                            Some(status) => {
+                                if status.err.is_some() {
+                                    eprintln!("Claim failed");
+                                }
+                                !status.err.is_some()
+                            }
+                        };
+                    }
+                    true
+                });
+                interval.tick().await;
+            }
+        }));
+
+        let inflight_proofs = self.inflight_proofs.clone();
+        let txn_sender = self.txn_sender.clone();
         self.worker_handle = Some(tokio::spawn(async move {
             while let Some(bix) = rx.recv().await {
                 let txn_sender = txn_sender.clone();
@@ -194,8 +231,10 @@ impl Risc0Runner {
                 let self_id = self_id.clone();
                 let input_staging_area = input_staging_area.clone();
                 let inflight_proofs = inflight_proofs.clone();
+                eprint!("Received instruction");
                 tokio::spawn(async move {
                     let bonsol_ix_type = parse_ix_data(&bix.data)?;
+
                     let result = match bonsol_ix_type.ix_type() {
                         ChannelInstructionIxType::DeployV1 => {
                             eprintln!("Received deploy request");
@@ -226,7 +265,7 @@ impl Risc0Runner {
                             .await
                         }
                         ChannelInstructionIxType::ClaimV1 => {
-                            eprintln!("Received deploy request");
+                            eprintln!("Claim Event");
                             let payload = bonsol_ix_type
                                 .claim_v1_nested_flatbuffer()
                                 .ok_or(Risc0RunnerError::EmptyInstruction)?;
@@ -243,9 +282,7 @@ impl Risc0Runner {
                             )
                             .await
                         }
-                        ChannelInstructionIxType::StatusV1 => {
-                            Ok(())
-                        }
+                        ChannelInstructionIxType::StatusV1 => Ok(()),
                         _ => {
                             eprintln!("Unknown instruction type");
                             Ok(())
@@ -268,12 +305,12 @@ impl Risc0Runner {
     }
 }
 
-async fn handle_claim<'a>(
+pub async fn handle_claim<'a>(
     config: &ProverNodeConfig,
     self_identity: &Pubkey,
     in_flight_proofs: InflightProofRef<'a>,
     input_client: Arc<reqwest::Client>,
-    transaction_sender: &TransactionSender,
+    transaction_sender: &RpcTransactionSender,
     loaded_images: LoadedImageMapRef<'a>,
     input_staging_area: InputStagingAreaRef<'a>,
     claim: ClaimV1<'a>,
@@ -360,22 +397,26 @@ async fn handle_claim<'a>(
                 eprintln!("Inputs resolved, generating proof");
                 let (eid, inputs) = input_staging_area.remove(execution_id).unwrap();
                 let mem_image = image.get_memory_image()?;
-                let result: Result<(Journal, Digest,SuccinctReceipt), Risc0RunnerError> =
-                    tokio::task::spawn_blocking(move || {
-                        risc0_prove(mem_image, inputs).map_err(|e| {
-                            eprintln!("Error generating proof: {:?}", e);
-                            Risc0RunnerError::ProofGenerationError
-                        })
+                let result: Result<
+                    (Journal, Digest, SuccinctReceipt<ReceiptClaim>),
+                    Risc0RunnerError,
+                > = tokio::task::spawn_blocking(move || {
+                    risc0_prove(mem_image, inputs).map_err(|e| {
+                        eprintln!("Error generating proof: {:?}", e);
+                        Risc0RunnerError::ProofGenerationError
                     })
-                    .await?;
+                })
+                .await?;
 
                 if let Ok((journal, assumptions_digest, reciept)) = result {
                     let compressed_receipt =
-                        risc0_docker_compress_proof(reciept).await.map_err(|e| {
-                            eprintln!("Error compressing proof: {:?}", e);
-                            Risc0RunnerError::ProofCompressionError
-                        })?;
-                        
+                        risc0_compress_proof(config.stark_compression_tools_path.as_str(), reciept)
+                            .await
+                            .map_err(|e| {
+                                eprintln!("Error compressing proof: {:?}", e);
+                                Risc0RunnerError::ProofCompressionError
+                            })?;
+
                     let (input_digest, committed_outputs) = journal.bytes.split_at(32);
                     let sig = transaction_sender
                         .submit_proof(
@@ -406,7 +447,7 @@ async fn handle_execution_request<'a>(
     config: &ProverNodeConfig,
     in_flight_proofs: InflightProofRef<'a>,
     input_client: Arc<reqwest::Client>,
-    transaction_sender: &TransactionSender,
+    transaction_sender: &RpcTransactionSender,
     loaded_images: LoadedImageMapRef<'a>,
     input_staging_area: InputStagingAreaRef<'a>,
     _execution_block: u64,
@@ -416,10 +457,10 @@ async fn handle_execution_request<'a>(
     // current naive implementation is to accept everything we have pending capacity for on this node, but this needs work
     let inflight = in_flight_proofs.len();
     eprintln!(
-        "Inflight: {} {}",
-        inflight, config.capacity_config.max_inflight_proofs
+        "Inflight: {} Max {}",
+        inflight, config.maximum_concurrent_proofs
     );
-    if inflight < config.capacity_config.max_inflight_proofs as usize {
+    if inflight < config.maximum_concurrent_proofs as usize {
         let eid = exec
             .execution_id()
             .map(|d| d.to_string())
@@ -624,7 +665,7 @@ async fn handle_image_deployment<'a>(
 fn risc0_prove(
     memory_image: MemoryImage,
     sorted_inputs: Vec<ProgramInput>,
-) -> Result<(Journal, Digest, SuccinctReceipt)> {
+) -> Result<(Journal, Digest, SuccinctReceipt<ReceiptClaim>)> {
     let mut env_builder = ExecutorEnv::builder();
     for input in sorted_inputs.into_iter() {
         match input {
@@ -643,23 +684,23 @@ fn risc0_prove(
     // Obtain the default prover.
     let opts = ProverOpts::default();
     let ctx = VerifierContext::default();
-    let prover = get_prover_server(&opts).unwrap();
-    let receipt = prover.prove_session(&ctx, &session).unwrap();
-    let composite_receipt = receipt.inner.composite().unwrap();
-    let succinct_receipt = prover.compress(composite_receipt).unwrap();
-    let ident_receipt = identity_p254(&succinct_receipt).unwrap();
-    let assumptions = assumptions_claim(composite_receipt)?;
-    Ok((receipt.journal, assumptions.digest(), ident_receipt))
+    let prover = get_prover_server(&opts)?;
+    let info = prover.prove_session(&ctx, &session)?;
+    if let InnerReceipt::Composite(cr) = &info.receipt.inner {
+        let sr = prover.composite_to_succinct(&cr)?;
+        let ident_receipt = identity_p254(&sr)?;
+        if let MaybePruned::Value(rc) = sr.claim {
+            if let MaybePruned::Value(Some(op)) = rc.output {
+                if let MaybePruned::Value(ass) = op.assumptions {
+                    return Ok((info.receipt.journal, ass.digest(), ident_receipt));
+                }
+            }
+        }
+    }
+
+    return Err(Risc0RunnerError::ProofGenerationError.into());
 }
 
-fn assumptions_claim(cr:&CompositeReceipt) -> Result<Assumptions, VerificationError> {
-    Ok(Assumptions(
-        cr.assumptions
-            .iter()
-            .map(|a| Ok(a.get_claim()?.into()))
-            .collect::<Result<Vec<_>, _>>()?,
-    ))
-}
 pub struct CompressedReciept {
     pub execution_digest: Vec<u8>,
     pub exit_code_system: u32,
@@ -668,8 +709,9 @@ pub struct CompressedReciept {
 }
 /// Compresses the proof to be sent to the blockchain
 /// This is a temporary solution until the wasm groth16 prover or a rust impl is working
-async fn risc0_docker_compress_proof(
-    succint_receipt: SuccinctReceipt,
+async fn risc0_compress_proof(
+    tools_path: &str,
+    succint_receipt: SuccinctReceipt<ReceiptClaim>,
 ) -> Result<CompressedReciept> {
     let sealbytes = succint_receipt.get_seal_bytes();
     if !(ARCH == "x86_64" || ARCH == "x86") {
@@ -677,12 +719,13 @@ async fn risc0_docker_compress_proof(
     }
     let tmp = tempdir()?;
     let prove_dir = tmp.path();
+    let root_path = Path::new(tools_path);
     let mut cursor = Cursor::new(&sealbytes);
     let inputs = prove_dir.join("input.json");
     let witness = prove_dir.join("out.wtns");
     let input_file = File::create(&inputs).await?;
     async_to_json(&mut cursor, input_file).await?;
-    let status = Command::new("stark/stark_verify")
+    let status = Command::new(root_path.join("stark_verify"))
         .arg(inputs.clone())
         .arg(witness.clone())
         .output()
@@ -691,10 +734,10 @@ async fn risc0_docker_compress_proof(
         eprintln!("witness {:?}", status);
         return Err(Risc0RunnerError::ProofCompressionError.into());
     }
-    let zkey = Path::new("stark/stark_verify_final.zkey");
+    let zkey = root_path.join("stark_verify_final.zkey");
     let proof_out = prove_dir.join("proof.json");
     let public = prove_dir.join("public.json");
-    let snark_status = Command::new("stark/rapidsnark")
+    let snark_status = Command::new(root_path.join("rapidsnark"))
         .arg(zkey)
         .arg(witness)
         .arg(proof_out.clone())
@@ -712,16 +755,22 @@ async fn risc0_docker_compress_proof(
     let proof: ProofJson = serde_json::from_slice(&bytes)?;
     let seal: Seal = proof.try_into()?;
     let claim = succint_receipt.claim;
-    let (system, user) = match claim.exit_code {
-        ExitCode::Halted(user_exit) => (0, user_exit),
-        ExitCode::Paused(user_exit) => (1, user_exit),
-        ExitCode::SystemSplit => (2, 0),
-        ExitCode::SessionLimit => (2, 2),
-    };
-    Ok(CompressedReciept {
-        execution_digest: claim.post.digest().as_bytes().to_vec(),
-        exit_code_system: system,
-        exit_code_user: user,
-        proof: seal.to_vec(),
-    })
+   if let MaybePruned::Value(rc)= claim {
+        let (system, user )= match rc.exit_code {
+            ExitCode::Halted(user_exit) => (0, user_exit),
+            ExitCode::Paused(user_exit) => (1, user_exit),
+            ExitCode::SystemSplit => (2, 0),
+            ExitCode::SessionLimit => (2, 2),
+        };
+        Ok(CompressedReciept {
+            execution_digest: rc.post.digest().as_bytes().to_vec(),
+            exit_code_system: system,
+            exit_code_user: user,
+            proof: seal.to_vec()
+        })
+    }
+    else {
+        Err(Risc0RunnerError::ProofCompressionError.into())
+    }
+    
 }

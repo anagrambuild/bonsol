@@ -15,9 +15,10 @@
   "types": "./dist/tsc/main.d.ts",
   "browser": "./dist/esbuild/browser.js",
   "dependencies": {
-    "@solana/functional": "2.0.0-experimental.55e373b",
-    "@solana/rpc-core": "0.0.0-experimental.df45965",
-    "@solana/web3.js": "2.0.0-experimental.0e03ca9",
+    "@solana/errors": "2.0.0-preview.3",
+    "@solana/functional":"2.0.0-preview.3",
+    "@solana/web3.js": "2.0.0-preview.3",
+    "@solana/keys": "2.0.0-preview.3",
     "bonsol-schemas": "workspace:*",
     "flatbuffers": "23.5.26",
     "@noble/hashes": "1.4.0"

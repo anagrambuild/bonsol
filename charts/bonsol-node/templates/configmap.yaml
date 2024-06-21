@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "bonsol-node.fullname" . }}-config
+  labels:
+    {{- include "bonsol-node.labels" . | nindent 4 }}
+data:
+  Node.toml: | 
+    risc0_image_folder = {{ .Values.risc0_image_folder | quote }}
+    max_input_size_mb = {{ .Values.max_input_size_mb }}
+    image_download_timeout_secs = {{ .Values.image_download_timeout_secs }}
+    input_download_timeout_secs = {{ .Values.input_download_timeout_secs }}
+    maximum_concurrent_proofs = {{ .Values.maximum_concurrent_proofs }}
+    max_image_size_mb = {{ .Values.max_image_size_mb }}
+    image_compression_ttl_hours = {{ .Values.image_compression_ttl_hours }}
+    env = {{ .Values.bonsol_env | quote }}
+    stark_compression_tools_path = /usr/opt/bonsol/stark/
+    [transaction_sender_config]
+      {{- if eq .Values.transaction_sending_config.type "Rpc" }}
+      Rpc = { rpc_url = {{ .Values.transaction_sending_config.rpc_url | quote }} }
+      {{- end }}
+    [signer_config]
+      {{- if eq .Values.signer_config.type "KeypairFile" }}
+      KeypairFile = { path = {{ .Values.signer_config.path | quote }} }
+      {{- end }}
+    [ingester_config]
+      {{- if eq .Values.ingester_config.type "RpcBlockSubscription" }}
+      RpcBlockSubscription = { wss_rpc_url = {{ .Values.ingester_config.wss_rpc_url | quote }} }
+      {{- end }}
+      {{- if eq .Values.ingester_config.type "GrpcSubscription" }}
+      GrpcSubscription = { grpc_url = {{ .Values.ingester_config.grpc_url | quote }}, token = {{ .Values.ingester_config.token | quote  }}, connection_timeout_secs = {{ .Values.ingester_config.connection_timeout_secs }}, timeout_secs = {{ .Values.ingester_config.timeout_secs }} }
+      {{- end }}
+    
