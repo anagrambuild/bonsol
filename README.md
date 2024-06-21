@@ -192,6 +192,7 @@ I run "./build-images.sh".
 
 Then "./validator" and "./run-relay.sh" , and run the ts-client tests in `channel` directory with `pnpm test` in three different terminals. This will deploy a zk program and start an execution request which the relay will respond to.
 
+
 # Running a Prover Node
 The prover node is a binary that comes from the relay package. You configure it with the Node.toml file. There are a variety of options in there. `relay/src/config.rs` shows all the configurations. There are alot of defaults.
 The key parts are the keypair, transaction sender and the ingester config. Because the groth16 prover is a heavy process the node that you run the prover on needs to allow alow a high stack limit. In the `./run-relay.sh` we use `ulimit -s unlimited` to allow the prover to run.
@@ -217,3 +218,4 @@ There are a few tests in the `onchain/channel/ts-client` directory. You can run 
 In a locall environment you need to run `solana-test-validator` and then airdrop some money to your relay keypair `solana -u http://localhost:8899 airdrop 1 --keypair relaykp.json`. Then you can run the tests.
 
 For a public network jsut set the `KP` and `RPC_ENDPOINT` env variables to the path of your keypair and run the tests.
+
