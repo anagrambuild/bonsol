@@ -9,7 +9,7 @@ image:
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
   tag: cuda-latest
-
+metrics: false
 max_input_size_mb: 10
 image_download_timeout_secs: 60
 input_download_timeout_secs: 60

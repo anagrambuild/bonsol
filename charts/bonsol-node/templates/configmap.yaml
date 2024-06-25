@@ -15,6 +15,10 @@ data:
     image_compression_ttl_hours = {{ .Values.image_compression_ttl_hours }}
     env = {{ .Values.bonsol_env | quote }}
     stark_compression_tools_path = /usr/opt/bonsol/stark/
+    {{- if .Values.metrics }}
+    [metrics_config]
+      Prometheus = {}
+    {{- end }}
     [transaction_sender_config]
       {{- if eq .Values.transaction_sending_config.type "Rpc" }}
       Rpc = { rpc_url = {{ .Values.transaction_sending_config.rpc_url | quote }} }
