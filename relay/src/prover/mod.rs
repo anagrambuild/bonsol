@@ -1,6 +1,7 @@
 mod image;
 mod utils;
 use self::image::Image;
+use crate::observe::*;
 use crate::{
     callback::{RpcTransactionSender, TransactionSender},
     config::ProverNodeConfig,
@@ -10,7 +11,6 @@ use crate::{
 use std::{env::consts::ARCH, io::Cursor, path::Path};
 use {
     anagram_bonsol_schema::{ClaimV1, DeployV1, ExecutionRequestV1, InputType, ProgramInputType},
-    ark_bn254::Bn254,
     dashmap::DashMap,
 };
 use {
@@ -31,18 +31,15 @@ use {
 };
 
 use risc0_groth16::{ProofJson, Seal};
-use risc0_zkp::verify::VerificationError;
-use risc0_zkvm::{
-    sha::Digest, Assumptions, CompositeReceipt, InnerReceipt, MaybePruned, ReceiptClaim,
-};
+use risc0_zkvm::{sha::Digest, InnerReceipt, MaybePruned, ReceiptClaim};
 use tempfile::tempdir;
 use tokio::{fs::File, io::AsyncReadExt, process::Command, task::JoinSet};
+use tracing::{error, info};
 
 use {
     crate::types::{BonsolInstruction, ProgramExec},
     anagram_bonsol_schema::{parse_ix_data, ChannelInstructionIxType},
     anyhow::Result,
-    ark_groth16::Groth16,
     risc0_zkvm::{
         get_prover_server, recursion::identity_p254, sha::Digestible, ExecutorEnv, ExecutorImpl,
         ProverOpts, VerifierContext,
@@ -50,7 +47,6 @@ use {
     thiserror::Error,
     tokio::{sync::mpsc::UnboundedSender, task::JoinHandle},
 };
-type GrothBn = Groth16<Bn254>;
 
 #[derive(Debug, Error)]
 pub enum Risc0RunnerError {
@@ -113,14 +109,14 @@ type InputStagingArea = Arc<DashMap<String, Vec<ProgramInput>>>;
 type InputStagingAreaRef<'a> = &'a DashMap<String, Vec<ProgramInput>>;
 
 #[derive(Debug, Clone)]
-struct UnresolvedInput {
+pub struct UnresolvedInput {
     pub index: u8,
     pub url: Url,
     pub input_type: ProgramInputType,
 }
 
 #[derive(Debug, Clone)]
-struct ResolvedInput {
+pub struct ResolvedInput {
     pub index: u8,
     pub data: Vec<u8>,
     pub input_type: ProgramInputType,
@@ -149,7 +145,7 @@ impl Risc0Runner {
             let entry = entry?;
             if entry.file_type()?.is_file() {
                 let img = Image::new(entry.path()).await?;
-                println!("Loaded image: {}", &img.id);
+                info!("Loaded image: {}", &img.id);
                 loaded_images.insert(img.id.clone(), img);
             }
         }
@@ -195,10 +191,9 @@ impl Risc0Runner {
             let mut interval = tokio::time::interval(Duration::from_secs(1));
             loop {
                 let current_block = txn_sender.get_current_block().await.unwrap_or(0);
-                eprintln!("Inflight Proofs {:?}", inflight_proofs.len());
                 inflight_proofs.retain(|_, v| {
                     if v.expiry < current_block {
-                        eprintln!("Proof expired: {}", v.execution_id);
+                        emit_event!(MetricEvents::ProofExpired, execution_id => v.execution_id.clone());
                         return false;
                     }
                     if let ClaimStatus::Claiming(sig) = &v.status {
@@ -207,7 +202,7 @@ impl Risc0Runner {
                             None => true,
                             Some(status) => {
                                 if status.err.is_some() {
-                                    eprintln!("Claim failed");
+                                    info!("Claim failed");
                                 }
                                 !status.err.is_some()
                             }
@@ -231,22 +226,19 @@ impl Risc0Runner {
                 let self_id = self_id.clone();
                 let input_staging_area = input_staging_area.clone();
                 let inflight_proofs = inflight_proofs.clone();
-                eprint!("Received instruction");
                 tokio::spawn(async move {
                     let bonsol_ix_type = parse_ix_data(&bix.data)?;
-
                     let result = match bonsol_ix_type.ix_type() {
                         ChannelInstructionIxType::DeployV1 => {
-                            eprintln!("Received deploy request");
-                            // Download image if node config allows
                             let payload = bonsol_ix_type
                                 .deploy_v1_nested_flatbuffer()
                                 .ok_or(Risc0RunnerError::EmptyInstruction)?;
+                            emit_counter!(MetricEvents::ImageDeployment, 1, "image_id" => payload.image_id().clone().unwrap_or_default());
                             handle_image_deployment(&config, &img_client, payload, &loaded_images)
                                 .await
                         }
                         ChannelInstructionIxType::ExecuteV1 => {
-                            eprintln!("Received execution request");
+                            info!("Received execution request");
                             // Evaluate the execution request and decide if it should be claimed
                             let payload = bonsol_ix_type
                                 .execute_v1_nested_flatbuffer()
@@ -265,7 +257,7 @@ impl Risc0Runner {
                             .await
                         }
                         ChannelInstructionIxType::ClaimV1 => {
-                            eprintln!("Claim Event");
+                            info!("Claim Event");
                             let payload = bonsol_ix_type
                                 .claim_v1_nested_flatbuffer()
                                 .ok_or(Risc0RunnerError::EmptyInstruction)?;
@@ -284,12 +276,12 @@ impl Risc0Runner {
                         }
                         ChannelInstructionIxType::StatusV1 => Ok(()),
                         _ => {
-                            eprintln!("Unknown instruction type");
+                            info!("Unknown instruction type");
                             Ok(())
                         }
                     };
                     if result.is_err() {
-                        eprintln!("Error: {:?}", result);
+                        info!("Error: {:?}", result);
                     }
                     result
                 });
@@ -316,17 +308,22 @@ pub async fn handle_claim<'a>(
     claim: ClaimV1<'a>,
     accounts: &[Pubkey], // need to create cannonical parsing of accounts per instruction type for my flatbuffer model or use shank
 ) -> Result<()> {
-    eprintln!("Received claim event");
+    info!("Received claim event");
     let claimer = accounts[2];
     let execution_id = claim.execution_id().ok_or(Risc0RunnerError::InvalidData)?;
     if &claimer != self_identity {
-        in_flight_proofs.remove(execution_id);
-        print!("Claimer is not self, we didnt win the claim.");
+        let attempt = in_flight_proofs.remove(execution_id);
+        if let Some((ifp, claim)) = attempt {
+            if let ClaimStatus::Claiming(sig) = claim.status {
+                emit_event!(MetricEvents::ClaimMissed, execution_id => ifp, signature => sig.to_string());
+            }
+        }
         return Ok(());
     }
 
     let claim_status = in_flight_proofs.remove(execution_id);
-    if let Some((_, mut claim)) = claim_status {
+    if let Some((ifp, mut claim)) = claim_status {
+        emit_event!(MetricEvents::ClaimReceived, execution_id => ifp);
         if let ClaimStatus::Claiming(_sig) = claim.status {
             claim.status = ClaimStatus::Accepted;
             if let Some(mut image) = loaded_images.get_mut(&claim.image_id) {
@@ -349,31 +346,33 @@ pub async fn handle_claim<'a>(
                 if unresolved_count > 0 {
                     //resolve inputs
                     let mut url_set = JoinSet::new();
-                    for input in inputs.iter() {
-                        if let ProgramInput::Unresolved(ui) = input {
-                            let client = input_client.clone();
-                            let mx_input = (config.max_input_size_mb * 1024 * 1024) as usize;
-                            // There should be no other un resolved input types
-                            if let ProgramInputType::Private = ui.input_type {
-                                let pir = PrivateInputRequest {
-                                    identity: claimer,
-                                    claim_id: execution_id.to_string(),
-                                    input_index: ui.index,
-                                };
-                                let pir_str = serde_json::to_string(&pir)?;
-                                let claim_authorization =
-                                    transaction_sender.sign_calldata(&pir_str)?;
-                                url_set.spawn(download_private_input(
-                                    client,
-                                    ui.index,
-                                    ui.url.clone(),
-                                    mx_input,
-                                    pir_str,
-                                    claim_authorization,
-                                ));
+                    emit_event_with_duration!(MetricEvents::InputDownload, {
+                        for input in inputs.iter() {
+                            if let ProgramInput::Unresolved(ui) = input {
+                                let client = input_client.clone();
+                                let mx_input = (config.max_input_size_mb * 1024 * 1024) as usize;
+                                // There should be no other un resolved input types
+                                if let ProgramInputType::Private = ui.input_type {
+                                    let pir = PrivateInputRequest {
+                                        identity: claimer,
+                                        claim_id: execution_id.to_string(),
+                                        input_index: ui.index,
+                                    };
+                                    let pir_str = serde_json::to_string(&pir)?;
+                                    let claim_authorization =
+                                        transaction_sender.sign_calldata(&pir_str)?;
+                                    url_set.spawn(download_private_input(
+                                        client,
+                                        ui.index,
+                                        ui.url.clone(),
+                                        mx_input,
+                                        pir_str,
+                                        claim_authorization,
+                                    ));
+                                }
                             }
                         }
-                    }
+                    }, execution_id => execution_id);
                     // one of the huge problems with the claim system is that we are not guaranteed to have
                     // the inputs we need at the time we claim and no way to
 
@@ -381,7 +380,7 @@ pub async fn handle_claim<'a>(
                         match url {
                             Ok(Ok(ri)) => {
                                 let index = ri.index as usize;
-                                eprintln!("Resolved input: {}", index);
+                                info!("Resolved input: {}", index);
                                 inputs[index] = ProgramInput::Resolved(ri);
                             }
                             _ => {
@@ -394,7 +393,7 @@ pub async fn handle_claim<'a>(
                 }
                 drop(inputs);
                 // drain the inputs and own them here
-                eprintln!("Inputs resolved, generating proof");
+                info!("Inputs resolved, generating proof");
                 let (eid, inputs) = input_staging_area.remove(execution_id).unwrap();
                 let mem_image = image.get_memory_image()?;
                 let result: Result<
@@ -402,7 +401,7 @@ pub async fn handle_claim<'a>(
                     Risc0RunnerError,
                 > = tokio::task::spawn_blocking(move || {
                     risc0_prove(mem_image, inputs).map_err(|e| {
-                        eprintln!("Error generating proof: {:?}", e);
+                        info!("Error generating proof: {:?}", e);
                         Risc0RunnerError::ProofGenerationError
                     })
                 })
@@ -413,7 +412,7 @@ pub async fn handle_claim<'a>(
                         risc0_compress_proof(config.stark_compression_tools_path.as_str(), reciept)
                             .await
                             .map_err(|e| {
-                                eprintln!("Error compressing proof: {:?}", e);
+                                info!("Error compressing proof: {:?}", e);
                                 Risc0RunnerError::ProofCompressionError
                             })?;
 
@@ -433,7 +432,7 @@ pub async fn handle_claim<'a>(
                         )
                         .await
                         .map_err(|e| Risc0RunnerError::TransactionError(e.to_string()))?;
-                    eprintln!("Proof submitted: {:?}", sig);
+                    info!("Proof submitted: {:?}", sig);
                 }
                 in_flight_proofs.remove(&eid);
             }
@@ -456,10 +455,7 @@ async fn handle_execution_request<'a>(
 ) -> Result<()> {
     // current naive implementation is to accept everything we have pending capacity for on this node, but this needs work
     let inflight = in_flight_proofs.len();
-    eprintln!(
-        "Inflight: {} Max {}",
-        inflight, config.maximum_concurrent_proofs
-    );
+    emit_event!(MetricEvents::ExecutionRequest, execution_id => exec.execution_id().unwrap_or_default());
     if inflight < config.maximum_concurrent_proofs as usize {
         let eid = exec
             .execution_id()
@@ -473,7 +469,7 @@ async fn handle_execution_request<'a>(
         let image_compute_estimate = loaded_images.get(&image_id).map(|img| img.size);
         let computable_by = if let Some(ice) = image_compute_estimate {
             // naive compute cost estimate which is YES WE CAN DO THIS in the default amount of time
-            println!("Image compute estimate: {}", ice);
+            emit_histogram!(MetricEvents::ImageComputeEstimate, ice as f64, image_id => image_id.clone());
             //ensure compute can happen before expiry
             //execution_block + (image_compute_estimate % config.max_compute_per_block) + 1 some bogus calc
             expiry / 2
@@ -584,9 +580,10 @@ async fn handle_execution_request<'a>(
                             forward_output: exec.forward_output(),
                         },
                     );
+                    emit_event!(MetricEvents::ClaimAttempt, execution_id => eid);
                 }
                 Err(e) => {
-                    eprintln!("Error claiming: {:?}", e);
+                    info!("Error claiming: {:?}", e);
                     in_flight_proofs.remove(&eid);
                 }
             }
@@ -648,17 +645,20 @@ async fn handle_image_deployment<'a>(
 ) -> Result<()> {
     let url = deploy.url().ok_or(Risc0RunnerError::InvalidData)?;
     let size = deploy.size_();
-    let resp = http_client.get(url).send().await?.error_for_status()?;
-    let min = std::cmp::min(size, (config.max_image_size_mb * 1024 * 1024) as u64) as usize;
-    if resp.status().is_success() {
-        let stream = resp.bytes_stream();
-        let byte = get_body_max_size(stream, min)
-            .await
-            .map_err(|e| Risc0RunnerError::ImageDownloadError(e))?;
-        let img = Image::from_bytes(byte)?;
-        loaded_images.insert(img.id.clone(), img);
-    }
-    Ok(())
+    emit_histogram!(MetricEvents::ImageDownload, size as f64, url => url.to_string());
+    emit_event_with_duration!(MetricEvents::ImageDownload, {
+        let resp = http_client.get(url).send().await?.error_for_status()?;
+        let min = std::cmp::min(size, (config.max_image_size_mb * 1024 * 1024) as u64) as usize;
+        if resp.status().is_success() {
+            let stream = resp.bytes_stream();
+            let byte = get_body_max_size(stream, min)
+                .await
+                .map_err(|e| Risc0RunnerError::ImageDownloadError(e))?;
+            let img = Image::from_bytes(byte)?;
+            loaded_images.insert(img.id.clone(), img);
+        }
+        Ok(())
+    }, url => url.to_string())
 }
 
 // proving function, no async this is cpu/gpu intesive
@@ -685,9 +685,14 @@ fn risc0_prove(
     let opts = ProverOpts::default();
     let ctx = VerifierContext::default();
     let prover = get_prover_server(&opts)?;
-    let info = prover.prove_session(&ctx, &session)?;
+    let info = emit_event_with_duration!(MetricEvents::ProofGeneration,{
+        prover.prove_session(&ctx, &session)
+    }, system => "risc0")?;
+    emit_histogram!(MetricEvents::ProofSegments, info.stats.segments as f64, system => "risc0");
+    emit_histogram!(MetricEvents::ProofCycles, info.stats.total_cycles as f64, system => "risc0", cycle_type => "total");
+    emit_histogram!(MetricEvents::ProofCycles, info.stats.user_cycles as f64, system => "risc0", cycle_type => "user");
     if let InnerReceipt::Composite(cr) = &info.receipt.inner {
-        let sr = prover.composite_to_succinct(&cr)?;
+        let sr = emit_event_with_duration!(MetricEvents::ProofConversion,{ prover.composite_to_succinct(&cr)}, system => "risc0")?;
         let ident_receipt = identity_p254(&sr)?;
         if let MaybePruned::Value(rc) = sr.claim {
             if let MaybePruned::Value(Some(op)) = rc.output {
@@ -697,7 +702,6 @@ fn risc0_prove(
             }
         }
     }
-
     return Err(Risc0RunnerError::ProofGenerationError.into());
 }
 
@@ -724,19 +728,22 @@ async fn risc0_compress_proof(
     let inputs = prove_dir.join("input.json");
     let witness = prove_dir.join("out.wtns");
     let input_file = File::create(&inputs).await?;
-    async_to_json(&mut cursor, input_file).await?;
+    emit_event_with_duration!(MetricEvents::ProofConversion,{
+        async_to_json(&mut cursor, input_file).await
+    }, system => "groth16json")?;
+    let zkey = root_path.join("stark_verify_final.zkey");
+    let proof_out = prove_dir.join("proof.json");
+    let public = prove_dir.join("public.json");
+    emit_event_with_duration!(MetricEvents::ProofCompression,{
     let status = Command::new(root_path.join("stark_verify"))
         .arg(inputs.clone())
         .arg(witness.clone())
         .output()
         .await?;
     if !status.status.success() {
-        eprintln!("witness {:?}", status);
+        info!("witness {:?}", status);
         return Err(Risc0RunnerError::ProofCompressionError.into());
     }
-    let zkey = root_path.join("stark_verify_final.zkey");
-    let proof_out = prove_dir.join("proof.json");
-    let public = prove_dir.join("public.json");
     let snark_status = Command::new(root_path.join("rapidsnark"))
         .arg(zkey)
         .arg(witness)
@@ -745,9 +752,11 @@ async fn risc0_compress_proof(
         .output()
         .await?;
     if !snark_status.status.success() {
-        eprintln!("snark {:?}", snark_status);
+        info!("snark {:?}", snark_status);
         return Err(Risc0RunnerError::ProofCompressionError.into());
     }
+    }, system => "risc0");
+
     let mut proof_fd = File::open(proof_out).await?;
     let mt = proof_fd.metadata().await?;
     let mut bytes = Vec::with_capacity(mt.len() as usize);
@@ -755,8 +764,8 @@ async fn risc0_compress_proof(
     let proof: ProofJson = serde_json::from_slice(&bytes)?;
     let seal: Seal = proof.try_into()?;
     let claim = succint_receipt.claim;
-   if let MaybePruned::Value(rc)= claim {
-        let (system, user )= match rc.exit_code {
+    if let MaybePruned::Value(rc) = claim {
+        let (system, user) = match rc.exit_code {
             ExitCode::Halted(user_exit) => (0, user_exit),
             ExitCode::Paused(user_exit) => (1, user_exit),
             ExitCode::SystemSplit => (2, 0),
@@ -766,11 +775,9 @@ async fn risc0_compress_proof(
             execution_digest: rc.post.digest().as_bytes().to_vec(),
             exit_code_system: system,
             exit_code_user: user,
-            proof: seal.to_vec()
+            proof: seal.to_vec(),
         })
-    }
-    else {
+    } else {
         Err(Risc0RunnerError::ProofCompressionError.into())
     }
-    
 }

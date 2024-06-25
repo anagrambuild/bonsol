@@ -1,20 +1,25 @@
 pub mod types;
 pub mod util;
+#[macro_use]
+pub mod observe;
 mod ingest;
 
 mod callback;
 pub mod config;
 mod prover;
 use {
-    callback::{TransactionSender,RpcTransactionSender},
-    ingest::{GrpcIngester, Ingester, RpcIngester},
     anyhow::{Ok, Result},
+    callback::{RpcTransactionSender, TransactionSender},
     config::*,
+    ingest::{GrpcIngester, Ingester, RpcIngester},
+    metrics_exporter_prometheus::PrometheusBuilder,
     prover::Risc0Runner,
     solana_sdk::{pubkey::Pubkey, signature::read_keypair_file, signer::Signer},
     std::{str::FromStr, sync::Arc},
     thiserror::Error,
     tokio::{select, signal},
+    tracing::{error, info},
+    tracing_subscriber,
 };
 
 #[derive(Error, Debug)]
@@ -35,15 +40,24 @@ pub enum CliError {
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    
+    tracing_subscriber::fmt()
+        .json()
+        .with_timer(tracing_subscriber::fmt::time::UtcTime::rfc_3339())
+        .init();
     let args: Vec<String> = std::env::args().collect();
     if args.len() < 3 || args[1] != "-f" {
-        eprintln!("Usage: relay -f <config_file>");
+        error!("Usage: relay -f <config_file>");
         return Ok(());
     }
     let config_file = &args[2];
     let config = config::load_config(config_file);
     let program = Pubkey::from_str(&config.bonsol_program)?;
+    if let MetricsConfig::Prometheus {} = config.metrics_config {
+        let builder = PrometheusBuilder::new();
+        builder
+            .install()
+            .expect("failed to install prometheus exporter");
+    }
     //todo use traits for signer
     let signer = match config.signer_config.clone() {
         SignerConfig::KeypairFile { path } => {
@@ -58,16 +72,17 @@ async fn main() -> Result<()> {
         IngesterConfig::RpcBlockSubscription { wss_rpc_url } => {
             Box::new(RpcIngester::new(wss_rpc_url))
         }
-        IngesterConfig::GrpcSubscription { 
-            grpc_url, 
-            token, 
-            connection_timeout_secs, 
-            timeout_secs
-         } => {
-            Box::new(
-                GrpcIngester::new(grpc_url, token, Some(connection_timeout_secs), Some(timeout_secs))
-            )
-        }
+        IngesterConfig::GrpcSubscription {
+            grpc_url,
+            token,
+            connection_timeout_secs,
+            timeout_secs,
+        } => Box::new(GrpcIngester::new(
+            grpc_url,
+            token,
+            Some(connection_timeout_secs),
+            Some(timeout_secs),
+        )),
         _ => return Err(CliError::InvalidIngester.into()),
     };
 
@@ -97,12 +112,12 @@ async fn main() -> Result<()> {
     });
     select! {
         _ = handle => {
-            eprintln!("Runner exited");
+            info!("Runner exited");
         },
         _ = signal::ctrl_c() => {
 
         },
     }
-    eprintln!("Exited");
+    info!("Exited");
     Ok(())
 }

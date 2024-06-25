@@ -57,6 +57,18 @@ pub struct ProverNodeConfig {
     pub signer_config: SignerConfig,
     #[serde(default = "default_stark_compression_tools_path")]
     pub stark_compression_tools_path: String,
+    #[serde(default = "default_metrics_config")]
+    pub metrics_config: MetricsConfig,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub enum MetricsConfig {
+    Prometheus { },
+    None,
+}
+
+fn default_metrics_config() -> MetricsConfig {
+    MetricsConfig::None
 }
 
 fn default_stark_compression_tools_path() -> String {
@@ -129,6 +141,7 @@ impl Default for ProverNodeConfig {
             transaction_sender_config: default_transaction_sender_config(),
             signer_config: default_signer_config(),
             stark_compression_tools_path: default_stark_compression_tools_path(),
+            metrics_config: default_metrics_config(),
         }
     }
 }
