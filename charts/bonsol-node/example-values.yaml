@@ -23,4 +23,5 @@ signer_config:
   type: "KeyPairFile"
   path: "/opt/bonsol/keys/signer.json" 
 risc0_image_folder: "/opt/bonsol/risc0_images"
+metrics: true // enables prometheus metrics
 
