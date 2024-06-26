@@ -14,7 +14,7 @@ data:
     max_image_size_mb = {{ .Values.max_image_size_mb }}
     image_compression_ttl_hours = {{ .Values.image_compression_ttl_hours }}
     env = {{ .Values.bonsol_env | quote }}
-    stark_compression_tools_path = /usr/opt/bonsol/stark/
+    stark_compression_tools_path = "/usr/opt/bonsol/stark/"
     {{- if .Values.metrics }}
     [metrics_config]
       Prometheus = {}

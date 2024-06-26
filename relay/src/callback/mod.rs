@@ -30,6 +30,8 @@ use {
         signer::Signer,
         transaction::Transaction,
     },
+    tracing::{error, info},
+    metrics::gauge,
 };
 #[async_trait]
 pub trait TransactionSender {
@@ -60,7 +62,7 @@ pub trait TransactionSender {
     fn clear_signature_status(&self, sig: &Signature);
 }
 
-use crate::types::ProgramExec;
+use crate::{observe::MetricEvents, types::ProgramExec};
 const RPC_PERMITS: usize = 200;
 
 pub struct RpcTransactionSender {
@@ -264,9 +266,13 @@ impl TransactionSender for RpcTransactionSender {
         self.txn_status_handle = Some(tokio::spawn(async move {
             let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(1));
             let sigs = sigs.clone();
+            let mut sigs_num = sigs.len();
             loop {
-                let sigs = sigs.clone();
                 interval.tick().await;
+                let sigs = sigs.clone();
+                if sigs.len() != sigs_num {
+                    emit_gauge!(MetricEvents::SignaturesInFlight, sigs.len() as f64, sent => "s");
+                }
                 let all_sigs = sigs.iter().map(|x| x.key().clone()).collect_vec();
                 let statuses = rpc_client.get_signature_statuses(&all_sigs).await;
                 if let Ok(statuses) = statuses {
@@ -274,6 +280,7 @@ impl TransactionSender for RpcTransactionSender {
                         sigs.insert(sig.0, sig.1);
                     }
                 }
+                sigs_num = sigs.len();
             }
         }));
     }

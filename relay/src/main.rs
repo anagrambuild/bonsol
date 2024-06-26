@@ -12,7 +12,9 @@ use {
     callback::{RpcTransactionSender, TransactionSender},
     config::*,
     ingest::{GrpcIngester, Ingester, RpcIngester},
+    metrics::counter,
     metrics_exporter_prometheus::PrometheusBuilder,
+    observe::MetricEvents,
     prover::Risc0Runner,
     solana_sdk::{pubkey::Pubkey, signature::read_keypair_file, signer::Signer},
     std::{str::FromStr, sync::Arc},
@@ -57,10 +59,13 @@ async fn main() -> Result<()> {
         builder
             .install()
             .expect("failed to install prometheus exporter");
+        info!("Prometheus exporter installed");
     }
+    emit_event!(MetricEvents::BonsolStartup, up => true);
     //todo use traits for signer
     let signer = match config.signer_config.clone() {
         SignerConfig::KeypairFile { path } => {
+            info!("Using Keypair File");
             read_keypair_file(&path).map_err(|_| CliError::InvalidSigner)?
         }
         _ => return Err(CliError::InvalidSigner.into()),
@@ -70,6 +75,7 @@ async fn main() -> Result<()> {
     //Todo traitify ingester
     let mut ingester: Box<dyn Ingester> = match config.ingester_config.clone() {
         IngesterConfig::RpcBlockSubscription { wss_rpc_url } => {
+            info!("Using RPC Block Subscription");
             Box::new(RpcIngester::new(wss_rpc_url))
         }
         IngesterConfig::GrpcSubscription {
@@ -77,12 +83,15 @@ async fn main() -> Result<()> {
             token,
             connection_timeout_secs,
             timeout_secs,
-        } => Box::new(GrpcIngester::new(
-            grpc_url,
-            token,
-            Some(connection_timeout_secs),
-            Some(timeout_secs),
-        )),
+        } => {
+            info!("Using GRPC Subscription");
+            Box::new(GrpcIngester::new(
+                grpc_url,
+                token,
+                Some(connection_timeout_secs),
+                Some(timeout_secs),
+            ))
+        }
         _ => return Err(CliError::InvalidIngester.into()),
     };
 

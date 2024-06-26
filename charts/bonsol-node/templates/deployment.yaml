@@ -31,15 +31,20 @@ spec:
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
-        - name: {{ .Chart.Name }}
+        - name: {{ .Chart.Name }} 
+          env:
+            - name: RUST_LOG
+              value: debug
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command: ["/usr/opt/bonsol/relay","-f", "/opt/bonsol/config/Node.toml"]
+          ports:
+            - name: metrics
+              containerPort: 9000
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-         
           volumeMounts:
             - name: key # only works with keypair signer for now
               mountPath: {{ .Values.signer_config.path | dir }}

@@ -191,6 +191,7 @@ impl Risc0Runner {
             let mut interval = tokio::time::interval(Duration::from_secs(1));
             loop {
                 let current_block = txn_sender.get_current_block().await.unwrap_or(0);
+                
                 inflight_proofs.retain(|_, v| {
                     if v.expiry < current_block {
                         emit_event!(MetricEvents::ProofExpired, execution_id => v.execution_id.clone());
