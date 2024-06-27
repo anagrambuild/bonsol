@@ -1,11 +1,11 @@
 use std::sync::Arc;
 
+use anagram_bonsol_channel_utils::deployment_address;
 use async_trait::async_trait;
 use dashmap::DashMap;
 use itertools::Itertools;
 use solana_sdk::{
-    message::{v0, VersionedMessage},
-    transaction::VersionedTransaction,
+    account::Account, message::{v0, VersionedMessage}, transaction::VersionedTransaction
 };
 use solana_transaction_status::TransactionStatus;
 use tokio::task::JoinHandle;
@@ -22,16 +22,15 @@ use {
 
 use {
     anyhow::Result,
+    metrics::gauge,
     solana_rpc_client::nonblocking::rpc_client::RpcClient,
     solana_sdk::{
         instruction::{AccountMeta, Instruction},
         pubkey::Pubkey,
         signature::Keypair,
-        signer::Signer,
-        transaction::Transaction,
+        signer::Signer
     },
     tracing::{error, info},
-    metrics::gauge,
 };
 #[async_trait]
 pub trait TransactionSender {
@@ -60,6 +59,7 @@ pub trait TransactionSender {
     async fn get_current_block(&self) -> Result<u64>;
     fn get_signature_status(&self, sig: &Signature) -> Option<TransactionStatus>;
     fn clear_signature_status(&self, sig: &Signature);
+    async fn get_deployment_account(&self, image_id: &str) -> Result<Account>;
 }
 
 use crate::{observe::MetricEvents, types::ProgramExec};
@@ -296,5 +296,14 @@ impl TransactionSender for RpcTransactionSender {
             .get_block_height()
             .await
             .map_err(|e| anyhow::anyhow!("{:?}", e))
+    }
+
+    async fn get_deployment_account(&self, image_id: &str) -> Result<Account> {
+        let (deployment_account, _) = deployment_address(image_id);
+        self
+            .rpc_client
+            .get_account(&deployment_account)
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to get account: {:?}", e))
     }
 }

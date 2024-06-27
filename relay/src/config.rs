@@ -31,6 +31,19 @@ pub enum SignerConfig {
 }
 
 #[derive(Debug, Deserialize, Clone)]
+pub enum MissingImageStrategy {
+    DownloadAndClaim,
+    DownloadAndMiss,
+    Fail,
+}
+
+impl Default for MissingImageStrategy {
+    fn default() -> Self {
+        MissingImageStrategy::DownloadAndClaim
+    }
+}
+
+#[derive(Debug, Deserialize, Clone)]
 pub struct ProverNodeConfig {
     pub env: Option<String>,
     #[serde(default = "default_bonsol_program")]
@@ -59,6 +72,7 @@ pub struct ProverNodeConfig {
     pub stark_compression_tools_path: String,
     #[serde(default = "default_metrics_config")]
     pub metrics_config: MetricsConfig,
+    pub missing_image_strategy: MissingImageStrategy,
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -142,6 +156,7 @@ impl Default for ProverNodeConfig {
             signer_config: default_signer_config(),
             stark_compression_tools_path: default_stark_compression_tools_path(),
             metrics_config: default_metrics_config(),
+            missing_image_strategy: Default::default(),
         }
     }
 }

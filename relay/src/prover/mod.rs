@@ -1,7 +1,7 @@
 mod image;
 mod utils;
 use self::image::Image;
-use crate::observe::*;
+use crate::{observe::*, MissingImageStrategy};
 use crate::{
     callback::{RpcTransactionSender, TransactionSender},
     config::ProverNodeConfig,
@@ -30,6 +30,7 @@ use {
     },
 };
 
+use anagram_bonsol_schema::root_as_deploy_v1;
 use risc0_groth16::{ProofJson, Seal};
 use risc0_zkvm::{sha::Digest, InnerReceipt, MaybePruned, ReceiptClaim};
 use tempfile::tempdir;
@@ -56,6 +57,8 @@ pub enum Risc0RunnerError {
     InvalidData,
     #[error("Img too large")]
     ImgTooLarge,
+    #[error("Img load error")]
+    ImgLoadError,
     #[error("Image download error")]
     ImageDownloadError(#[from] anyhow::Error),
     #[error("Invalid input type")]
@@ -248,6 +251,7 @@ impl Risc0Runner {
                                 &config,
                                 &inflight_proofs,
                                 input_client.clone(),
+                                img_client.clone(),
                                 &txn_sender,
                                 &loaded_images,
                                 &input_staging_area,
@@ -447,6 +451,7 @@ async fn handle_execution_request<'a>(
     config: &ProverNodeConfig,
     in_flight_proofs: InflightProofRef<'a>,
     input_client: Arc<reqwest::Client>,
+    img_client: Arc<reqwest::Client>,
     transaction_sender: &RpcTransactionSender,
     loaded_images: LoadedImageMapRef<'a>,
     input_staging_area: InputStagingAreaRef<'a>,
@@ -467,16 +472,35 @@ async fn handle_execution_request<'a>(
             .map(|d| d.to_string())
             .ok_or(Risc0RunnerError::InvalidData)?;
         let expiry = exec.max_block_height();
-        let image_compute_estimate = loaded_images.get(&image_id).map(|img| img.size);
-        let computable_by = if let Some(ice) = image_compute_estimate {
+        let img = loaded_images.get(&image_id);
+        let img = if img.is_none() {
+            match config.missing_image_strategy {
+                MissingImageStrategy::DownloadAndClaim => {
+                    info!("Image not loaded, attempting to load and rejecting claim");
+                    load_image(config, transaction_sender, &img_client, &image_id, loaded_images).await?;
+                    loaded_images.get(&image_id)
+                }
+                MissingImageStrategy::DownloadAndMiss => {
+                    info!("Image not loaded, loading and rejecting claim");
+                    load_image(config, transaction_sender, &img_client, &image_id, loaded_images).await?;
+                    None
+                }
+                MissingImageStrategy::Fail => {
+                    info!("Image not loaded, rejecting claim");
+                    None
+                }
+            }
+        } else {
+            img
+        }
+        .ok_or(Risc0RunnerError::ImgLoadError)?;
+        
             // naive compute cost estimate which is YES WE CAN DO THIS in the default amount of time
-            emit_histogram!(MetricEvents::ImageComputeEstimate, ice as f64, image_id => image_id.clone());
+            emit_histogram!(MetricEvents::ImageComputeEstimate, img.size  as f64, image_id => image_id.clone());
             //ensure compute can happen before expiry
             //execution_block + (image_compute_estimate % config.max_compute_per_block) + 1 some bogus calc
-            expiry / 2
-        } else {
-            u64::MAX
-        };
+            let computable_by = expiry / 2;
+ 
         if computable_by < expiry {
             //the way this is done can cause race conditions where so many request come in a short time that we accept
             // them before we change the value of g so we optimistically change to inflight and we will decrement if we dont win the claim
@@ -636,6 +660,23 @@ async fn dowload_public_input(
         data: byte.to_vec(),
         input_type: ProgramInputType::Public,
     })
+}
+
+async fn load_image<'a>(
+    config: &ProverNodeConfig,
+    transaction_sender: &RpcTransactionSender,
+    http_client: &reqwest::Client,
+    image_id: &str,
+    loaded_images: LoadedImageMapRef<'a>
+) -> Result<()> {
+    let account = transaction_sender
+        .get_deployment_account(image_id)
+        .await
+        .map_err(|e| Risc0RunnerError::ImageDownloadError(e))?;
+    let deploy_data = root_as_deploy_v1(&account.data)
+    .map_err(|_| anyhow::anyhow!("Failed to parse account data"))?;
+    handle_image_deployment(config, http_client, deploy_data, loaded_images).await?; 
+    Ok(())
 }
 
 async fn handle_image_deployment<'a>(
