@@ -697,6 +697,9 @@ async fn handle_image_deployment<'a>(
                 .await
                 .map_err(|e| Risc0RunnerError::ImageDownloadError(e))?;
             let img = Image::from_bytes(byte)?;
+            if img.id != deploy.image_id().unwrap_or_default() {
+                return Err(Risc0RunnerError::InvalidData.into());
+            }
             loaded_images.insert(img.id.clone(), img);
         }
         Ok(())
