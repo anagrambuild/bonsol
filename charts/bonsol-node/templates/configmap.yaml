@@ -15,6 +15,7 @@ data:
     image_compression_ttl_hours = {{ .Values.image_compression_ttl_hours }}
     env = {{ .Values.bonsol_env | quote }}
     stark_compression_tools_path = "/usr/opt/bonsol/stark/"
+    missing_image_strategy = {{ .Values.missing_image_strategy | quote }}
     {{- if .Values.metrics }}
     [metrics_config]
       Prometheus = {}

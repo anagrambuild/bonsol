@@ -72,6 +72,7 @@ pub struct ProverNodeConfig {
     pub stark_compression_tools_path: String,
     #[serde(default = "default_metrics_config")]
     pub metrics_config: MetricsConfig,
+    #[serde(default)]
     pub missing_image_strategy: MissingImageStrategy,
 }
 
@@ -156,7 +157,7 @@ impl Default for ProverNodeConfig {
             signer_config: default_signer_config(),
             stark_compression_tools_path: default_stark_compression_tools_path(),
             metrics_config: default_metrics_config(),
-            missing_image_strategy: Default::default(),
+            missing_image_strategy: MissingImageStrategy::default(),
         }
     }
 }

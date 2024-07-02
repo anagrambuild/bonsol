@@ -17,6 +17,7 @@ maximum_concurrent_proofs: 1
 max_image_size_mb: 4
 image_compression_ttl_hours: 24
 bonsol_env: "dev"
+missing_image_strategy: "DownloadAndClaim"
 transaction_sending_config:
   type: "Rpc"
   rpc_url: "http://localhost:8899"
