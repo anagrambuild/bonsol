@@ -3,11 +3,11 @@
 
 // @generated
 
-
-
+use core::mem;
+use core::cmp::Ordering;
 
 extern crate flatbuffers;
-
+use self::flatbuffers::{EndianScalar, Follow};
 
 pub enum ClaimV1Offset {}
 #[derive(Copy, Clone, PartialEq)]
@@ -65,7 +65,7 @@ impl flatbuffers::Verifiable for ClaimV1<'_> {
   fn run_verifier(
     v: &mut flatbuffers::Verifier, pos: usize
   ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
-    
+    use self::flatbuffers::Verifiable;
     v.visit_table(pos)?
      .visit_field::<flatbuffers::ForwardsUOffset<&str>>("execution_id", Self::VT_EXECUTION_ID, false)?
      .visit_field::<u64>("block_commitment", Self::VT_BLOCK_COMMITMENT, false)?

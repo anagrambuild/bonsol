@@ -3,11 +3,11 @@
 
 // @generated
 
-
-
+use core::mem;
+use core::cmp::Ordering;
 
 extern crate flatbuffers;
-
+use self::flatbuffers::{EndianScalar, Follow};
 
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
 pub const ENUM_MIN_STATUS_TYPES: u8 = 0;
@@ -225,7 +225,7 @@ impl flatbuffers::Verifiable for StatusV1<'_> {
   fn run_verifier(
     v: &mut flatbuffers::Verifier, pos: usize
   ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
-    
+    use self::flatbuffers::Verifiable;
     v.visit_table(pos)?
      .visit_field::<flatbuffers::ForwardsUOffset<&str>>("execution_id", Self::VT_EXECUTION_ID, false)?
      .visit_field::<StatusTypes>("status", Self::VT_STATUS, false)?

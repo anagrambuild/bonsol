@@ -9,6 +9,7 @@ import { BONSOL_PROGRAM_ID, deploymentAddress } from ".";
 export async function Deploy(params: {
   imageUrl: string,
   imageId: string,
+  imageSize: bigint,
   programName: string,
   deployer: Address,
   payer?: Address,
@@ -28,7 +29,8 @@ export async function Deploy(params: {
     programName,
     deployer,
     payer,
-    inputs
+    inputs,
+    imageSize
   } = params;
   //eunsure valid url
   if (!URL.canParse(imageUrl)) {
@@ -39,11 +41,13 @@ export async function Deploy(params: {
   const imgName = builder.createString(programName)
   const imgURL = builder.createString(imageUrl)
   const ownerBytes = getAddressEncoder().encode(deployer);
-  const ownerBuf = DeployV1.createOwnerVector(builder,  ownerBytes);
+  //@ts-ignore
+  const ownerBuf = DeployV1.createOwnerVector(builder, ownerBytes);
 
   let iv = DeployV1.createInputsVector(builder, inputs);
   DeployV1.startDeployV1(builder);
-  DeployV1.addUrl(builder, imgURL);
+  DeployV1.addUrl(builder, imgURL)
+  DeployV1.addSize(builder, imageSize);
   DeployV1.addImageId(builder, imgId);
   DeployV1.addProgramName(builder, imgName);
   DeployV1.addInputs(builder, iv);

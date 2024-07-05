@@ -132,6 +132,7 @@ pub struct DeployAccounts<'a, 'b> {
     pub extra_accounts: &'a [AccountInfo<'a>],
     pub deployment_bump: Option<u8>,
     pub image_id: &'b str,
+    pub image_checksum: &'b [u8],
 }
 
 impl<'a, 'b> DeployAccounts<'a, 'b> {
@@ -148,6 +149,7 @@ impl<'a, 'b> DeployAccounts<'a, 'b> {
                 extra_accounts: &accounts[4..],
                 deployment_bump: None,
                 image_id: imageid,
+                image_checksum: &[],
             };
             let owner = data
                 .owner()
@@ -473,6 +475,7 @@ pub fn program<'a>(
             let da = DeployAccounts::from_instruction(accounts, &dp)?;
             let b = [da.deployment_bump.unwrap()];
             let imghash = img_id_hash(da.image_id);
+
             let mut seeds = deployment_address_seeds(&imghash);
             seeds.push(&b);
             let bytes = ix.deploy_v1().unwrap().bytes();
@@ -522,8 +525,10 @@ pub fn program<'a>(
                     .bytes()
                     .try_into()
                     .map_err(|_| ChannelError::InvalidInstruction)?;
-                if er.verify_input_hash(){
-                    er.input_digest().map(|x| check_bytes_match(x.bytes(), input, ChannelError::InputsDontMatch));
+                if er.verify_input_hash() {
+                    er.input_digest().map(|x| {
+                        check_bytes_match(x.bytes(), input, ChannelError::InputsDontMatch)
+                    });
                 }
                 let output_digest = output_digest(input, co, asud);
                 let inputs = prepare_inputs(

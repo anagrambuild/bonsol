@@ -98,7 +98,7 @@ static addOwner(builder:flatbuffers.Builder, ownerOffset:flatbuffers.Offset) {
   builder.addFieldOffset(0, ownerOffset, 0);
 }
 
-static createOwnerVector(builder:flatbuffers.Builder, data:number[]|ReadonlyUint8Array):flatbuffers.Offset {
+static createOwnerVector(builder:flatbuffers.Builder, data:number[]|Uint8Array):flatbuffers.Offset {
   builder.startVector(1, data.length, 1);
   for (let i = data.length - 1; i >= 0; i--) {
     builder.addInt8(data[i]!);

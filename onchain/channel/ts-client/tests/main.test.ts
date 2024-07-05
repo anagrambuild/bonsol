@@ -1,5 +1,6 @@
 import { Cluster, LuzidSdk } from '@luzid/sdk'
 import fs from 'fs/promises';
+import * as flatbuffers from 'flatbuffers';
 import {
   signTransaction,
   lamports,
@@ -11,7 +12,8 @@ import {
   setTransactionMessageFeePayer,
   setTransactionMessageLifetimeUsingBlockhash,
   appendTransactionMessageInstruction,
-  compileTransaction
+  compileTransaction,
+  parseBase64RpcAccount
 } from '@solana/web3.js';
 import {
   isSolanaError,
@@ -20,12 +22,12 @@ import {
 
 import { pipe } from '@solana/functional';
 import { createDefaultRpcSubscriptionsTransport } from '@solana/web3.js';
-import { InputType, ProgramInputType } from 'bonsol-schemas';
+import { DeployV1, InputType, ProgramInputType } from 'bonsol-schemas';
 import { Execute, Deploy, deploymentAddress } from '../src/';
 import { randomBytes } from '@noble/hashes/utils';
 
 describe('BonsolProgram', () => {
-  const SIMPLE_IMAGE_ID = "111fd1d8f623c845a1d5ac7a6625159b6a0e935561de3e2bab94d9b8abfbdccc";
+  const SIMPLE_IMAGE_ID = "4034fdfed1d8600987d1a0c73ae0eb8ff5e9c79df047844edba82a213340c682";
   const api = createSolanaRpc(process.env.RPC_ENDPOINT || Cluster.Development.apiUrl);
   const sub = createSolanaRpcSubscriptions((process.env.RPC_ENDPOINT || Cluster.Development.apiUrl).replace('http', 'ws').replace("8899", "8900"))
 
@@ -54,9 +56,10 @@ describe('BonsolProgram', () => {
       }
       const result = await Deploy(
         {
-          imageUrl: "https://silver-managerial-planarian-752.mypinata.cloud/ipfs/Qmcar67ViBoMcBVCT2tTmpninxXrx6AwoHh6LgG3jMAxyo",
+          imageUrl: "https://silver-managerial-planarian-752.mypinata.cloud/ipfs/QmZYLnmtP3HPhe7TVsixP93EjLa7Q2Nn7nWtCRa6Qj5tAp",
           imageId: SIMPLE_IMAGE_ID,
-          programName: "simple",
+          imageSize: 276084n,
+          programName: "simple5",
           deployer: pub,
           inputs: [
             ProgramInputType.Public,
@@ -92,7 +95,20 @@ describe('BonsolProgram', () => {
           return tx;
         })
 
+    } else {
+      
+      let ea = parseBase64RpcAccount(depl, deployAccount.value)
+      let buf = new flatbuffers.ByteBuffer(ea.data as Uint8Array)
+      let dp = DeployV1.getRootAsDeployV1(buf)
+      console.log("deployed", dp.imageId())
+      console.log("deployed", dp.programName())
+      console.log("deployed", dp.url())
+      console.log("deployed", dp.size())
+      console.log("deployed", dp.ownerArray())
+      console.log("deployed", dp.inputs)
     }
+    //sleep
+    await new Promise((resolve) => setTimeout(resolve, 1000))
   })
 
   it('should create valid execution requests', async () => {

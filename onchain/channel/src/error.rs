@@ -55,6 +55,10 @@ pub enum ChannelError {
     InputsDontMatch,
     #[error("Invalid Field Element")]
     InvalidFieldElement,
+    #[error("Missing Image Checksum")]
+    MissingImageChecksum,
+    #[error("Invalid Image Checksum")]
+    InvalidImageChecksum,
 }
 
 impl From<ChannelError> for ProgramError {

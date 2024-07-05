@@ -4,11 +4,11 @@
 // @generated
 
 use crate::input_type_generated::*;
-
-
+use core::mem;
+use core::cmp::Ordering;
 
 extern crate flatbuffers;
-
+use self::flatbuffers::{EndianScalar, Follow};
 
 pub enum InputSetOffset {}
 #[derive(Copy, Clone, PartialEq)]
@@ -57,7 +57,7 @@ impl flatbuffers::Verifiable for InputSet<'_> {
   fn run_verifier(
     v: &mut flatbuffers::Verifier, pos: usize
   ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
-    
+    use self::flatbuffers::Verifiable;
     v.visit_table(pos)?
      .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<Input>>>>("inputs", Self::VT_INPUTS, false)?
      .finish();

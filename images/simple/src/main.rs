@@ -10,15 +10,15 @@ fn main() {
     let mut private2 = Vec::new();
     env::read_slice(&mut private2);
     let privatei2 = String::from_utf8(private2).unwrap();
-    
     let valid = gjson::valid(&publici1);
-    let mut res = false;
+    let mut res = 0;
     if valid {
         let val = gjson::get(&publici1, "attestation");
         if val.kind() == Kind::String && val.str() == privatei2 {
-            res = true;
+            res = 1;
         }
     }
+    println!("input 1 {}", publici1);
     let digest = Impl::hash_bytes(
         &[
             publici1.as_bytes(),
@@ -26,5 +26,5 @@ fn main() {
         ].concat(),
     );
     env::commit_slice(digest.as_bytes());
-    env::commit_slice(&[res as u8]);
+    env::commit_slice(&[res]);
 }

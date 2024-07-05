@@ -22,7 +22,7 @@ export declare class DeployV1 {
     inputsArray(): Uint8Array | null;
     static startDeployV1(builder: flatbuffers.Builder): void;
     static addOwner(builder: flatbuffers.Builder, ownerOffset: flatbuffers.Offset): void;
-    static createOwnerVector(builder: flatbuffers.Builder, data: number[] | ReadonlyUint8Array): flatbuffers.Offset;
+    static createOwnerVector(builder: flatbuffers.Builder, data: number[] | Uint8Array): flatbuffers.Offset;
     static startOwnerVector(builder: flatbuffers.Builder, numElems: number): void;
     static addImageId(builder: flatbuffers.Builder, imageIdOffset: flatbuffers.Offset): void;
     static addProgramName(builder: flatbuffers.Builder, programNameOffset: flatbuffers.Offset): void;
