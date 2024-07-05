@@ -54,7 +54,7 @@ describe('BonsolProgram', () => {
       }
       const result = await Deploy(
         {
-          imageUrl: "https://elfserver.solana",
+          imageUrl: "https://silver-managerial-planarian-752.mypinata.cloud/ipfs/Qmcar67ViBoMcBVCT2tTmpninxXrx6AwoHh6LgG3jMAxyo",
           imageId: SIMPLE_IMAGE_ID,
           programName: "simple",
           deployer: pub,
