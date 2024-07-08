@@ -51,6 +51,7 @@ RUN if [ "$FLAVOR" = "cuda" ]; then \
     fi
 WORKDIR /usr/opt/bonsol
 EXPOSE 9000
+RUN ulimit -s unlimited
 CMD ["relay"]
 
 
