@@ -1,13 +1,13 @@
 mod image;
 mod utils;
 use self::image::Image;
-use crate::{observe::*, MissingImageStrategy};
 use crate::{
     callback::{RpcTransactionSender, TransactionSender},
     config::ProverNodeConfig,
     prover::utils::async_to_json,
     util::get_body_max_size,
 };
+use crate::{observe::*, MissingImageStrategy};
 use std::{env::consts::ARCH, io::Cursor, path::Path};
 use {
     anagram_bonsol_schema::{ClaimV1, DeployV1, ExecutionRequestV1, InputType, ProgramInputType},
@@ -194,7 +194,7 @@ impl Risc0Runner {
             let mut interval = tokio::time::interval(Duration::from_secs(1));
             loop {
                 let current_block = txn_sender.get_current_block().await.unwrap_or(0);
-                
+
                 inflight_proofs.retain(|_, v| {
                     if v.expiry < current_block {
                         emit_event!(MetricEvents::ProofExpired, execution_id => v.execution_id.clone());
@@ -477,12 +477,26 @@ async fn handle_execution_request<'a>(
             match config.missing_image_strategy {
                 MissingImageStrategy::DownloadAndClaim => {
                     info!("Image not loaded, attempting to load and rejecting claim");
-                    load_image(config, transaction_sender, &img_client, &image_id, loaded_images).await?;
+                    load_image(
+                        config,
+                        transaction_sender,
+                        &img_client,
+                        &image_id,
+                        loaded_images,
+                    )
+                    .await?;
                     loaded_images.get(&image_id)
                 }
                 MissingImageStrategy::DownloadAndMiss => {
                     info!("Image not loaded, loading and rejecting claim");
-                    load_image(config, transaction_sender, &img_client, &image_id, loaded_images).await?;
+                    load_image(
+                        config,
+                        transaction_sender,
+                        &img_client,
+                        &image_id,
+                        loaded_images,
+                    )
+                    .await?;
                     None
                 }
                 MissingImageStrategy::Fail => {
@@ -494,13 +508,13 @@ async fn handle_execution_request<'a>(
             img
         }
         .ok_or(Risc0RunnerError::ImgLoadError)?;
-        
-            // naive compute cost estimate which is YES WE CAN DO THIS in the default amount of time
-            emit_histogram!(MetricEvents::ImageComputeEstimate, img.size  as f64, image_id => image_id.clone());
-            //ensure compute can happen before expiry
-            //execution_block + (image_compute_estimate % config.max_compute_per_block) + 1 some bogus calc
-            let computable_by = expiry / 2;
- 
+
+        // naive compute cost estimate which is YES WE CAN DO THIS in the default amount of time
+        emit_histogram!(MetricEvents::ImageComputeEstimate, img.size  as f64, image_id => image_id.clone());
+        //ensure compute can happen before expiry
+        //execution_block + (image_compute_estimate % config.max_compute_per_block) + 1 some bogus calc
+        let computable_by = expiry / 2;
+
         if computable_by < expiry {
             //the way this is done can cause race conditions where so many request come in a short time that we accept
             // them before we change the value of g so we optimistically change to inflight and we will decrement if we dont win the claim
@@ -667,15 +681,15 @@ async fn load_image<'a>(
     transaction_sender: &RpcTransactionSender,
     http_client: &reqwest::Client,
     image_id: &str,
-    loaded_images: LoadedImageMapRef<'a>
+    loaded_images: LoadedImageMapRef<'a>,
 ) -> Result<()> {
     let account = transaction_sender
         .get_deployment_account(image_id)
         .await
         .map_err(|e| Risc0RunnerError::ImageDownloadError(e))?;
     let deploy_data = root_as_deploy_v1(&account.data)
-    .map_err(|_| anyhow::anyhow!("Failed to parse account data"))?;
-    handle_image_deployment(config, http_client, deploy_data, loaded_images).await?; 
+        .map_err(|_| anyhow::anyhow!("Failed to parse account data"))?;
+    handle_image_deployment(config, http_client, deploy_data, loaded_images).await?;
     Ok(())
 }
 
@@ -770,15 +784,15 @@ async fn risc0_compress_proof(
     let prove_dir = tmp.path();
     let root_path = Path::new(tools_path);
     let mut cursor = Cursor::new(&sealbytes);
-    let inputs = prove_dir.join("input.json");
-    let witness = prove_dir.join("out.wtns");
+    let inputs = root_path.join("input.json");
+    let witness = root_path.join("out.wtns");
     let input_file = File::create(&inputs).await?;
     emit_event_with_duration!(MetricEvents::ProofConversion,{
         async_to_json(&mut cursor, input_file).await
     }, system => "groth16json")?;
     let zkey = root_path.join("stark_verify_final.zkey");
-    let proof_out = prove_dir.join("proof.json");
-    let public = prove_dir.join("public.json");
+    let proof_out = root_path.join("proof.json");
+    let public = root_path.join("public.json");
     emit_event_with_duration!(MetricEvents::ProofCompression,{
     let status = Command::new(root_path.join("stark_verify"))
         .arg(inputs.clone())
