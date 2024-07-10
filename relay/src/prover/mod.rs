@@ -784,15 +784,15 @@ async fn risc0_compress_proof(
     let prove_dir = tmp.path();
     let root_path = Path::new(tools_path);
     let mut cursor = Cursor::new(&sealbytes);
-    let inputs = root_path.join("input.json");
-    let witness = root_path.join("out.wtns");
+    let inputs = prove_dir.join("input.json");
+    let witness = prove_dir.join("out.wtns");
     let input_file = File::create(&inputs).await?;
     emit_event_with_duration!(MetricEvents::ProofConversion,{
         async_to_json(&mut cursor, input_file).await
     }, system => "groth16json")?;
     let zkey = root_path.join("stark_verify_final.zkey");
-    let proof_out = root_path.join("proof.json");
-    let public = root_path.join("public.json");
+    let proof_out = prove_dir.join("proof.json");
+    let public = prove_dir.join("public.json");
     emit_event_with_duration!(MetricEvents::ProofCompression,{
     let status = Command::new(root_path.join("stark_verify"))
         .arg(inputs.clone())
