@@ -8,20 +8,7 @@ mod callback;
 pub mod config;
 mod prover;
 use {
-    anyhow::{Ok, Result},
-    callback::{RpcTransactionSender, TransactionSender},
-    config::*,
-    ingest::{GrpcIngester, Ingester, RpcIngester},
-    metrics::counter,
-    metrics_exporter_prometheus::PrometheusBuilder,
-    observe::MetricEvents,
-    prover::Risc0Runner,
-    solana_sdk::{pubkey::Pubkey, signature::read_keypair_file, signer::Signer},
-    std::{str::FromStr, sync::Arc},
-    thiserror::Error,
-    tokio::{select, signal},
-    tracing::{error, info},
-    tracing_subscriber,
+    anyhow::Result, callback::{RpcTransactionSender, TransactionSender}, config::*, ingest::{GrpcIngester, Ingester, RpcIngester}, metrics::counter, metrics_exporter_prometheus::PrometheusBuilder, observe::MetricEvents, prover::Risc0Runner, rlimit::Resource, solana_sdk::{pubkey::Pubkey, signature::read_keypair_file, signer::Signer}, std::{str::FromStr, sync::Arc}, thiserror::Error, tokio::{select, signal}, tracing::{error, info}, tracing_subscriber
 };
 
 #[derive(Error, Debug)]
@@ -42,6 +29,12 @@ pub enum CliError {
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    // Set the stack size to unlimited
+    match rlimit::setrlimit(Resource::STACK, u64::MAX, u64::MAX) {
+        Ok(_) => {}
+        Err(e) => eprintln!("Error setting rlimit: {}", e),
+    }
+    
     tracing_subscriber::fmt()
         .json()
         .with_timer(tracing_subscriber::fmt::time::UtcTime::rfc_3339())

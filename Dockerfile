@@ -51,9 +51,7 @@ RUN if [ "$FLAVOR" = "cuda" ]; then \
     fi
 WORKDIR /usr/opt/bonsol
 EXPOSE 9000
-COPY docker-entrypoint.sh .
-ENTRYPOINT [ docker-entrypoint.sh ]
-CMD ["/usr/opt/bonsol/relay"]
+ENTRYPOINT ["/usr/opt/bonsol/relay"]
 
 
 

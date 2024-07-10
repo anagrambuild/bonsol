@@ -1,6 +1,6 @@
 [package]
 name = "relay"
-version = "0.1.8"
+version = "0.1.9"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -9,6 +9,7 @@ edition = "2021"
 cuda = ["risc0-zkvm/cuda"]
 
 [dependencies]
+rlimit = "0.10.1"
 figment = { version = "0.10.14", features = ["toml"] }
 fnv = "1.0.7"
 num = "=0.4.1"
