@@ -180,8 +180,7 @@ You will need to run a few components.
 #Compiles the 乃ㄖ几丂ㄖㄥ on chain program and starts a localnet with the program loaded
 ./validator.sh 
 
-#Compiles the 乃ㄖ几丂ㄖㄥ off chain relay and starts it
-./run-relay.sh
+#Compiles the 乃ㄖ几丂ㄖㄥ off chain relay and starts it ./run-relay.sh
 
 #Compiles any local 乃ㄖ几丂ㄖㄥ zkprograms
 ./build-images.sh 
