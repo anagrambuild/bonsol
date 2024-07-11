@@ -174,24 +174,22 @@ You will need to run a few components.
 5. (Soon) Private input server
 
 ```bash
-#Download and setup the system with the needed binaries and keys to run the groth16 prover over the risc0 FRI
-./setup.sh
+# Download and setup the system with the needed binaries and keys to run the groth16 prover over the risc0 FRI
+./0-setup.sh
 
-#Compiles the 乃ㄖ几丂ㄖㄥ on chain program and starts a localnet with the program loaded
-./validator.sh 
+# Compiles any local 乃ㄖ几丂ㄖㄥ zkprograms
+./1-build-risc0-images.sh
 
-#Compiles the 乃ㄖ几丂ㄖㄥ off chain relay and starts it
-./run-relay.sh
+# Compiles the 乃ㄖ几丂ㄖㄥ on chain program and starts a localnet with the program loaded
+./3-run-local-solana-validator.sh
 
-#Compiles any local 乃ㄖ几丂ㄖㄥ zkprograms
-./build-images.sh 
+# Compiles the 乃ㄖ几丂ㄖㄥ off chain relay and starts it ./run-relay.sh
+./5-run-relay.sh
+
+# Deploy the solana smart contracts onto the local validator
+./7-deploy-solana-contracts.sh
+
 ```
-
-Currently I have the following flow:
-I run "./build-images.sh".
-
-Then "./validator" and "./run-relay.sh" , and run the ts-client tests in `channel` directory with `pnpm test` in three different terminals. This will deploy a zk program and start an execution request which the relay will respond to.
-
 
 # Running a Prover Node
 The prover node is a binary that comes from the relay package. You configure it with the Node.toml file. There are a variety of options in there. `relay/src/config.rs` shows all the configurations. There are alot of defaults.
