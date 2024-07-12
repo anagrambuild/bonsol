@@ -4,5 +4,6 @@ export declare enum InputType {
     PublicAccountData = 3,
     PublicUrl = 4,
     Private = 5,
-    InputSet = 6
+    InputSet = 6,
+    PublicProof = 7
 }

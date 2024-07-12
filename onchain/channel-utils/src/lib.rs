@@ -12,7 +12,6 @@ use {
     solana_sdk::{keccak, keccak::Hash},
 };
 
-
 declare_id!("BoNsHRcyLLNdtnoDf8hiCNZpyehMC4FDMxs6NTxFi3ew");
 
 pub fn execution_address_seeds<'a>(requester: &'a Pubkey, execution_id: &'a [u8]) -> Vec<&'a [u8]> {

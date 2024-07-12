@@ -27,7 +27,7 @@ import { Execute, Deploy, deploymentAddress } from '../src/';
 import { randomBytes } from '@noble/hashes/utils';
 
 describe('BonsolProgram', () => {
-  const SIMPLE_IMAGE_ID = "4034fdfed1d8600987d1a0c73ae0eb8ff5e9c79df047844edba82a213340c682";
+  const SIMPLE_IMAGE_ID = "d114bde0f149f1a3ba9866aeda1d73fba2585e630d8f9e0ba95fb51590a08c12";
   const api = createSolanaRpc(process.env.RPC_ENDPOINT || Cluster.Development.apiUrl);
   const sub = createSolanaRpcSubscriptions((process.env.RPC_ENDPOINT || Cluster.Development.apiUrl).replace('http', 'ws').replace("8899", "8900"))
 
@@ -56,10 +56,10 @@ describe('BonsolProgram', () => {
       }
       const result = await Deploy(
         {
-          imageUrl: "https://silver-managerial-planarian-752.mypinata.cloud/ipfs/QmZYLnmtP3HPhe7TVsixP93EjLa7Q2Nn7nWtCRa6Qj5tAp",
+          imageUrl: "https://shdw-drive.genesysgo.net/4G6XK2ViQMQRzWdqY51jCrKtRECVhu8r19v54yWHb1ge/simple",
           imageId: SIMPLE_IMAGE_ID,
           imageSize: 276084n,
-          programName: "simple5",
+          programName: "simple6",
           deployer: pub,
           inputs: [
             ProgramInputType.Public,

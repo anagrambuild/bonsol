@@ -3,11 +3,17 @@ name = "simple"
 version = "0.1.0"
 edition = "2021"
 
+[package.metadata.zkprogram]
+input_order = ["Public", "Private"]
+
+[build]
+target-dir = "./target"
+
 [workspace]
 
 [dependencies]
 gjson = "0.8"
-risc0-zkvm = {version = "0.21.0", default-features = false, features = ["std"]}
+risc0-zkvm = {git = "https://github.com/anagrambuild/risc0", branch = "v1.0.1-bonsai-fix", default-features = false, features = ["std"]}
 
 [dependencies.sha2]
 git = "https://github.com/risc0/RustCrypto-hashes"

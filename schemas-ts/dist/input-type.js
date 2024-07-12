@@ -10,4 +10,5 @@ var InputType;
     InputType[InputType["PublicUrl"] = 4] = "PublicUrl";
     InputType[InputType["Private"] = 5] = "Private";
     InputType[InputType["InputSet"] = 6] = "InputSet";
+    InputType[InputType["PublicProof"] = 7] = "PublicProof";
 })(InputType || (exports.InputType = InputType = {}));

@@ -11,6 +11,7 @@ enum InputType: uint8 {
   PublicUrl = 4,
   Private = 5,
   InputSet = 6,
+  PublicProof = 7,
 }
 
 table Input {

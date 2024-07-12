@@ -101,16 +101,17 @@ impl flatbuffers::SimpleToVerifyInSlice for ProgramInputType {}
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
 pub const ENUM_MIN_INPUT_TYPE: u8 = 0;
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-pub const ENUM_MAX_INPUT_TYPE: u8 = 6;
+pub const ENUM_MAX_INPUT_TYPE: u8 = 7;
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_INPUT_TYPE: [InputType; 6] = [
+pub const ENUM_VALUES_INPUT_TYPE: [InputType; 7] = [
   InputType::Unknown,
   InputType::PublicData,
   InputType::PublicAccountData,
   InputType::PublicUrl,
   InputType::Private,
   InputType::InputSet,
+  InputType::PublicProof,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -124,9 +125,10 @@ impl InputType {
   pub const PublicUrl: Self = Self(4);
   pub const Private: Self = Self(5);
   pub const InputSet: Self = Self(6);
+  pub const PublicProof: Self = Self(7);
 
   pub const ENUM_MIN: u8 = 0;
-  pub const ENUM_MAX: u8 = 6;
+  pub const ENUM_MAX: u8 = 7;
   pub const ENUM_VALUES: &'static [Self] = &[
     Self::Unknown,
     Self::PublicData,
@@ -134,6 +136,7 @@ impl InputType {
     Self::PublicUrl,
     Self::Private,
     Self::InputSet,
+    Self::PublicProof,
   ];
   /// Returns the variant's name or "" if unknown.
   pub fn variant_name(self) -> Option<&'static str> {
@@ -144,6 +147,7 @@ impl InputType {
       Self::PublicUrl => Some("PublicUrl"),
       Self::Private => Some("Private"),
       Self::InputSet => Some("InputSet"),
+      Self::PublicProof => Some("PublicProof"),
       _ => None,
     }
   }
