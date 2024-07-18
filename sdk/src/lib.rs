@@ -1,4 +1,5 @@
 use tokio::time::{interval, Duration};
+use serde::{Deserialize, Serialize, Serializer};
 use {
     anyhow::Result,
     solana_rpc_client::nonblocking::rpc_client::RpcClient,
@@ -19,6 +20,7 @@ use {
 pub use anagram_bonsol_channel_utils::*;
 pub use anagram_bonsol_schema::*;
 use flatbuffers::FlatBufferBuilder;
+pub mod input_resolver;
 pub struct BonsolClient {
     rpc_client: RpcClient,
 }
@@ -155,4 +157,41 @@ impl BonsolClient {
             }
         }
     }
+}
+
+pub struct SdkInputType(InputType);
+
+impl Serialize for SdkInputType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        match self.0 {
+            InputType::PublicData => serializer.serialize_str("Public"),
+            InputType::PublicAccountData => serializer.serialize_str("PublicAccountData"),
+            InputType::PublicUrl => serializer.serialize_str("PublicUrl"),
+            InputType::Private => serializer.serialize_str("Private"),
+            InputType::InputSet => serializer.serialize_str("InputSet"),
+            InputType::PublicProof => serializer.serialize_str("PublicProof"),
+            _ => Err(serde::ser::Error::custom("Invalid input type")),
+        }
+    }
+}
+
+impl<'de> Deserialize<'de> for SdkInputType {
+  fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+  where
+    D: serde::Deserializer<'de>,
+  {
+    let s = String::deserialize(deserializer)?;
+    match s.as_str() {
+      "Public" => Ok(SdkInputType(InputType::PublicData)),
+      "PublicAccountData" => Ok(SdkInputType(InputType::PublicAccountData)),
+      "PublicUrl" => Ok(SdkInputType(InputType::PublicUrl)),
+      "Private" => Ok(SdkInputType(InputType::Private)),
+      "InputSet" => Ok(SdkInputType(InputType::InputSet)),
+      "PublicProof" => Ok(SdkInputType(InputType::PublicProof)),
+      _ => Err(serde::de::Error::custom(format!("Invalid input type: {}", s))),
+    }
+  }
 }

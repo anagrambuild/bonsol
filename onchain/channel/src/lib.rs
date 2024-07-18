@@ -6,6 +6,8 @@ pub mod error;
 pub mod program;
 pub mod proof_handling;
 mod verifying_key;
+pub mod utilities;
+pub mod actions;
 
 declare_id!("BoNsHRcyLLNdtnoDf8hiCNZpyehMC4FDMxs6NTxFi3ew");
 

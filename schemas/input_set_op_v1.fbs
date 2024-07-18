@@ -1,0 +1,16 @@
+
+include "./input_type.fbs";
+
+enum InputSetOp: uint8 {
+  Create = 0,
+  Update = 1,
+  Delete = 2,
+}
+
+table InputSetOpV1 {
+  id: string;
+  op: InputSetOp;
+  inputs: [Input];
+}
+
+root_type InputSetOpV1;

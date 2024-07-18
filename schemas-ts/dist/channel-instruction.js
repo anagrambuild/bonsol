@@ -104,8 +104,20 @@ class ChannelInstruction {
         const offset = this.bb.__offset(this.bb_pos, 12);
         return offset ? new Uint8Array(this.bb.bytes().buffer, this.bb.bytes().byteOffset + this.bb.__vector(this.bb_pos + offset), this.bb.__vector_len(this.bb_pos + offset)) : null;
     }
+    inputSetV1(index) {
+        const offset = this.bb.__offset(this.bb_pos, 14);
+        return offset ? this.bb.readUint8(this.bb.__vector(this.bb_pos + offset) + index) : 0;
+    }
+    inputSetV1Length() {
+        const offset = this.bb.__offset(this.bb_pos, 14);
+        return offset ? this.bb.__vector_len(this.bb_pos + offset) : 0;
+    }
+    inputSetV1Array() {
+        const offset = this.bb.__offset(this.bb_pos, 14);
+        return offset ? new Uint8Array(this.bb.bytes().buffer, this.bb.bytes().byteOffset + this.bb.__vector(this.bb_pos + offset), this.bb.__vector_len(this.bb_pos + offset)) : null;
+    }
     static startChannelInstruction(builder) {
-        builder.startObject(5);
+        builder.startObject(6);
     }
     static addIxType(builder, ixType) {
         builder.addFieldInt8(0, ixType, channel_instruction_ix_type_js_1.ChannelInstructionIxType.ExecuteV1);
@@ -162,6 +174,19 @@ class ChannelInstruction {
     static startClaimV1Vector(builder, numElems) {
         builder.startVector(1, numElems, 1);
     }
+    static addInputSetV1(builder, inputSetV1Offset) {
+        builder.addFieldOffset(5, inputSetV1Offset, 0);
+    }
+    static createInputSetV1Vector(builder, data) {
+        builder.startVector(1, data.length, 1);
+        for (let i = data.length - 1; i >= 0; i--) {
+            builder.addInt8(data[i]);
+        }
+        return builder.endVector();
+    }
+    static startInputSetV1Vector(builder, numElems) {
+        builder.startVector(1, numElems, 1);
+    }
     static endChannelInstruction(builder) {
         const offset = builder.endObject();
         return offset;
@@ -172,13 +197,14 @@ class ChannelInstruction {
     static finishSizePrefixedChannelInstructionBuffer(builder, offset) {
         builder.finish(offset, undefined, true);
     }
-    static createChannelInstruction(builder, ixType, executeV1Offset, statusV1Offset, deployV1Offset, claimV1Offset) {
+    static createChannelInstruction(builder, ixType, executeV1Offset, statusV1Offset, deployV1Offset, claimV1Offset, inputSetV1Offset) {
         ChannelInstruction.startChannelInstruction(builder);
         ChannelInstruction.addIxType(builder, ixType);
         ChannelInstruction.addExecuteV1(builder, executeV1Offset);
         ChannelInstruction.addStatusV1(builder, statusV1Offset);
         ChannelInstruction.addDeployV1(builder, deployV1Offset);
         ChannelInstruction.addClaimV1(builder, claimV1Offset);
+        ChannelInstruction.addInputSetV1(builder, inputSetV1Offset);
         return ChannelInstruction.endChannelInstruction(builder);
     }
 }

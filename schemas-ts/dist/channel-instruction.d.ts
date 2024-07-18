@@ -20,6 +20,9 @@ export declare class ChannelInstruction {
     claimV1(index: number): number | null;
     claimV1Length(): number;
     claimV1Array(): Uint8Array | null;
+    inputSetV1(index: number): number | null;
+    inputSetV1Length(): number;
+    inputSetV1Array(): Uint8Array | null;
     static startChannelInstruction(builder: flatbuffers.Builder): void;
     static addIxType(builder: flatbuffers.Builder, ixType: ChannelInstructionIxType): void;
     static addExecuteV1(builder: flatbuffers.Builder, executeV1Offset: flatbuffers.Offset): void;
@@ -34,8 +37,11 @@ export declare class ChannelInstruction {
     static addClaimV1(builder: flatbuffers.Builder, claimV1Offset: flatbuffers.Offset): void;
     static createClaimV1Vector(builder: flatbuffers.Builder, data: number[] | Uint8Array): flatbuffers.Offset;
     static startClaimV1Vector(builder: flatbuffers.Builder, numElems: number): void;
+    static addInputSetV1(builder: flatbuffers.Builder, inputSetV1Offset: flatbuffers.Offset): void;
+    static createInputSetV1Vector(builder: flatbuffers.Builder, data: number[] | Uint8Array): flatbuffers.Offset;
+    static startInputSetV1Vector(builder: flatbuffers.Builder, numElems: number): void;
     static endChannelInstruction(builder: flatbuffers.Builder): flatbuffers.Offset;
     static finishChannelInstructionBuffer(builder: flatbuffers.Builder, offset: flatbuffers.Offset): void;
     static finishSizePrefixedChannelInstructionBuffer(builder: flatbuffers.Builder, offset: flatbuffers.Offset): void;
-    static createChannelInstruction(builder: flatbuffers.Builder, ixType: ChannelInstructionIxType, executeV1Offset: flatbuffers.Offset, statusV1Offset: flatbuffers.Offset, deployV1Offset: flatbuffers.Offset, claimV1Offset: flatbuffers.Offset): flatbuffers.Offset;
+    static createChannelInstruction(builder: flatbuffers.Builder, ixType: ChannelInstructionIxType, executeV1Offset: flatbuffers.Offset, statusV1Offset: flatbuffers.Offset, deployV1Offset: flatbuffers.Offset, claimV1Offset: flatbuffers.Offset, inputSetV1Offset: flatbuffers.Offset): flatbuffers.Offset;
 }

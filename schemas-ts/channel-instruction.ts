@@ -99,8 +99,23 @@ claimV1Array():Uint8Array|null {
   return offset ? new Uint8Array(this.bb!.bytes().buffer, this.bb!.bytes().byteOffset + this.bb!.__vector(this.bb_pos + offset), this.bb!.__vector_len(this.bb_pos + offset)) : null;
 }
 
+inputSetV1(index: number):number|null {
+  const offset = this.bb!.__offset(this.bb_pos, 14);
+  return offset ? this.bb!.readUint8(this.bb!.__vector(this.bb_pos + offset) + index) : 0;
+}
+
+inputSetV1Length():number {
+  const offset = this.bb!.__offset(this.bb_pos, 14);
+  return offset ? this.bb!.__vector_len(this.bb_pos + offset) : 0;
+}
+
+inputSetV1Array():Uint8Array|null {
+  const offset = this.bb!.__offset(this.bb_pos, 14);
+  return offset ? new Uint8Array(this.bb!.bytes().buffer, this.bb!.bytes().byteOffset + this.bb!.__vector(this.bb_pos + offset), this.bb!.__vector_len(this.bb_pos + offset)) : null;
+}
+
 static startChannelInstruction(builder:flatbuffers.Builder) {
-  builder.startObject(5);
+  builder.startObject(6);
 }
 
 static addIxType(builder:flatbuffers.Builder, ixType:ChannelInstructionIxType) {
@@ -171,6 +186,22 @@ static startClaimV1Vector(builder:flatbuffers.Builder, numElems:number) {
   builder.startVector(1, numElems, 1);
 }
 
+static addInputSetV1(builder:flatbuffers.Builder, inputSetV1Offset:flatbuffers.Offset) {
+  builder.addFieldOffset(5, inputSetV1Offset, 0);
+}
+
+static createInputSetV1Vector(builder:flatbuffers.Builder, data:number[]|Uint8Array):flatbuffers.Offset {
+  builder.startVector(1, data.length, 1);
+  for (let i = data.length - 1; i >= 0; i--) {
+    builder.addInt8(data[i]!);
+  }
+  return builder.endVector();
+}
+
+static startInputSetV1Vector(builder:flatbuffers.Builder, numElems:number) {
+  builder.startVector(1, numElems, 1);
+}
+
 static endChannelInstruction(builder:flatbuffers.Builder):flatbuffers.Offset {
   const offset = builder.endObject();
   return offset;
@@ -184,13 +215,14 @@ static finishSizePrefixedChannelInstructionBuffer(builder:flatbuffers.Builder, o
   builder.finish(offset, undefined, true);
 }
 
-static createChannelInstruction(builder:flatbuffers.Builder, ixType:ChannelInstructionIxType, executeV1Offset:flatbuffers.Offset, statusV1Offset:flatbuffers.Offset, deployV1Offset:flatbuffers.Offset, claimV1Offset:flatbuffers.Offset):flatbuffers.Offset {
+static createChannelInstruction(builder:flatbuffers.Builder, ixType:ChannelInstructionIxType, executeV1Offset:flatbuffers.Offset, statusV1Offset:flatbuffers.Offset, deployV1Offset:flatbuffers.Offset, claimV1Offset:flatbuffers.Offset, inputSetV1Offset:flatbuffers.Offset):flatbuffers.Offset {
   ChannelInstruction.startChannelInstruction(builder);
   ChannelInstruction.addIxType(builder, ixType);
   ChannelInstruction.addExecuteV1(builder, executeV1Offset);
   ChannelInstruction.addStatusV1(builder, statusV1Offset);
   ChannelInstruction.addDeployV1(builder, deployV1Offset);
   ChannelInstruction.addClaimV1(builder, claimV1Offset);
+  ChannelInstruction.addInputSetV1(builder, inputSetV1Offset);
   return ChannelInstruction.endChannelInstruction(builder);
 }
 }

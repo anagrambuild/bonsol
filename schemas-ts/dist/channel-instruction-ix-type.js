@@ -8,4 +8,5 @@ var ChannelInstructionIxType;
     ChannelInstructionIxType[ChannelInstructionIxType["StatusV1"] = 1] = "StatusV1";
     ChannelInstructionIxType[ChannelInstructionIxType["DeployV1"] = 2] = "DeployV1";
     ChannelInstructionIxType[ChannelInstructionIxType["ClaimV1"] = 3] = "ClaimV1";
+    ChannelInstructionIxType[ChannelInstructionIxType["InputSetOpV1"] = 4] = "InputSetOpV1";
 })(ChannelInstructionIxType || (exports.ChannelInstructionIxType = ChannelInstructionIxType = {}));

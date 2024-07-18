@@ -12,3 +12,12 @@ anagram-bonsol-channel-utils = { path = "../onchain/channel-utils", features = [
 anyhow = "1.0.86"
 flatbuffers = {workspace = true}
 tokio = "1.36.0"
+serde = { version = "1.0.197"}
+bytes = "1.5.0"
+async-trait = "0.1.80"
+reqwest = { version = "0.11.26", features = [
+  "gzip",
+  "deflate",
+  "stream",
+  "native-tls-vendored",
+] }

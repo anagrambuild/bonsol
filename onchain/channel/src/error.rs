@@ -59,6 +59,14 @@ pub enum ChannelError {
     MissingImageChecksum,
     #[error("Invalid Image Checksum")]
     InvalidImageChecksum,
+    #[error("Transfer Error")]
+    TransferError,
+    #[error("Invalid Input Set Account")]
+    InvalidInputSetAccount,
+    #[error("Invalid Input Set Data")]
+    InvalidInputSetData,
+    #[error("Input set Nesting Error")]
+    InputSetNestingError,
 }
 
 impl From<ChannelError> for ProgramError {
