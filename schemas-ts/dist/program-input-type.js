@@ -7,4 +7,5 @@ var ProgramInputType;
     ProgramInputType[ProgramInputType["Unknown"] = 0] = "Unknown";
     ProgramInputType[ProgramInputType["Public"] = 1] = "Public";
     ProgramInputType[ProgramInputType["Private"] = 2] = "Private";
+    ProgramInputType[ProgramInputType["PublicProof"] = 3] = "PublicProof";
 })(ProgramInputType || (exports.ProgramInputType = ProgramInputType = {}));

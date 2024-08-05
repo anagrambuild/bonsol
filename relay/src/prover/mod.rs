@@ -5,7 +5,6 @@ use crate::{
     callback::{RpcTransactionSender, TransactionSender},
     config::ProverNodeConfig,
     prover::utils::async_to_json,
-    util::get_body_max_size,
 };
 use crate::{observe::*, MissingImageStrategy};
 use std::{env::consts::ARCH, io::Cursor, path::Path};
@@ -31,12 +30,15 @@ use {
 };
 
 use anagram_bonsol_schema::root_as_deploy_v1;
+use anagram_bonsol_sdk::{
+    input_resolver::{InputResolver, ProgramInput},
+    util::get_body_max_size,
+};
 use risc0_groth16::{ProofJson, Seal};
 use risc0_zkvm::{sha::Digest, InnerReceipt, MaybePruned, ReceiptClaim};
 use tempfile::tempdir;
 use tokio::{fs::File, io::AsyncReadExt, process::Command, task::JoinSet};
 use tracing::{error, info};
-
 use {
     crate::types::{BonsolInstruction, ProgramExec},
     anagram_bonsol_schema::{parse_ix_data, ChannelInstructionIxType},
@@ -85,23 +87,6 @@ pub struct InflightProof {
     pub program_callback: Option<ProgramExec>,
 }
 
-#[derive(Debug, Clone)]
-pub enum ProgramInput {
-    Empty,
-    Resolved(ResolvedInput),
-    Unresolved(UnresolvedInput),
-}
-
-impl ProgramInput {
-    fn index(&self) -> u8 {
-        match self {
-            ProgramInput::Resolved(ri) => ri.index,
-            ProgramInput::Unresolved(ui) => ui.index,
-            _ => 0,
-        }
-    }
-}
-
 type InflightProofs = Arc<DashMap<String, InflightProof>>;
 type InflightProofRef<'a> = &'a DashMap<String, InflightProof>;
 
@@ -133,6 +118,7 @@ pub struct Risc0Runner {
     input_staging_area: InputStagingArea,
     self_identity: Arc<Pubkey>,
     inflight_proofs: InflightProofs,
+    input_resolver: Arc<dyn InputResolver + 'static>,
 }
 
 impl Risc0Runner {
@@ -141,6 +127,7 @@ impl Risc0Runner {
         self_identity: Pubkey,
         image_dir: String,
         txn_sender: Arc<RpcTransactionSender>,
+        input_resolver: Arc<dyn InputResolver + 'static>,
     ) -> Result<Risc0Runner> {
         let dir = fs::read_dir(image_dir)?;
         let loaded_images = DashMap::new();
@@ -162,27 +149,22 @@ impl Risc0Runner {
             input_staging_area: Arc::new(DashMap::new()),
             self_identity: Arc::new(self_identity),
             inflight_proofs: Arc::new(DashMap::new()),
+            input_resolver,
         })
     }
 
+    // TODO: break up pipleine into smaller domains to make it easier to test
+    // Break into Image handling, Input handling, Execution Request
+    // Inputs and Image should be service used by this prover.
     pub fn start(&mut self) -> Result<UnboundedSender<BonsolInstruction>> {
         let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel::<BonsolInstruction>();
         let loaded_images = self.loaded_images.clone();
-
+        // TODO: move image handling out of prover
         let img_client = Arc::new(
             reqwest::Client::builder()
                 .timeout(Duration::from_secs(
                     self.config.image_download_timeout_secs as u64,
                 ))
-                .build()?,
-        );
-        let input_client = Arc::new(
-            reqwest::Client::builder()
-                .timeout(Duration::from_secs(
-                    self.config.input_download_timeout_secs as u64,
-                ))
-                .gzip(true)
-                .deflate(true)
                 .build()?,
         );
         let config = self.config.clone();
@@ -220,13 +202,14 @@ impl Risc0Runner {
 
         let inflight_proofs = self.inflight_proofs.clone();
         let txn_sender = self.txn_sender.clone();
+        let input_resolver = self.input_resolver.clone();
         self.worker_handle = Some(tokio::spawn(async move {
             while let Some(bix) = rx.recv().await {
                 let txn_sender = txn_sender.clone();
                 let loaded_images = loaded_images.clone();
                 let config = config.clone();
                 let img_client = img_client.clone();
-                let input_client = input_client.clone();
+                let input_resolver = input_resolver.clone();
                 let self_id = self_id.clone();
                 let input_staging_area = input_staging_area.clone();
                 let inflight_proofs = inflight_proofs.clone();
@@ -250,7 +233,7 @@ impl Risc0Runner {
                             handle_execution_request(
                                 &config,
                                 &inflight_proofs,
-                                input_client.clone(),
+                                input_resolver.clone(),
                                 img_client.clone(),
                                 &txn_sender,
                                 &loaded_images,
@@ -270,7 +253,7 @@ impl Risc0Runner {
                                 &config,
                                 &self_id,
                                 &inflight_proofs,
-                                input_client,
+                                input_resolver.clone(),
                                 &txn_sender,
                                 &loaded_images,
                                 &input_staging_area,
@@ -306,7 +289,7 @@ pub async fn handle_claim<'a>(
     config: &ProverNodeConfig,
     self_identity: &Pubkey,
     in_flight_proofs: InflightProofRef<'a>,
-    input_client: Arc<reqwest::Client>,
+    input_resolver: Arc<dyn InputResolver + 'static>,
     transaction_sender: &RpcTransactionSender,
     loaded_images: LoadedImageMapRef<'a>,
     input_staging_area: InputStagingAreaRef<'a>,
@@ -337,10 +320,7 @@ pub async fn handle_claim<'a>(
                 let start = SystemTime::now();
                 let since_the_epoch = start.duration_since(UNIX_EPOCH)?.as_secs();
                 image.last_used = since_the_epoch;
-                let mut inputs = input_staging_area.get_mut(execution_id).unwrap();
-
-                inputs.sort_by(|a, b| a.index().cmp(&b.index()));
-
+                let (_,mut inputs) = input_staging_area.remove(execution_id).unwrap();
                 let unresolved_count = inputs
                     .iter()
                     .filter(|i| match i {
@@ -348,55 +328,16 @@ pub async fn handle_claim<'a>(
                         _ => false,
                     })
                     .count();
+                
                 if unresolved_count > 0 {
-                    //resolve inputs
-                    let mut url_set = JoinSet::new();
+                    info!("{} outstanding inputs", unresolved_count);
+              
                     emit_event_with_duration!(MetricEvents::InputDownload, {
-                        for input in inputs.iter() {
-                            if let ProgramInput::Unresolved(ui) = input {
-                                let client = input_client.clone();
-                                let mx_input = (config.max_input_size_mb * 1024 * 1024) as usize;
-                                // There should be no other un resolved input types
-                                if let ProgramInputType::Private = ui.input_type {
-                                    let pir = PrivateInputRequest {
-                                        identity: claimer,
-                                        claim_id: execution_id.to_string(),
-                                        input_index: ui.index,
-                                    };
-                                    let pir_str = serde_json::to_string(&pir)?;
-                                    let claim_authorization =
-                                        transaction_sender.sign_calldata(&pir_str)?;
-                                    url_set.spawn(download_private_input(
-                                        client,
-                                        ui.index,
-                                        ui.url.clone(),
-                                        mx_input,
-                                        pir_str,
-                                        claim_authorization,
-                                    ));
-                                }
-                            }
-                        }
-                    }, execution_id => execution_id);
+                        input_resolver.resolve_private_inputs(execution_id, &mut inputs, Arc::new(transaction_sender)).await?;
+                    }, execution_id => execution_id, stage => "private");
                     // one of the huge problems with the claim system is that we are not guaranteed to have
                     // the inputs we need at the time we claim and no way to
-
-                    while let Some(url) = url_set.join_next().await {
-                        match url {
-                            Ok(Ok(ri)) => {
-                                let index = ri.index as usize;
-                                info!("Resolved input: {}", index);
-                                inputs[index] = ProgramInput::Resolved(ri);
-                            }
-                            _ => {
-                                in_flight_proofs.remove(execution_id);
-                                input_staging_area.remove(execution_id);
-                                return Ok(());
-                            }
-                        }
-                    }
                 }
-                drop(inputs);
                 // drain the inputs and own them here
                 info!("Inputs resolved, generating proof");
                 let (eid, inputs) = input_staging_area.remove(execution_id).unwrap();
@@ -440,6 +381,8 @@ pub async fn handle_claim<'a>(
                     info!("Proof submitted: {:?}", sig);
                 }
                 in_flight_proofs.remove(&eid);
+            } else {
+                info!("Image not loaded, fatal error aborting execution");
             }
         }
     }
@@ -450,7 +393,7 @@ pub async fn handle_claim<'a>(
 async fn handle_execution_request<'a>(
     config: &ProverNodeConfig,
     in_flight_proofs: InflightProofRef<'a>,
-    input_client: Arc<reqwest::Client>,
+    input_resolver: Arc<dyn InputResolver + 'static>,
     img_client: Arc<reqwest::Client>,
     transaction_sender: &RpcTransactionSender,
     loaded_images: LoadedImageMapRef<'a>,
@@ -476,7 +419,7 @@ async fn handle_execution_request<'a>(
         let img = if img.is_none() {
             match config.missing_image_strategy {
                 MissingImageStrategy::DownloadAndClaim => {
-                    info!("Image not loaded, attempting to load and rejecting claim");
+                    info!("Image not loaded, attempting to load and running claim");
                     load_image(
                         config,
                         transaction_sender,
@@ -519,72 +462,10 @@ async fn handle_execution_request<'a>(
             //the way this is done can cause race conditions where so many request come in a short time that we accept
             // them before we change the value of g so we optimistically change to inflight and we will decrement if we dont win the claim
             let inputs = exec.input().ok_or(Risc0RunnerError::InvalidData)?;
-            let mut url_set = JoinSet::new();
-            //TODO handle input sets
-            let input_vec = vec![ProgramInput::Empty; inputs.len()];
-            input_staging_area.insert(eid.clone(), input_vec);
-            let mx_input = (config.max_input_size_mb * 1024 * 1024) as usize;
-            // grab public inputs optimistically
-            for (index, input) in inputs.iter().enumerate() {
-                let client = input_client.clone();
-                let mx_input = mx_input.clone();
-                match input.input_type() {
-                    InputType::PublicUrl => {
-                        let url = input
-                            .data()
-                            .map(|d| d.bytes())
-                            .ok_or(Risc0RunnerError::InvalidData)?;
-                        let url = from_utf8(url)?;
-                        let url = Url::parse(url)?;
-                        url_set.spawn(dowload_public_input(client, index as u8, url, mx_input));
-                    }
-                    InputType::Private => {
-                        let url = input
-                            .data()
-                            .map(|d| d.bytes())
-                            .ok_or(Risc0RunnerError::InvalidData)?;
-                        let url = from_utf8(url)?;
-                        let url = Url::parse(url)?;
-                        let mut isa = input_staging_area.get_mut(&eid).unwrap();
-                        isa[index] = ProgramInput::Unresolved(UnresolvedInput {
-                            index: index as u8,
-                            url,
-                            input_type: ProgramInputType::Private,
-                        });
-                    }
-                    InputType::PublicData => {
-                        let data = input
-                            .data()
-                            .map(|d| d.bytes())
-                            .ok_or(Risc0RunnerError::InvalidData)?;
-                        let data = data.to_vec();
-                        let mut isa = input_staging_area.get_mut(&eid).unwrap();
-                        isa[index] = ProgramInput::Resolved(ResolvedInput {
-                            index: index as u8,
-                            data,
-                            input_type: ProgramInputType::Public,
-                        });
-                    }
-                    _ => {
-                        // not implemented yet / or unknown
-                        return Err(Risc0RunnerError::InvalidInputType.into());
-                    }
-                }
-            }
-            while let Some(url) = url_set.join_next().await {
-                match url {
-                    Ok(Ok(ri)) => {
-                        let mut isa = input_staging_area.get_mut(&eid).unwrap();
-                        isa.push(ProgramInput::Resolved(ri));
-                    }
-                    _ => {
-                        in_flight_proofs.remove(&eid);
-                        input_staging_area.remove(&eid);
-                        return Ok(());
-                    }
-                }
-            }
-            // ADD SOME CRAZY AGRESSIVE RETRYING HERE
+            let program_inputs = emit_event_with_duration!(MetricEvents::InputDownload, {
+                input_resolver.resolve_public_inputs(inputs.iter().collect()).await?
+            }, execution_id => eid, stage => "public");
+            input_staging_area.insert(eid.clone(), program_inputs);
             let sig = transaction_sender
                 .claim(&eid, accounts[2], computable_by)
                 .await
@@ -630,51 +511,6 @@ async fn handle_execution_request<'a>(
     }
     Ok(())
 }
-#[derive(Debug, Serialize, Deserialize)]
-pub struct PrivateInputRequest {
-    identity: Pubkey,
-    claim_id: String,
-    input_index: u8,
-}
-async fn download_private_input(
-    client: Arc<reqwest::Client>,
-    index: u8,
-    url: Url,
-    max_size: usize,
-    body: String,
-    claim_authorization: String,
-) -> Result<ResolvedInput> {
-    let resp = client
-        .post(url)
-        .body(body)
-        // Signature of the json payload
-        .header("Authorization", format!("Bearer {}", claim_authorization))
-        .header("Content-Type", "application/json")
-        .send()
-        .await?
-        .error_for_status()?;
-    let byte = get_body_max_size(resp.bytes_stream(), max_size).await?;
-    Ok(ResolvedInput {
-        index,
-        data: byte.to_vec(),
-        input_type: ProgramInputType::Private,
-    })
-}
-
-async fn dowload_public_input(
-    client: Arc<reqwest::Client>,
-    index: u8,
-    url: Url,
-    max_size: usize,
-) -> Result<ResolvedInput> {
-    let resp = client.get(url).send().await?.error_for_status()?;
-    let byte = get_body_max_size(resp.bytes_stream(), max_size).await?;
-    Ok(ResolvedInput {
-        index,
-        data: byte.to_vec(),
-        input_type: ProgramInputType::Public,
-    })
-}
 
 async fn load_image<'a>(
     config: &ProverNodeConfig,
@@ -705,6 +541,7 @@ async fn handle_image_deployment<'a>(
     emit_event_with_duration!(MetricEvents::ImageDownload, {
         let resp = http_client.get(url).send().await?.error_for_status()?;
         let min = std::cmp::min(size, (config.max_image_size_mb * 1024 * 1024) as u64) as usize;
+        info!("Downloading image, size {} min {}", size, min);
         if resp.status().is_success() {
             let stream = resp.bytes_stream();
             let byte = get_body_max_size(stream, min)

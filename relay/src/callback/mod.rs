@@ -5,7 +5,7 @@ use async_trait::async_trait;
 use dashmap::DashMap;
 use itertools::Itertools;
 use solana_sdk::{
-    account::Account, message::{v0, VersionedMessage}, transaction::VersionedTransaction
+    account::Account, message::{v0, VersionedMessage}, signer::SignerError, transaction::VersionedTransaction
 };
 use solana_transaction_status::TransactionStatus;
 use tokio::task::JoinHandle;
@@ -71,6 +71,28 @@ pub struct RpcTransactionSender {
     pub signer: Keypair,
     pub txn_status_handle: Option<JoinHandle<()>>,
     pub sigs: Arc<DashMap<Signature, Option<TransactionStatus>>>,
+}
+
+impl Signer for RpcTransactionSender {
+    fn pubkey(&self) -> Pubkey {
+        self.signer.pubkey()
+    }
+
+    fn try_pubkey(&self) -> Result<Pubkey, SignerError> {
+        Ok(self.signer.pubkey())
+    }
+
+    fn sign_message(&self, message: &[u8]) -> Signature {
+        self.signer.sign_message(message)
+    }
+    
+    fn try_sign_message(&self, message: &[u8]) -> std::result::Result<Signature, solana_sdk::signer::SignerError> {
+        self.signer.try_sign_message(message)
+    }
+    
+    fn is_interactive(&self) -> bool {
+        false 
+    }
 }
 
 impl RpcTransactionSender {

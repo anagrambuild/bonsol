@@ -16,6 +16,8 @@ use solana_program::msg;
 use solana_program::program::invoke_signed;
 use solana_program::program_error::ProgramError;
 use solana_program::program_memory::sol_memcmp;
+use solana_program::sysvar::Sysvar;
+use solana_program::clock::Clock;
 
 struct StatusAccounts<'a, 'b> {
     pub requester: &'a AccountInfo<'a>,
@@ -70,6 +72,9 @@ pub fn process_status_v1<'a>(
     let er = root_as_execution_request_v1(&*er_ref)
         .map_err(|_| ChannelError::InvalidExecutionAccount)?;
     let pr_v = st.proof().filter(|x| x.len() == 256);
+    if er.max_block_height() < Clock::get()?.slot {
+        return Err(ChannelError::ExecutionExpired.into());
+    }
     let execution_digest_v = st.execution_digest().map(|x| x.bytes());
     let input_digest_v = st.input_digest().map(|x| x.bytes());
     let assumption_digest_v = st.assumption_digest().map(|x| x.bytes());

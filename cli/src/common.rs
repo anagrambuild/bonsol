@@ -39,5 +39,5 @@ pub struct ZkProgramManifest {
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct InputFile {
-    pub inputs: Vec<InputType>,
+    pub inputs: Vec<u8>
 }
