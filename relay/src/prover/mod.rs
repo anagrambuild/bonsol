@@ -320,7 +320,7 @@ pub async fn handle_claim<'a>(
                 let start = SystemTime::now();
                 let since_the_epoch = start.duration_since(UNIX_EPOCH)?.as_secs();
                 image.last_used = since_the_epoch;
-                let (_,mut inputs) = input_staging_area.remove(execution_id).unwrap();
+                let mut inputs = input_staging_area.get_mut(execution_id).ok_or(Risc0RunnerError::InvalidData)?;
                 let unresolved_count = inputs
                     .iter()
                     .filter(|i| match i {
@@ -338,9 +338,9 @@ pub async fn handle_claim<'a>(
                     // one of the huge problems with the claim system is that we are not guaranteed to have
                     // the inputs we need at the time we claim and no way to
                 }
-                // drain the inputs and own them here
-                info!("Inputs resolved, generating proof");
-                let (eid, inputs) = input_staging_area.remove(execution_id).unwrap();
+                drop(inputs);
+                // drain the inputs and own them here, this is a bit of a hack but it works
+                let (eid, inputs) = input_staging_area.remove(execution_id).ok_or(Risc0RunnerError::InvalidData)?;
                 let mem_image = image.get_memory_image()?;
                 let result: Result<
                     (Journal, Digest, SuccinctReceipt<ReceiptClaim>),
@@ -544,10 +544,14 @@ async fn handle_image_deployment<'a>(
         info!("Downloading image, size {} min {}", size, min);
         if resp.status().is_success() {
             let stream = resp.bytes_stream();
-            let byte = get_body_max_size(stream, min)
+            let resp_data = get_body_max_size(stream, min)
                 .await
                 .map_err(|e| Risc0RunnerError::ImageDownloadError(e))?;
-            let img = Image::from_bytes(byte)?;
+
+            let img = Image::from_bytes(resp_data)?;
+            if let Some(bytes) = img.bytes() {
+                tokio::fs::write(Path::new(&config.risc0_image_folder).join(img.id.clone()), bytes).await?;
+            }
             if img.id != deploy.image_id().unwrap_or_default() {
                 return Err(Risc0RunnerError::InvalidData.into());
             }
