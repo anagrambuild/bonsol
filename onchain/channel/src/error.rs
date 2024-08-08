@@ -67,6 +67,8 @@ pub enum ChannelError {
     InvalidInputSetData,
     #[error("Input set Nesting Error")]
     InputSetNestingError,
+    #[error("Execution expired")]
+    ExecutionExpired,
 }
 
 impl From<ChannelError> for ProgramError {

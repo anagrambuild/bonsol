@@ -2,6 +2,7 @@ enum ProgramInputType: uint8 {
   Unknown = 0,
   Public = 1,
   Private = 2,
+  PublicProof = 3,
 }
 
 enum InputType: uint8 {

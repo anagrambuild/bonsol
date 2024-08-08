@@ -3,5 +3,6 @@
 export enum ProgramInputType {
   Unknown = 0,
   Public = 1,
-  Private = 2
+  Private = 2,
+  PublicProof = 3
 }

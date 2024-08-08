@@ -25,6 +25,18 @@ pub struct S3UploadDestination {
     pub region: Option<String>,
 }
 
+#[derive(Debug, Clone, Args)]
+pub struct ShadowDriveUpload {
+    #[arg(long)]
+    pub storage_account: Option<String>,
+    #[arg(long)]
+    pub storage_account_size_mb: Option<u64>,
+    #[arg(long)]
+    pub storage_account_name: Option<String>,
+    #[arg(long)]
+    pub alternate_keypair: Option<String>, // for testing on devnet but deploying to shadow drive 
+}
+
 #[derive(Debug, Clone, ValueEnum)]
 pub enum ProveMode {
     Local,
@@ -34,6 +46,7 @@ pub enum ProveMode {
 #[derive(Debug, Clone, ValueEnum)]
 pub enum DeployType {
     S3,
+    ShadowDrive,
 }
 
 #[derive(Subcommand, Debug)]
@@ -45,6 +58,8 @@ pub enum Commands {
         deploy_type: Option<DeployType>,
         #[clap(flatten)]
         s3_upload: S3UploadDestination,
+        #[clap(flatten)]
+        shadow_drive_upload: ShadowDriveUpload,
         #[arg(short = 'y', long)]
         auto_confirm: bool,
     },

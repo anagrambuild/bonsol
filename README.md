@@ -143,6 +143,7 @@ let digest = Impl::hash_bytes(
 env::commit_slice(digest.as_bytes());
 ```
 You can see that in the guest program we are hashing the public and private inputs and commiting the hash to the zkvm. This is how we insure that the prover ran this over your actual imput data which you previously hashed and sent into the execution request.
+If your input is dynamic and you dont know the hash ahead of time you can turn off the verify_inputs flag in the execution request and the prover will not fail if the inputs dont match. This is useful for dynamic input types like dynamic website data. If you need to prove over dynamic data pulled from the web, the reccomendation is to pull that data from inside your zkprogram or to ensure you check the hash in your callback program after the fact.
 
 # Roadmap
 * More TXN sender configs
@@ -156,6 +157,8 @@ You can see that in the guest program we are hashing the public and private inpu
 * More dynamic input types
     * Solana transaction history
     * Interactive Browser Proofs
+    * Zk Compressed State
+    * Nonced Risc0/Bonsol Proofs to allow composition of proofs
 
 ## Local Development
 Prequisites:
@@ -171,7 +174,7 @@ You will need to run a few components.
 2. 乃ㄖ几丂ㄖㄥ on chain program
 3. 乃ㄖ几丂ㄖㄥ off chain relay
 4. 乃ㄖ几丂ㄖㄥ zkprogram compiler 
-5. (Soon) Private input server
+5. (Soon) Private input server (optional)
 
 ```bash
 #Download and setup the system with the needed binaries and keys to run the groth16 prover over the risc0 FRI

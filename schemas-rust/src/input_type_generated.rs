@@ -12,13 +12,14 @@ use self::flatbuffers::{EndianScalar, Follow};
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
 pub const ENUM_MIN_PROGRAM_INPUT_TYPE: u8 = 0;
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-pub const ENUM_MAX_PROGRAM_INPUT_TYPE: u8 = 2;
+pub const ENUM_MAX_PROGRAM_INPUT_TYPE: u8 = 3;
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_PROGRAM_INPUT_TYPE: [ProgramInputType; 3] = [
+pub const ENUM_VALUES_PROGRAM_INPUT_TYPE: [ProgramInputType; 4] = [
   ProgramInputType::Unknown,
   ProgramInputType::Public,
   ProgramInputType::Private,
+  ProgramInputType::PublicProof,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -29,13 +30,15 @@ impl ProgramInputType {
   pub const Unknown: Self = Self(0);
   pub const Public: Self = Self(1);
   pub const Private: Self = Self(2);
+  pub const PublicProof: Self = Self(3);
 
   pub const ENUM_MIN: u8 = 0;
-  pub const ENUM_MAX: u8 = 2;
+  pub const ENUM_MAX: u8 = 3;
   pub const ENUM_VALUES: &'static [Self] = &[
     Self::Unknown,
     Self::Public,
     Self::Private,
+    Self::PublicProof,
   ];
   /// Returns the variant's name or "" if unknown.
   pub fn variant_name(self) -> Option<&'static str> {
@@ -43,6 +46,7 @@ impl ProgramInputType {
       Self::Unknown => Some("Unknown"),
       Self::Public => Some("Public"),
       Self::Private => Some("Private"),
+      Self::PublicProof => Some("PublicProof"),
       _ => None,
     }
   }

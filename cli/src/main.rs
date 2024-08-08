@@ -49,10 +49,11 @@ async fn main() -> anyhow::Result<()> {
         Commands::Deploy {
             manifest_path,
             s3_upload,
+            shadow_drive_upload,
             auto_confirm,
             deploy_type,
         } => {
-            deploy::deploy(rpc, &keypair, manifest_path, s3_upload, auto_confirm, deploy_type).await?;
+            deploy::deploy(rpc, &keypair, manifest_path, s3_upload, shadow_drive_upload, auto_confirm, deploy_type).await?;
         },
         Commands::Prove {
             manifest_path,
