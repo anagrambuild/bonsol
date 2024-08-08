@@ -11,6 +11,7 @@ use {
 pub struct Image {
     pub id: String,
     pub data: Option<Program>,
+    bytes: Option<Bytes>,
     pub size: u64,
     pub path: PathBuf,
     pub last_used: u64,
@@ -27,11 +28,16 @@ impl Image {
         Ok(image)
     }
 
+    pub fn bytes(&self) -> Option<&Bytes> {
+        self.bytes.as_ref()
+    }
+
     pub fn from_bytes(bytes: Bytes) -> Result<Image> {
         let program = Image::load_elf(&bytes)?;
         let img = Image::mem_img(&program)?;
         Ok(Image {
             id: img.compute_id().to_string(),
+            bytes: Some(bytes),
             data: Some(program),
             size: img.pages.len() as u64 * PAGE_SIZE as u64,
             path: PathBuf::new(),
@@ -46,6 +52,7 @@ impl Image {
 
         Ok(Image {
             id: img.compute_id().to_string(),
+            bytes: Some(Bytes::from(data)),
             data: Some(program),
             size: img.pages.len() as u64 * PAGE_SIZE as u64,
             path,
@@ -55,6 +62,7 @@ impl Image {
 
     pub fn compress(&mut self) {
         self.data = None;
+        self.bytes = None;
     }
 
     pub async fn load(&mut self) -> Result<()> {
@@ -64,6 +72,7 @@ impl Image {
         let data = read(&self.path).await?;
         let program = Image::load_elf(&data)?;
         self.data = Some(program);
+        self.bytes = Some(Bytes::from(data));
         Ok(())
     }
 

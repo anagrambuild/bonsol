@@ -41,6 +41,7 @@ pub async fn deploy(
         .map_err(|e| anyhow::anyhow!("Error parsing manifest file: {:?}", e))?;
     let loaded_binary = fs::read(&manifest.binary_path)
         .map_err(|e| anyhow::anyhow!("Error loading binary: {:?}", e))?;
+    println!("binary size {}", loaded_binary.len());
     let url: String = match deploy_type {
         Some(DeployType::S3) => {
             let bucket = s3_upload
@@ -113,17 +114,22 @@ pub async fn deploy(
                 None
             };
             let sa = if storage_account == "create" {
-                let size = shadow_drive_upload.storage_account_size_mb.unwrap_or((loaded_binary.len()as u64)/1024/1024*2);
+                let name = shadow_drive_upload.storage_account_name.unwrap_or(manifest.name.clone());
+                let min = std::cmp::max(((loaded_binary.len() as u64)/1024/1024)*2, 1);
+                let size = shadow_drive_upload.storage_account_size_mb.unwrap_or(min);
                 let res = if let Some(alt_client) = &alt_client {
                     alt_client.create_storage_account(
-                        &shadow_drive_upload.storage_account_name.unwrap_or(manifest.name.clone()),
+                        &name,
                         Byte::from_unit(size as f64, ByteUnit::MB).map_err(|e| anyhow::anyhow!("Invalid size: {:?}", e))?,
                         shadow_drive_sdk::StorageAccountVersion::V2,
                     ).await
                     .map_err(|e| anyhow::anyhow!("Error creating storage account: {:?}", e))?
                 } else {
+
+                    println!("Creating storage account with {}MB under the name {} with {}", size,&name, signer.pubkey());
+
                     shadow_drive.create_storage_account(
-                        &shadow_drive_upload.storage_account_name.unwrap_or(manifest.name.clone()),
+                        &name,
                         Byte::from_unit(size as f64, ByteUnit::MB).map_err(|e| anyhow::anyhow!("Invalid size: {:?}", e))?,
                         shadow_drive_sdk::StorageAccountVersion::V2,
                     ).await

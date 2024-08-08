@@ -1,4 +1,8 @@
-use std::{str::from_utf8, sync::Arc, time::{SystemTime, UNIX_EPOCH}};
+use std::{
+    str::from_utf8,
+    sync::Arc,
+    time::{SystemTime, UNIX_EPOCH},
+};
 
 use anagram_bonsol_schema::{root_as_input_set, Input, InputType, ProgramInputType};
 use anyhow::Result;
@@ -70,7 +74,7 @@ pub struct DeafultInputResolver {
     max_input_size_mb: u64,
 }
 
-impl DeafultInputResolver  {
+impl DeafultInputResolver {
     pub fn new(
         http_client: Arc<reqwest::Client>,
         solana_rpc_client: Arc<solana_rpc_client::nonblocking::rpc_client::RpcClient>,
@@ -233,14 +237,16 @@ impl InputResolver for DeafultInputResolver {
                     }
                 }
                 _ => {
-                    res.push(self.par_resolve_input(client, index, *input, &mut url_set)?);
+                    res[index as usize] =
+                        self.par_resolve_input(client, index, *input, &mut url_set)?;
                 }
             }
         }
         while let Some(url) = url_set.join_next().await {
             match url {
                 Ok(Ok(ri)) => {
-                    std::mem::replace(&mut res[ri.index as usize], ProgramInput::Resolved(ri));
+                    let index = ri.index as usize;
+                    res[index] = ProgramInput::Resolved(ri);
                 }
                 e => {
                     return Err(anyhow::anyhow!("Error downloading input: {:?}", e));
@@ -281,7 +287,8 @@ impl InputResolver for DeafultInputResolver {
         while let Some(url) = url_set.join_next().await {
             match url {
                 Ok(Ok(ri)) => {
-                    std::mem::replace(&mut inputs[ri.index as usize], ProgramInput::Resolved(ri));
+                    let index = ri.index as usize;
+                    inputs[index] = ProgramInput::Resolved(ri);
                 }
                 e => {
                     return Err(anyhow::anyhow!("Error downloading input: {:?}", e));
@@ -324,7 +331,6 @@ pub struct PrivateInputRequest {
     input_index: u8,
     now_utc: u64,
 }
-
 
 async fn dowload_public_input(
     client: Arc<reqwest::Client>,

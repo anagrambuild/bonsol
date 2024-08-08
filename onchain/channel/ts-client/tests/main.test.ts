@@ -46,7 +46,7 @@ describe('BonsolProgram', () => {
     const depl = await deploymentAddress(SIMPLE_IMAGE_ID);
 
     const deployAccount = await api.getAccountInfo(depl, { commitment: "confirmed", encoding: "base64" }).send();
-    if (!deployAccount.value) {
+    if (!deployAccount.value && process.env.DEPLOY == "true") {
       //deploy
       const keyPair = await kp();
       const pub = await getAddressFromPublicKey(keyPair.publicKey);
@@ -56,7 +56,7 @@ describe('BonsolProgram', () => {
       }
       const result = await Deploy(
         {
-          imageUrl: "https://shdw-drive.genesysgo.net/4G6XK2ViQMQRzWdqY51jCrKtRECVhu8r19v54yWHb1ge/simple",
+          imageUrl: "https://bonsol-public-images.s3.us-east-1.amazonaws.com/simple-20b9db715f989e3f57842787badafae101ce0b16202491bac1a3aebf573da0ba",
           imageId: SIMPLE_IMAGE_ID,
           imageSize: 266608n,
           programName: "simple6",
@@ -98,6 +98,10 @@ describe('BonsolProgram', () => {
     } else {
       
       let ea = parseBase64RpcAccount(depl, deployAccount.value)
+      if (!ea.exists) {
+        console.log("Image not deployed")
+        return
+      }
       let buf = new flatbuffers.ByteBuffer(ea.data as Uint8Array)
       let dp = DeployV1.getRootAsDeployV1(buf)
       console.log("deployed", dp.imageId())
