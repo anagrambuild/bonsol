@@ -73,7 +73,7 @@ I would love feedback on if this is a good idea or not. I think it will incentiv
 乃ㄖ几丂ㄖㄥ flavored zkprograms have two types of inputs. Public and Private. Private inputs are not required and the zkprogram creator can choose to only have public inputs.
 They are easy because they are public and can be passed in the execution request either by value or by refernce. 
 You can also pass an `InputSet` which is a preconfigured set of private or public inputs. This is useful for use cases where many inputs are known but a final end user input is not known. 
-For example a use case where a zkprogram dev (thats prolly you) has a 
+For example a use case where a zkprogram dev (thats prolly you) has an application that needs the public key and a signature from a user when they click something, but the rest of the input are already known. You can create an input set of those inputs that will be used for those input slots and the users inputs for the unknown ones.
 
 
 ### Public Inputs
