@@ -157,6 +157,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "anagram-bonsol-channel-interface"
+version = "0.0.1"
+dependencies = [
+ "anagram-bonsol-channel-utils",
+ "anagram-bonsol-schema",
+ "flatbuffers",
+ "solana-program",
+ "solana-sdk",
+ "thiserror",
+]
+
+[[package]]
 name = "anagram-bonsol-channel-utils"
 version = "0.0.1"
 dependencies = [
@@ -169,7 +181,6 @@ name = "anagram-bonsol-schema"
 version = "0.0.1"
 dependencies = [
  "flatbuffers",
- "serde",
  "thiserror",
 ]
 
@@ -177,6 +188,7 @@ dependencies = [
 name = "anagram-bonsol-sdk"
 version = "0.0.1"
 dependencies = [
+ "anagram-bonsol-channel-interface",
  "anagram-bonsol-channel-utils",
  "anagram-bonsol-schema",
  "anyhow",

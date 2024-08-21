@@ -37,11 +37,6 @@ pub struct ShadowDriveUpload {
     pub alternate_keypair: Option<String>, // for testing on devnet but deploying to shadow drive 
 }
 
-#[derive(Debug, Clone, ValueEnum)]
-pub enum ProveMode {
-    Local,
-    Remote,
-}
 
 #[derive(Debug, Clone, ValueEnum)]
 pub enum DeployType {
@@ -67,11 +62,21 @@ pub enum Commands {
         #[arg(short = 'z', long)]
         zk_program_path: String,
     },
+    Execute {
+        #[arg(short = 'p', long)]
+        program_id: String,
+        #[arg(short, long)]
+        inputs: Option<Vec<String>>,
+        #[arg(short, long)]
+        input_file: Option<String>,
+        #[arg(short, long)]
+        tip: Option<u64>,
+        #[arg(short, long)]
+        expiry: Option<u64>,
+    },
     Prove {
         #[arg(short = 'm', long)]
-        manifest_path: String,
-        #[arg(short = 'l', long)]
-        prove_mode: ProveMode,
+        manifest_path: Option<String>,
         #[arg(short, long)]
         inputs: Option<Vec<String>>,
         #[arg(short, long)]

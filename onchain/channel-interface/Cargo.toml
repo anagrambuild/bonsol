@@ -1,0 +1,16 @@
+[package]
+name = "anagram-bonsol-channel-interface"
+version = "0.0.1"
+edition = "2021"
+
+[features]
+on-chain = ["solana-program", "anagram-bonsol-channel-utils/on-chain"]
+default = ["solana-sdk", "anagram-bonsol-channel-utils/default"]
+
+[dependencies]
+anagram-bonsol-schema = { path = "../../schemas-rust", version = "0.0.1" }
+anagram-bonsol-channel-utils = { path = "../channel-utils", version="0.0.1" ,  optional = true}
+flatbuffers = {workspace = true}
+solana-program = { workspace = true, optional = true}
+solana-sdk = { workspace = true, optional = true }
+thiserror = { workspace = true }

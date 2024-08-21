@@ -10,7 +10,6 @@ edition = "2021"
 [dependencies]
 flatbuffers = {workspace = true}
 thiserror = {workspace = true}
-serde = "1.0.196"
 
 [lints]
 workspace = true

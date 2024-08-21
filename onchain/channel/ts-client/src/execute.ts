@@ -69,7 +69,6 @@ export async function Execute(params: {
   if (prf) {
     ExecutionRequestV1.addCallbackInstructionPrefix(builder, prf);
   }
-
   ExecutionRequestV1.addTip(builder, BigInt(params.tip || 0));
   ExecutionRequestV1.addVerifyInputHash(builder, params.verifyInputHash || false);
   ExecutionRequestV1.addForwardOutput(builder, params.forwardOuput || false);
@@ -110,7 +109,7 @@ export async function Execute(params: {
         address: address("11111111111111111111111111111111"),
         role: AccountRole.READONLY,
       },
-
+      ...extra_accounts
     ],
     programAddress: address(BONSOL_PROGRAM_ID),
     data: buf,

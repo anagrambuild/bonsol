@@ -1,5 +1,6 @@
 mod build;
 mod deploy;
+// mod execute;
 pub mod common;
 pub mod command;
 use clap::Parser;
@@ -55,13 +56,9 @@ async fn main() -> anyhow::Result<()> {
         } => {
             deploy::deploy(rpc, &keypair, manifest_path, s3_upload, shadow_drive_upload, auto_confirm, deploy_type).await?;
         },
-        Commands::Prove {
-            manifest_path,
-            prove_mode,
-            inputs,
-            input_file,
-        } => {
-            todo!()
+       _ => {
+            println!("Invalid command");
+            return Ok(());
         }
     };
     Ok(())

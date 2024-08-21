@@ -52,7 +52,8 @@ describe('BonsolProgram', () => {
       const pub = await getAddressFromPublicKey(keyPair.publicKey);
       
       if (process.env.RPC_ENDPOINT == null || process.env.RPC_ENDPOINT == "http://localhost:8899") {
-        await api.requestAirdrop(pub, lamports(1000000000n)).send();
+        await api.requestAirdrop(pub, lamports(1000000000n)).send();  
+        await new Promise((resolve) => setTimeout(resolve, 1000));
       }
       const result = await Deploy(
         {
@@ -120,6 +121,7 @@ describe('BonsolProgram', () => {
     const pub = await getAddressFromPublicKey(keyPair.publicKey);
     if (process.env.RPC_ENDPOINT == null || process.env.RPC_ENDPOINT == "http://localhost:8899") {
       await api.requestAirdrop(pub, lamports(1000000000n)).send();
+      await new Promise((resolve) => setTimeout(resolve, 1000));
     }
     //random uuid 
     const eid = randomBytes(5).toString();

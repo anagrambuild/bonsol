@@ -9,6 +9,7 @@ solana-rpc-client = { workspace = true}
 solana-rpc-client-api = { workspace = true }
 anagram-bonsol-schema = { path = "../schemas-rust" }
 anagram-bonsol-channel-utils = { path = "../onchain/channel-utils", features = ["default"] }
+anagram-bonsol-channel-interface = { path = "../onchain/channel-interface", features = ["default"] }
 anyhow = "1.0.86"
 flatbuffers = {workspace = true}
 tokio = "1.36.0"
