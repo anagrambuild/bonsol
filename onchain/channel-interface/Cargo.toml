@@ -9,7 +9,7 @@ default = ["solana-sdk", "anagram-bonsol-channel-utils/default"]
 
 [dependencies]
 anagram-bonsol-schema = { path = "../../schemas-rust", version = "0.0.1" }
-anagram-bonsol-channel-utils = { path = "../channel-utils", version="0.0.1" ,  optional = true}
+anagram-bonsol-channel-utils = { path = "../channel-utils", version="0.0.1" , optional = true, default-features = false}
 flatbuffers = {workspace = true}
 solana-program = { workspace = true, optional = true}
 solana-sdk = { workspace = true, optional = true }

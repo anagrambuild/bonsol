@@ -4,7 +4,7 @@ import type * as Preset from '@docusaurus/preset-classic';
 import { themes } from 'prism-react-renderer';
 
 const config: Config = {
-  title: 'Bonsol Documentation',
+  title: 'Bonsol',
   tagline: 'Zk plubing on solana',
   favicon: 'img/favicon.ico',
 
@@ -26,7 +26,10 @@ const config: Config = {
     defaultLocale: 'en',
     locales: ['en'],
   },
-
+  markdown: {
+    mermaid: true,
+  },
+  themes: ['@docusaurus/theme-mermaid'],
   presets: [
     [
       'classic',
@@ -145,6 +148,9 @@ const config: Config = {
       prism: {
         theme: themes.oneLight,
         darkTheme: themes.nightOwl,
+      },
+      mermaid: {
+        theme: {light: 'neutral', dark: 'forest'},
       },
     }),
 };

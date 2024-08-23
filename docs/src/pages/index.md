@@ -1,6 +1,5 @@
 ---
 slug: /
-sidebar_position: 1
 ---
 
 # Welcome to Bonsol
@@ -13,37 +12,47 @@ To get started with Bonsol without installing anything use our interactive demo,
 
 ## Navigating the Documentation
 
-Our documentation is structured according to the Diátaxis framework, addressing four distinct user needs:
+Our documentation is structured according to five distinct user needs:
+
+- Tutorials
+- How-To Guides
+- Reference
+- Explanation
 
 ### 1. Tutorials (Learning-oriented)
+Get started with a non trivial example of how to use Bonsol.
 
-If you're new to Bonsol or want to learn by doing, start here:
-- [Build a Dapp that uses Bonsol](/docs/tutorials/build-a-dapp-that-uses-bonsol)
-- [Build a Solana Program that uses Bonsol](/docs/tutorials/build-a-solana-program-that-uses-bonsol)
+- [Taste of Bonsol](/docs/tutorials/a-taste-of-bonsol)
+
 
 ### 2. How-To Guides (Problem-oriented)
 
 For specific tasks and problem-solving:
 
-- [How to Optimize Gas Usage](/docs/how-to/optimize-gas)
-- [How to Upgrade ZK Programs](/docs/how-to/upgrade-zk-programs)
-- [How to Integrate with Frontend Frameworks](/docs/how-to/frontend-integration)
+##### Basics
+- [How to Execute a Bonsol Program](/docs/how-to/interact-with-contracts#execute-a-bonsol-program)
+- [How to recive a Bonsol Callback](/docs/how-to/interact-with-contracts#recieve-a-bonsol-callback)
+##### Use Case Driven
+- [How to verify a Http Request](/docs/how-to/verify-http-request)
+- [How to use Private Inputs V1](/docs/how-to/private-inputs-v1)
+- [How to use PublicProof Inputs](/docs/how-to/public-proof-inputs) 
+##### Advanced
+- [Local Proving with the CLI](/docs/how-to/local-proving-cli)
+
+
 
 ### 3. Reference (Information-oriented)
 
 Detailed technical descriptions of Bonsol's tools and APIs:
-
 - [CLI Commands](/docs/reference/cli-commands)
-- [ZK Program API](/docs/reference/zk-program-api)
-- [Configuration Options](/docs/reference/configuration)
+- [Bonsol On Chain Helpers](/docs/reference/contract-interfaces)
+
 
 ### 4. Explanation (Understanding-oriented)
 
 Discussions and clarifications of Bonsol concepts:
-
 - [What is Bonsol?](/docs/explanation/what-is-bonsol)
-- [ZK Proofs in Solana: A Deep Dive](/docs/explanation/zk-proofs-solana)
-- [Bonsol's Approach to ZK Development](/docs/explanation/bonsol-zk-approach)
+
 
 ## Key Features
 

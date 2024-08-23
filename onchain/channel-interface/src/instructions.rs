@@ -8,7 +8,7 @@ use flatbuffers::{FlatBufferBuilder, WIPOffset};
 
 #[cfg(feature = "on-chain")]
 use {
-    solana_program::account::AccountMeta, solana_program::instruction::Instruction,
+    solana_program::instruction::AccountMeta, solana_program::instruction::Instruction,
     solana_program::msg, solana_program::program_error::ProgramError,
     solana_program::pubkey::Pubkey, solana_program::system_program,
 };
