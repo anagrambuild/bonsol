@@ -1,5 +1,10 @@
 include "./input_type.fbs";
 
+struct Account {
+  writable: bool = false;
+  pubkey: [uint8:32];
+}
+
 table ExecutionRequestV1{
   tip: uint64;
   execution_id: string;
@@ -11,6 +16,7 @@ table ExecutionRequestV1{
   input: [Input];
   input_digest: [uint8]; // sha256 of the input data, checked against journal digest
   max_block_height: uint64; // max block height to accept prover commitment
+  callback_extra_accounts: [Account]; // extra accounts to pass to callback program
 }
 
 root_type ExecutionRequestV1;

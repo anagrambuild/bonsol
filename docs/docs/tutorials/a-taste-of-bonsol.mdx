@@ -13,9 +13,8 @@ The following example is showcase of how you could use bonsol to build a Proof o
 This fun little demo simulates the minig process for a Pow token, every pattern is different.
 <PowPowDemo />
 
-Congratulations! You have minted yourself some PowPow tokens. You can now use the interactive demo to mint yourself more tokens.
+Congratulations! You have minted yourself some PowPow tokens.
 Lets take a moment to break down what happened in this example.
-
 When you clicked the Mint button you sent a transaction to the Solana blockchain. You sent it to the Bonsol PoW example program which then sent a message to the Bonsol Channel program to request a proof. A node in the prover network claimed that compute and rand the sequence for you, and then sent you a proof. The Bonsol Channel program then verified the proof and minted you and the node that provider the proof some PowPow tokens according to the difficulty of the sequence. While this is a contrived example it is a non trivial one that shows the folowing:
 - Building a solana program that uses Bonsol
 - Using Bonsol to prove a computation
@@ -67,11 +66,11 @@ Here is a diagram of how the program works.
 ```mermaid
 sequenceDiagram;
   participant SC as Solana Smart Contract;
-  participant BSC as Bonsai Smart Contract;
+  participant BSC as Bonsol Smart Contract(PowPow);
   participant R as Relayers;
   participant ZK as ZK Computation;
   
-  SC->>BSC: Call Bonsai Smart Contract;
+  SC->>BSC: Call Bonsol Smart Contract(PowPow);
   BSC->>R: Emit event;
   R->>ZK: Listen and initiate ZK computation;
   ZK->>R: Generate ZK proof;

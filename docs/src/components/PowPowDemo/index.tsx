@@ -96,11 +96,11 @@ function CollatzDemo() {
 
     for (let i = 0; i <= currentIndex; i++) {
       const diff = Number(sequenceRef.current[i]) - Number(sequenceRef.current[0]);
-      const angle = (i / sequenceRef.current.length ) * Math.PI * (diff - sequenceRef.current.length);
+      const angle = (i / sequenceRef.current.length ) * (Math.PI * Number(sequenceRef.current[i])) * (diff - sequenceRef.current.length);
       
       const radius = maxRadius * (Math.log(Number(sequenceRef.current[i])) / Math.log(Number(sequenceRef.current[0])));
-      const x = centerX + Math.cos(angle) * radius;
-      const y = centerY + Math.sin(angle) * radius;
+      const x = (centerX + Math.sin(angle) * radius);
+      const y = (centerY + Math.cos(angle) * radius);
 
       if (i === 0) {
         ctx.moveTo(x, y);

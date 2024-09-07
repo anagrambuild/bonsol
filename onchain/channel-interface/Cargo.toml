@@ -6,6 +6,9 @@ edition = "2021"
 [features]
 on-chain = ["solana-program", "anagram-bonsol-channel-utils/on-chain"]
 default = ["solana-sdk", "anagram-bonsol-channel-utils/default"]
+anchor = ["on-chain", "anchor-lang"]
+macros = ["on-chain"]
+
 
 [dependencies]
 anagram-bonsol-schema = { path = "../../schemas-rust", version = "0.0.1" }
@@ -14,3 +17,13 @@ flatbuffers = {workspace = true}
 solana-program = { workspace = true, optional = true}
 solana-sdk = { workspace = true, optional = true }
 thiserror = { workspace = true }
+sha3 = "0.10"
+hex = "0.4.3"
+arrayref = "0.3.6"
+paste = "1.0"
+
+[dependencies.anchor-lang]
+version = "0.30"
+optional = true
+ 
+[dev-dependencies]

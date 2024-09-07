@@ -2,7 +2,7 @@ use anagram_bonsol_channel_utils::{deployment_address, execution_address};
 use anagram_bonsol_schema::{
     ChannelInstruction, ChannelInstructionArgs, ChannelInstructionIxType, DeployV1, DeployV1Args,
     ExecutionRequestV1, ExecutionRequestV1Args, Input as FBBInput, InputBuilder,
-    InputType, ProgramInputType,
+    InputType, ProgramInputType, Account,
 };
 use flatbuffers::{FlatBufferBuilder, WIPOffset};
 
@@ -113,6 +113,7 @@ impl Default for ExecutionConfig {
 pub struct CallbackConfig {
     pub program_id: Pubkey,
     pub instruction_prefix: Vec<u8>,
+    pub extra_accounts: Vec<AccountMeta>,
 }
 pub struct Input {
     pub input_type: InputType,
@@ -134,13 +135,20 @@ pub fn execute_v1(
     let (deployment_account, _) = deployment_address(image_id);
     let mut fbb = FlatBufferBuilder::new();
     let mut callback_pubkey = None; // aviod clone
-    let (callback_program_id, callback_instruction_prefix) = if let Some(cb) = callback {
+    let (callback_program_id, callback_instruction_prefix, extra_accounts) = if let Some(cb) = callback {
         callback_pubkey = Some(cb.program_id);
         let cb_program_id = fbb.create_vector(cb.program_id.as_ref());
         let cb_instruction_prefix = fbb.create_vector(cb.instruction_prefix.as_slice());
-        (Some(cb_program_id), Some(cb_instruction_prefix))
+        let ealen = cb.extra_accounts.len();
+        fbb.start_vector::<WIPOffset<Account>>(ealen);
+        for ea in cb.extra_accounts {
+            let pkbytes = arrayref::array_ref!(ea.pubkey.as_ref(), 0, 32);
+            let eab = Account::new(ea.is_writable, pkbytes);
+            fbb.push(eab);
+        }
+        (Some(cb_program_id), Some(cb_instruction_prefix), Some(fbb.end_vector(ealen)))
     } else {
-        (None, None)
+        (None, None, None)
     };
     let mut accounts = vec![
         AccountMeta::new(signer.to_owned(), true),
@@ -198,6 +206,7 @@ pub fn execute_v1(
             input: Some(fb_inputs),
             max_block_height: expiration,
             input_digest,
+            callback_extra_accounts: extra_accounts,
         },
     );
     fbb.finish(fbb_execute, None);
