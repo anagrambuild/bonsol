@@ -120,6 +120,45 @@ pub struct Input {
     pub data: Vec<u8>,
 }
 
+impl Input {
+    pub fn public(data: Vec<u8>) -> Self {
+        Self {
+            input_type: InputType::PublicData,
+            data,
+        }
+    }
+    pub fn private(data: Vec<u8>) -> Self {
+        Self {
+            input_type: InputType::Private,
+            data,
+        }
+    }
+    pub fn public_proof(data: Vec<u8>) -> Self {
+        Self {
+            input_type: InputType::PublicProof,
+            data,
+        }
+    }
+    pub fn url(data: Vec<u8>) -> Self {
+        Self {
+            input_type: InputType::PublicUrl,
+            data,
+        }
+    }
+    pub fn input_set(data: Pubkey) -> Self {
+        Self {
+            input_type: InputType::InputSet,
+            data: data.to_bytes().to_vec(),
+        }
+    }
+    pub fn public_account(data: Pubkey) -> Self {
+        Self {
+            input_type: InputType::PublicAccountData,
+            data: data.to_bytes().to_vec(),
+        }
+    }
+}
+
 pub fn execute_v1(
     signer: &Pubkey,
     image_id: &str,

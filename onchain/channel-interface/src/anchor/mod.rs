@@ -6,7 +6,10 @@ use anchor_lang::prelude::ProgramError;
 use paste::paste;
 use solana_program::pubkey::Pubkey;
 use std::marker::PhantomData;
-use std::ops::Deref;
+use std::ops::Deref;    
+
+#[cfg(feature = "idl-build")]
+use anchor_lang::idl::IdlBuild;
 
 macro_rules! impl_anchor_for {
     (
@@ -19,6 +22,10 @@ macro_rules! impl_anchor_for {
                 data: $type<'a>,
                 // PhantomData to tie the lifetime to our struct
                 _marker: PhantomData<&'a [u8]>,
+            }
+
+            impl anchor_lang::Discriminator for [<$type Account>]<'_> {
+                const DISCRIMINATOR: [u8; 8] = [0u8; 8];
             }
 
             impl<'a> anchor_lang::AccountDeserialize for [<$type Account>]<'a> {
@@ -46,14 +53,19 @@ macro_rules! impl_anchor_for {
               }
             }
 
+            impl anchor_lang::Owners for [<$type Account>]<'_> {
+              fn owners() -> &'static [Pubkey] {
+                    &[crate::ID]
+              }
+            }
+
             impl<'a> Deref for [<$type Account>]<'a> {
               type Target = $type<'a>;
 
               fn deref(&self) -> &Self::Target {
                   &self.data
               }
-            }
-
+            }           
         }
     };
 }
@@ -62,3 +74,27 @@ macro_rules! impl_anchor_for {
 impl_anchor_for!(DeployV1, root_as_deploy_v1);
 impl_anchor_for!(ExecutionRequestV1, root_as_execution_request_v1);
 impl_anchor_for!(InputSet, root_as_input_set);
+
+pub struct Bonsol {}
+
+impl anchor_lang::Id for Bonsol {
+    fn id() -> Pubkey {
+        crate::ID
+    }
+}
+
+macro_rules! impl_anchor_for_idl {
+    (
+        $type:ident
+    ) => {
+        paste! {
+            impl anchor_lang::IdlBuild for  [<$type Account>]<'_> {}
+        }
+    };
+}
+#[cfg(feature = "idl-build")]
+impl_anchor_for_idl!(DeployV1);
+#[cfg(feature = "idl-build")]
+impl_anchor_for_idl!(ExecutionRequestV1);
+#[cfg(feature = "idl-build")]
+impl_anchor_for_idl!(InputSet);
