@@ -10,32 +10,31 @@ type FeatureItem = {
 
 const FeatureList: FeatureItem[] = [
   {
-    title: 'Easy to Use',
-    Svg: require('@site/static/img/undraw_docusaurus_mountain.svg').default,
+    title: 'Prove Anything',
+    Svg: require('@site/static/img/prove.svg').default,
     description: (
       <>
-        Docusaurus was designed from the ground up to be easily installed and
-        used to get your website up and running quickly.
+        With Bonsol you can prove anything, from simple computations to complex business logic.
+        Using state of the art zk(risc0) technology, Bonsol allows you to prove computations that are impossible to run on-chain.
       </>
     ),
   },
   {
-    title: 'Focus on What Matters',
-    Svg: require('@site/static/img/undraw_docusaurus_tree.svg').default,
+    title: 'Solana Integrated',
+    Svg: require('@site/static/img/sol.svg').default,
     description: (
       <>
-        Docusaurus lets you focus on your docs, and we&apos;ll do the chores. Go
-        ahead and move your docs into the <code>docs</code> directory.
+        Bonsol can integrate with any solana program, allowing you to take action after a proof is verified.
+        String on and off chain computations together with ease.
       </>
     ),
   },
   {
-    title: 'Powered by React',
-    Svg: require('@site/static/img/undraw_docusaurus_react.svg').default,
+    title: 'Batteries Included',
+    Svg: require('@site/static/img/bat.svg').default,
     description: (
       <>
-        Extend or customize your website layout by reusing React. Docusaurus can
-        be extended while reusing the same header and footer.
+        Anchor integrated, CLI, SDKs will help you get up and running quickly.
       </>
     ),
   },

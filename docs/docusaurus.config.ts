@@ -9,7 +9,7 @@ const config: Config = {
   favicon: 'img/favicon.ico',
 
   // Set the production url of your site here
-  url: 'https://doc.bonsol.sh',
+  url: 'https://bonsol.sh',
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
   baseUrl: '/',
@@ -19,7 +19,7 @@ const config: Config = {
   organizationName: 'anagrambuild', // Usually your GitHub org/user name.
   projectName: 'bonsol', // Usually your repo name.
 
-  onBrokenLinks: 'throw',
+  onBrokenLinks: 'warn',
   onBrokenMarkdownLinks: 'warn',
 
   i18n: {
@@ -53,12 +53,12 @@ const config: Config = {
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
       // Replace with your project's social card
-      image: 'img/docusaurus-social-card.jpg',
+      image: 'img/logo.webp',
       navbar: {
         title: 'Bonsol Docs',
         logo: {
           alt: 'Bonsol Logo',
-          src: 'img/logo.svg',
+          src: 'img/logo.webp',
         },
         items: [
           {
@@ -96,37 +96,8 @@ const config: Config = {
         style: 'dark',
         links: [
           {
-            title: 'Docs',
-            items: [
-              {
-                label: 'Tutorials',
-                to: '/docs/category/tutorials',
-              },
-              {
-                label: 'How-To Guides',
-                to: '/docs/category/how-to-guides',
-              },
-              {
-                label: 'Reference',
-                to: '/docs/category/reference',
-              },
-              {
-                label: 'Explanation',
-                to: '/docs/category/explanation',
-              },
-            ],
-          },
-          {
             title: 'Community',
             items: [
-              {
-                label: 'Stack Overflow',
-                href: 'https://stackoverflow.com/questions/tagged/bonsol',
-              },
-              {
-                label: 'Discord',
-                href: 'https://discordapp.com/invite/bonsol',
-              },
               {
                 label: 'Twitter',
                 href: 'https://twitter.com/bonsol',
@@ -134,7 +105,7 @@ const config: Config = {
             ],
           },
           {
-            title: 'More',
+            title: 'Code',
             items: [
               {
                 label: 'GitHub',
@@ -143,7 +114,7 @@ const config: Config = {
             ],
           },
         ],
-        copyright: `Copyright © ${new Date().getFullYear()} Bonsol Project. Built by Anagram, Built with Docusaurus.`,
+        copyright: `Copyright © ${new Date().getFullYear()} Bonsol Project. Built by Anagram, Docs Built with Docusaurus.`,
       },
       prism: {
         theme: themes.oneLight,
