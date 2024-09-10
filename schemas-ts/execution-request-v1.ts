@@ -2,6 +2,7 @@
 
 import * as flatbuffers from 'flatbuffers';
 
+import { Account } from './account.js';
 import { Input } from './input.js';
 
 
@@ -156,8 +157,18 @@ mutate_max_block_height(value:bigint):boolean {
   return true;
 }
 
+callbackExtraAccounts(index: number, obj?:Account):Account|null {
+  const offset = this.bb!.__offset(this.bb_pos, 24);
+  return offset ? (obj || new Account()).__init(this.bb!.__vector(this.bb_pos + offset) + index * 33, this.bb!) : null;
+}
+
+callbackExtraAccountsLength():number {
+  const offset = this.bb!.__offset(this.bb_pos, 24);
+  return offset ? this.bb!.__vector_len(this.bb_pos + offset) : 0;
+}
+
 static startExecutionRequestV1(builder:flatbuffers.Builder) {
-  builder.startObject(10);
+  builder.startObject(11);
 }
 
 static addTip(builder:flatbuffers.Builder, tip:bigint) {
@@ -248,6 +259,14 @@ static addMaxBlockHeight(builder:flatbuffers.Builder, maxBlockHeight:bigint) {
   builder.addFieldInt64(9, maxBlockHeight, BigInt('0'));
 }
 
+static addCallbackExtraAccounts(builder:flatbuffers.Builder, callbackExtraAccountsOffset:flatbuffers.Offset) {
+  builder.addFieldOffset(10, callbackExtraAccountsOffset, 0);
+}
+
+static startCallbackExtraAccountsVector(builder:flatbuffers.Builder, numElems:number) {
+  builder.startVector(33, numElems, 1);
+}
+
 static endExecutionRequestV1(builder:flatbuffers.Builder):flatbuffers.Offset {
   const offset = builder.endObject();
   return offset;
@@ -261,7 +280,7 @@ static finishSizePrefixedExecutionRequestV1Buffer(builder:flatbuffers.Builder, o
   builder.finish(offset, undefined, true);
 }
 
-static createExecutionRequestV1(builder:flatbuffers.Builder, tip:bigint, executionIdOffset:flatbuffers.Offset, imageIdOffset:flatbuffers.Offset, callbackProgramIdOffset:flatbuffers.Offset, callbackInstructionPrefixOffset:flatbuffers.Offset, forwardOutput:boolean, verifyInputHash:boolean, inputOffset:flatbuffers.Offset, inputDigestOffset:flatbuffers.Offset, maxBlockHeight:bigint):flatbuffers.Offset {
+static createExecutionRequestV1(builder:flatbuffers.Builder, tip:bigint, executionIdOffset:flatbuffers.Offset, imageIdOffset:flatbuffers.Offset, callbackProgramIdOffset:flatbuffers.Offset, callbackInstructionPrefixOffset:flatbuffers.Offset, forwardOutput:boolean, verifyInputHash:boolean, inputOffset:flatbuffers.Offset, inputDigestOffset:flatbuffers.Offset, maxBlockHeight:bigint, callbackExtraAccountsOffset:flatbuffers.Offset):flatbuffers.Offset {
   ExecutionRequestV1.startExecutionRequestV1(builder);
   ExecutionRequestV1.addTip(builder, tip);
   ExecutionRequestV1.addExecutionId(builder, executionIdOffset);
@@ -273,6 +292,7 @@ static createExecutionRequestV1(builder:flatbuffers.Builder, tip:bigint, executi
   ExecutionRequestV1.addInput(builder, inputOffset);
   ExecutionRequestV1.addInputDigest(builder, inputDigestOffset);
   ExecutionRequestV1.addMaxBlockHeight(builder, maxBlockHeight);
+  ExecutionRequestV1.addCallbackExtraAccounts(builder, callbackExtraAccountsOffset);
   return ExecutionRequestV1.endExecutionRequestV1(builder);
 }
 }

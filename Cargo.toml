@@ -3,10 +3,11 @@ members = [
   "iop",
   "onchain/channel",
   "onchain/channel-utils", 
+  "onchain/channel-interface",
   "relay",
   "schemas-rust",
   "cli",
-  "sdk",
+  "sdk"
 ]
 resolver = "2"
 

@@ -2,4 +2,6 @@ packages:
   - "schemas-ts"
   - "onchain/channel/ts-client"
   - "vkey"
+  - "docs"
+  - "examples/bonsol-pow-example"
   

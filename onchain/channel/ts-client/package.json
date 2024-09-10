@@ -1,5 +1,5 @@
 {
-  "name": "bonsol-channel-node-sdk",
+  "name": "@bonsol/bonsol-node",
   "version": "0.0.0",
   "scripts": {
     "lint": "eslint src/ --ext .js,.jsx,.ts,.tsx",

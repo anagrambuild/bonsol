@@ -10,6 +10,115 @@ use core::cmp::Ordering;
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
 
+// struct Account, aligned to 1
+#[repr(transparent)]
+#[derive(Clone, Copy, PartialEq)]
+pub struct Account(pub [u8; 33]);
+impl Default for Account { 
+  fn default() -> Self { 
+    Self([0; 33])
+  }
+}
+impl core::fmt::Debug for Account {
+  fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+    f.debug_struct("Account")
+      .field("writable", &self.writable())
+      .field("pubkey", &self.pubkey())
+      .finish()
+  }
+}
+
+impl flatbuffers::SimpleToVerifyInSlice for Account {}
+impl<'a> flatbuffers::Follow<'a> for Account {
+  type Inner = &'a Account;
+  #[inline]
+  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+    <&'a Account>::follow(buf, loc)
+  }
+}
+impl<'a> flatbuffers::Follow<'a> for &'a Account {
+  type Inner = &'a Account;
+  #[inline]
+  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+    flatbuffers::follow_cast_ref::<Account>(buf, loc)
+  }
+}
+impl<'b> flatbuffers::Push for Account {
+    type Output = Account;
+    #[inline]
+    unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
+        let src = ::core::slice::from_raw_parts(self as *const Account as *const u8, Self::size());
+        dst.copy_from_slice(src);
+    }
+}
+
+impl<'a> flatbuffers::Verifiable for Account {
+  #[inline]
+  fn run_verifier(
+    v: &mut flatbuffers::Verifier, pos: usize
+  ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
+    use self::flatbuffers::Verifiable;
+    v.in_buffer::<Self>(pos)
+  }
+}
+
+impl<'a> Account {
+  #[allow(clippy::too_many_arguments)]
+  pub fn new(
+    writable: bool,
+    pubkey: &[u8; 32],
+  ) -> Self {
+    let mut s = Self([0; 33]);
+    s.set_writable(writable);
+    s.set_pubkey(pubkey);
+    s
+  }
+
+  pub fn writable(&self) -> bool {
+    let mut mem = core::mem::MaybeUninit::<<bool as EndianScalar>::Scalar>::uninit();
+    // Safety:
+    // Created from a valid Table for this object
+    // Which contains a valid value in this slot
+    EndianScalar::from_little_endian(unsafe {
+      core::ptr::copy_nonoverlapping(
+        self.0[0..].as_ptr(),
+        mem.as_mut_ptr() as *mut u8,
+        core::mem::size_of::<<bool as EndianScalar>::Scalar>(),
+      );
+      mem.assume_init()
+    })
+  }
+
+  pub fn set_writable(&mut self, x: bool) {
+    let x_le = x.to_little_endian();
+    // Safety:
+    // Created from a valid Table for this object
+    // Which contains a valid value in this slot
+    unsafe {
+      core::ptr::copy_nonoverlapping(
+        &x_le as *const _ as *const u8,
+        self.0[0..].as_mut_ptr(),
+        core::mem::size_of::<<bool as EndianScalar>::Scalar>(),
+      );
+    }
+  }
+
+  pub fn pubkey(&'a self) -> flatbuffers::Array<'a, u8, 32> {
+    // Safety:
+    // Created from a valid Table for this object
+    // Which contains a valid array in this slot
+    unsafe { flatbuffers::Array::follow(&self.0, 1) }
+  }
+
+  pub fn set_pubkey(&mut self, items: &[u8; 32]) {
+    // Safety:
+    // Created from a valid Table for this object
+    // Which contains a valid array in this slot
+    unsafe { flatbuffers::emplace_scalar_array(&mut self.0, 1, items) };
+  }
+
+}
+
 pub enum ExecutionRequestV1Offset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -36,6 +145,7 @@ impl<'a> ExecutionRequestV1<'a> {
   pub const VT_INPUT: flatbuffers::VOffsetT = 18;
   pub const VT_INPUT_DIGEST: flatbuffers::VOffsetT = 20;
   pub const VT_MAX_BLOCK_HEIGHT: flatbuffers::VOffsetT = 22;
+  pub const VT_CALLBACK_EXTRA_ACCOUNTS: flatbuffers::VOffsetT = 24;
 
   #[inline]
   pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
@@ -49,6 +159,7 @@ impl<'a> ExecutionRequestV1<'a> {
     let mut builder = ExecutionRequestV1Builder::new(_fbb);
     builder.add_max_block_height(args.max_block_height);
     builder.add_tip(args.tip);
+    if let Some(x) = args.callback_extra_accounts { builder.add_callback_extra_accounts(x); }
     if let Some(x) = args.input_digest { builder.add_input_digest(x); }
     if let Some(x) = args.input { builder.add_input(x); }
     if let Some(x) = args.callback_instruction_prefix { builder.add_callback_instruction_prefix(x); }
@@ -131,6 +242,13 @@ impl<'a> ExecutionRequestV1<'a> {
     // which contains a valid value in this slot
     unsafe { self._tab.get::<u64>(ExecutionRequestV1::VT_MAX_BLOCK_HEIGHT, Some(0)).unwrap()}
   }
+  #[inline]
+  pub fn callback_extra_accounts(&self) -> Option<flatbuffers::Vector<'a, Account>> {
+    // Safety:
+    // Created from valid Table for this object
+    // which contains a valid value in this slot
+    unsafe { self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, Account>>>(ExecutionRequestV1::VT_CALLBACK_EXTRA_ACCOUNTS, None)}
+  }
 }
 
 impl flatbuffers::Verifiable for ExecutionRequestV1<'_> {
@@ -150,6 +268,7 @@ impl flatbuffers::Verifiable for ExecutionRequestV1<'_> {
      .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<Input>>>>("input", Self::VT_INPUT, false)?
      .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, u8>>>("input_digest", Self::VT_INPUT_DIGEST, false)?
      .visit_field::<u64>("max_block_height", Self::VT_MAX_BLOCK_HEIGHT, false)?
+     .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, Account>>>("callback_extra_accounts", Self::VT_CALLBACK_EXTRA_ACCOUNTS, false)?
      .finish();
     Ok(())
   }
@@ -165,6 +284,7 @@ pub struct ExecutionRequestV1Args<'a> {
     pub input: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<Input<'a>>>>>,
     pub input_digest: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a, u8>>>,
     pub max_block_height: u64,
+    pub callback_extra_accounts: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a, Account>>>,
 }
 impl<'a> Default for ExecutionRequestV1Args<'a> {
   #[inline]
@@ -180,6 +300,7 @@ impl<'a> Default for ExecutionRequestV1Args<'a> {
       input: None,
       input_digest: None,
       max_block_height: 0,
+      callback_extra_accounts: None,
     }
   }
 }
@@ -230,6 +351,10 @@ impl<'a: 'b, 'b> ExecutionRequestV1Builder<'a, 'b> {
     self.fbb_.push_slot::<u64>(ExecutionRequestV1::VT_MAX_BLOCK_HEIGHT, max_block_height, 0);
   }
   #[inline]
+  pub fn add_callback_extra_accounts(&mut self, callback_extra_accounts: flatbuffers::WIPOffset<flatbuffers::Vector<'b , Account>>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(ExecutionRequestV1::VT_CALLBACK_EXTRA_ACCOUNTS, callback_extra_accounts);
+  }
+  #[inline]
   pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> ExecutionRequestV1Builder<'a, 'b> {
     let start = _fbb.start_table();
     ExecutionRequestV1Builder {
@@ -257,6 +382,7 @@ impl core::fmt::Debug for ExecutionRequestV1<'_> {
       ds.field("input", &self.input());
       ds.field("input_digest", &self.input_digest());
       ds.field("max_block_height", &self.max_block_height());
+      ds.field("callback_extra_accounts", &self.callback_extra_accounts());
       ds.finish()
   }
 }
