@@ -71,6 +71,8 @@ pub enum ChannelError {
     ExecutionExpired,
     #[error("Invalid Deployment Account PDA")]
     InvalidDeploymentAccountPDA,
+    #[error("Invalid Callback Extra Accounts")]
+    InvalidCallbackExtraAccounts,
 }
 
 impl From<ChannelError> for ProgramError {

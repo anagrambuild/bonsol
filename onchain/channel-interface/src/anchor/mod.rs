@@ -2,11 +2,10 @@ use anagram_bonsol_schema::{
     root_as_deploy_v1, root_as_execution_request_v1, root_as_input_set, DeployV1,
     ExecutionRequestV1, InputSet,
 };
-use anchor_lang::prelude::ProgramError;
 use paste::paste;
 use solana_program::pubkey::Pubkey;
 use std::marker::PhantomData;
-use std::ops::Deref;    
+use std::ops::Deref;
 
 #[cfg(feature = "idl-build")]
 use anchor_lang::idl::IdlBuild;
@@ -65,7 +64,7 @@ macro_rules! impl_anchor_for {
               fn deref(&self) -> &Self::Target {
                   &self.data
               }
-            }           
+            }
         }
     };
 }

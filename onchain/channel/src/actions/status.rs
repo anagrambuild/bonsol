@@ -10,6 +10,7 @@ use anagram_bonsol_schema::ChannelInstruction;
 use anagram_bonsol_schema::ExitCode;
 use anagram_bonsol_schema::StatusV1;
 use solana_program::account_info::AccountInfo;
+use solana_program::clock::Clock;
 use solana_program::instruction::AccountMeta;
 use solana_program::instruction::Instruction;
 use solana_program::msg;
@@ -17,7 +18,6 @@ use solana_program::program::invoke_signed;
 use solana_program::program_error::ProgramError;
 use solana_program::program_memory::sol_memcmp;
 use solana_program::sysvar::Sysvar;
-use solana_program::clock::Clock;
 
 struct StatusAccounts<'a, 'b> {
     pub requester: &'a AccountInfo<'a>,
@@ -123,26 +123,36 @@ pub fn process_status_v1<'a>(
                 seeds.push(&b);
                 let mut ainfos = vec![sa.exec.clone(), sa.callback_program.clone()];
                 ainfos.extend(sa.extra_accounts.iter().cloned());
+                // ER is the signer, it is reuired to save the execution id in the calling program
                 let mut accounts = vec![AccountMeta::new(*sa.exec.key, true)];
-                for a in sa.extra_accounts {
-                    // dont cary feepayer signature through to callback
-                    let _signer = if sol_memcmp(a.key.as_ref(), sa.prover.key.as_ref(), 32) == 0 {
-                        false
-                    } else {
-                        a.is_signer
-                    };
-                    if a.is_writable {
-                        accounts.push(AccountMeta::new(*a.key, a.is_signer));
-                    } else {
-                        accounts.push(AccountMeta::new_readonly(*a.key, a.is_signer));
+                if let Some(extra_accounts) = er.callback_extra_accounts() {
+                    if extra_accounts.len() != sa.extra_accounts.len() {
+                        return Err(ChannelError::InvalidCallbackExtraAccounts.into());
+                    }
+                    for (i, a) in sa.extra_accounts.iter().enumerate() {
+                        let stored_a = extra_accounts.get(i);
+                        if sol_memcmp(a.key.as_ref(), &stored_a.0[0..32], 32) != 0 {
+                            return Err(ChannelError::InvalidCallbackExtraAccounts.into());
+                        }
+                        // dont cary feepayer signature through to callback we set all signer to false except the ER
+                        if a.is_writable {
+                            if !stored_a.writable() {
+                                return Err(ChannelError::InvalidCallbackExtraAccounts.into());
+                            }
+                            accounts.push(AccountMeta::new(*a.key, false));
+                        } else {
+                            if stored_a.writable() {
+                                return Err(ChannelError::InvalidCallbackExtraAccounts.into());
+                            }
+                            accounts.push(AccountMeta::new_readonly(*a.key, false));
+                        }
                     }
                 }
                 let payload = if er.forward_output() && st.committed_outputs().is_some() {
                     [
                         er.callback_instruction_prefix().unwrap().bytes(),
                         st.committed_outputs().unwrap().bytes(),
-                    ]
-                    .concat()
+                    ].concat()
                 } else {
                     er.callback_instruction_prefix().unwrap().bytes().to_vec()
                 };

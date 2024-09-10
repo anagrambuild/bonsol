@@ -6,34 +6,24 @@ use anagram_bonsol_schema::{
 };
 use flatbuffers::{FlatBufferBuilder, WIPOffset};
 
+
+use crate::error::ClientError;
+
 #[cfg(feature = "on-chain")]
 use {
     solana_program::instruction::AccountMeta, solana_program::instruction::Instruction,
-    solana_program::msg, solana_program::program_error::ProgramError,
     solana_program::pubkey::Pubkey, solana_program::system_program,
 };
 
 #[cfg(not(feature = "on-chain"))]
 use {
-    solana_sdk::instruction::AccountMeta, solana_sdk::instruction::Instruction, solana_sdk::msg,
-    solana_sdk::program_error::ProgramError, solana_sdk::pubkey::Pubkey,
+    solana_sdk::instruction::AccountMeta, solana_sdk::instruction::Instruction, solana_sdk::pubkey::Pubkey,
     solana_sdk::system_program,
 };
 
-#[derive(thiserror::Error, Debug)]
-pub enum ClientError {
-    #[error("InvalidInput")]
-    InvalidInput,
-    #[error("InvalidInputSetAddress")]
-    InvalidInputSetAddress,
-}
 
-impl Into<ProgramError> for ClientError {
-    fn into(self) -> ProgramError {
-        msg!(&self.to_string());
-        ProgramError::Custom(self as u32)
-    }
-}
+
+
 
 pub fn deploy_v1(
     signer: &Pubkey,

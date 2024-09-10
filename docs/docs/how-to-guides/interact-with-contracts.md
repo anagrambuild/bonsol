@@ -48,29 +48,7 @@ const EXECUTION_REQUEST_ACCOUNT = executionAddress(REQUESTER, EXECUTION_ID);
 To create an execuition request you will need to provide the following information:
 
 ```rust
-use anagram_bonsol_channel_interface::{
-    macros::{execute...},
-   
-};
 
-
-fn your_program_entrypoint(program_id: &Pubkey, accounts: &[AccountInfo], input: Vec<u8>) -> Result<()> {
-...
-let your_ix_data_oject = ...;
-let execution_id = "execution_id"; //This is allowed to be any string as long as its unique. UUIDs are a good choice.
-let inputs = vec![Input::PublicData(input)]; //this is the input you want to pass to the program
-
-
-execute!( 
-  accounts[0], //just an example the requester account, must be a signer,
-  None, //no signer seeds, if you are havine a pda be the requester then you will need to provide the seeds
-  accounts, //execute will locate the accounts you need to pass to the program
-  IMAGE_ID, //the image id of the program you want to execute
-  , //the execution id of the program you want to execute
-
-)?;
-...
-}
 ```
 
 ## Using the crate in a anchor program
