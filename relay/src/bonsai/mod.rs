@@ -1,4 +1,4 @@
-use anagram_bonsol_schema::{
+use bonsol_schema::{
     parse_ix_data, ChannelInstruction, ChannelInstructionIxType, ExecutionInputType, ExecutionRequestV1, StatusV1
 };
 use anyhow::Result;

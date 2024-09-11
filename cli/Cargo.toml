@@ -12,7 +12,7 @@ clap = { version = "4.4.2", features = ["derive"] }
 solana-sdk = { workspace = true }
 solana-rpc-client = { workspace = true }
 solana-cli-config = { workspace = true }
-anagram-bonsol-sdk = { path = "../sdk" }
+bonsol-sdk = { path = "../sdk" }
 cargo_toml = "0.20.3"
 serde_json = "1.0.104"
 serde = { version = "1.0.197", features = ["derive"] }

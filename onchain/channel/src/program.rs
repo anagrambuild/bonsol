@@ -1,6 +1,6 @@
 use crate::actions::*;
 use crate::error::ChannelError;
-use anagram_bonsol_schema::{
+use bonsol_schema::{
     parse_ix_data,
     ChannelInstructionIxType
 };

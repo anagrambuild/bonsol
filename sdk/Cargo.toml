@@ -1,5 +1,5 @@
 [package]
-name = "anagram-bonsol-sdk"
+name = "bonsol-sdk"
 version = "0.0.1"
 edition = "2021"
 
@@ -7,9 +7,9 @@ edition = "2021"
 solana-sdk = { workspace = true }
 solana-rpc-client = { workspace = true}
 solana-rpc-client-api = { workspace = true }
-anagram-bonsol-schema = { path = "../schemas-rust" }
-anagram-bonsol-channel-utils = { path = "../onchain/channel-utils", features = ["default"] }
-anagram-bonsol-channel-interface = { path = "../onchain/channel-interface", features = ["default"] }
+bonsol-schema = { path = "../schemas-rust" }
+bonsol-channel-utils = { path = "../onchain/channel-utils", features = ["default"] }
+bonsol-channel-interface = { path = "../onchain/channel-interface", features = ["default"] }
 anyhow = "1.0.86"
 flatbuffers = {workspace = true}
 tokio = "1.36.0"

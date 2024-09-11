@@ -1,7 +1,7 @@
 use {
     crate::error::ClientError,
-    anagram_bonsol_channel_utils::execution_address,
-    anagram_bonsol_schema::root_as_execution_request_v1,
+    bonsol_channel_utils::execution_address,
+    bonsol_schema::root_as_execution_request_v1,
     solana_program::{
         account_info::AccountInfo,
         instruction::{AccountMeta, Instruction},

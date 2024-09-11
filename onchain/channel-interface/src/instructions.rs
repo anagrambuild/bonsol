@@ -1,5 +1,5 @@
-use anagram_bonsol_channel_utils::{deployment_address, execution_address};
-use anagram_bonsol_schema::{
+use bonsol_channel_utils::{deployment_address, execution_address};
+use bonsol_schema::{
     ChannelInstruction, ChannelInstructionArgs, ChannelInstructionIxType, DeployV1, DeployV1Args,
     ExecutionRequestV1, ExecutionRequestV1Args, Input as FBBInput, InputBuilder,
     InputType, ProgramInputType, Account,

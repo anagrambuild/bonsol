@@ -9,7 +9,7 @@ use crate::{
     command::{DeployType, S3UploadDestination, ShadowDriveUpload},
     common::ZkProgramManifest,
 };
-use anagram_bonsol_sdk::{BonsolClient, ProgramInputType};
+use bonsol_sdk::{BonsolClient, ProgramInputType};
 use anyhow::Result;
 use byte_unit::{Byte, ByteUnit};
 use indicatif::ProgressBar;

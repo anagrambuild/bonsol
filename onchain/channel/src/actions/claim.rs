@@ -1,6 +1,6 @@
-use anagram_bonsol_channel_utils::execution_claim_address_seeds;
-use anagram_bonsol_schema::root_as_execution_request_v1;
-use anagram_bonsol_schema::{ChannelInstruction, ClaimV1};
+use bonsol_channel_utils::execution_claim_address_seeds;
+use bonsol_schema::root_as_execution_request_v1;
+use bonsol_schema::{ChannelInstruction, ClaimV1};
 use bytemuck::{Pod, Zeroable};
 use solana_program::account_info::AccountInfo;
 use solana_program::pubkey::Pubkey;

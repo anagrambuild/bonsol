@@ -1,6 +1,6 @@
 use std::process::Command;
 
-use anagram_bonsol_sdk::InputType;
+use bonsol_sdk::InputType;
 use serde::{Deserialize, Serialize};
 
 

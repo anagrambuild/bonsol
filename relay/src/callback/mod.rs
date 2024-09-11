@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use anagram_bonsol_channel_utils::deployment_address;
+use bonsol_channel_utils::deployment_address;
 use async_trait::async_trait;
 use dashmap::DashMap;
 use itertools::Itertools;
@@ -10,8 +10,8 @@ use solana_sdk::{
 use solana_transaction_status::TransactionStatus;
 use tokio::task::JoinHandle;
 use {
-    anagram_bonsol_channel_utils::{execution_address, execution_claim_address},
-    anagram_bonsol_schema::{
+    bonsol_channel_utils::{execution_address, execution_claim_address},
+    bonsol_schema::{
         ChannelInstruction, ChannelInstructionArgs, ChannelInstructionIxType, ClaimV1, ClaimV1Args,
         StatusTypes, StatusV1, StatusV1Args,
     },
