@@ -100,7 +100,7 @@ const config: Config = {
             items: [
               {
                 label: 'Twitter',
-                href: 'https://twitter.com/bonsol',
+                href: 'https://twitter.com/bonsolsh',
               },
             ],
           },
