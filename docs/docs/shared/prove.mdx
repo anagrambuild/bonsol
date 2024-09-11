@@ -1,0 +1,48 @@
+### `prove`: Local Proving with the CLI
+
+Local proving is a key feature of Bonsol. This allows you to prove computations that are impossible to run on-chain.
+You can do this with the cli, using the `bonsol prove` command. In this scenario you will need to be proving against a deployed program.
+
+```bash 
+bonsol prove -f local.json  
+```
+
+Similar to the `bonsol execute` command, the cli takes a json file as an argument.
+Here is an example of a valid local proving payload json file.
+
+```json
+{
+  "imageId": "20b9db715f989e3f57842787badafae101ce0b16202491bac1a3aebf573da0ba",
+  "inputs": [
+    {
+      "inputType": "Public",
+      "data": "0x1234567890"
+    }
+  ]
+}
+```
+
+The json schema for the local proving payload is hosted [here](https://github.com/anagrambuild/bonsol/blob/main/schemas/prove.schema.json).
+
+#### Output 
+If proving succeeds, the cli will return the proof and the output of the execution. You can choose the format of the output with the `--format` flag.
+
+Two formats are supported:
+* `json` - The default format, the cli will return the proof and the output of the execution in json format.
+* `binary` - The cli will return the proof and the output of the execution in the flatbuffer binary format.
+
+##### Binary Format
+The binary format is a binary representation of the proof and the output of the execution. The binary format is useful for storing the proof on chain.
+There are two components to the binary format, the proof and the output.
+
+##### JSON Format 
+The json format is a json representation of the proof and the output of the execution.
+An example of the json format is shown below.
+```json
+{
+  "proof": "...", // 
+  "output": "adff...fsdfsdfZ=" //base64 encoded output of the execution
+}
+```
+
+For more on how to use Proof Composition in Bonsol, check out the [Proof Composition](/docs/tutorials/proof-composition) guide.
