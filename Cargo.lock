@@ -135,82 +135,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "anagram-bonsol-channel"
-version = "0.0.1"
-dependencies = [
- "anagram-bonsol-channel-utils",
- "anagram-bonsol-schema",
- "anyhow",
- "ark-bn254",
- "ark-serialize",
- "bytemuck",
- "flatbuffers",
- "groth16-solana",
- "hex",
- "hex-literal",
- "num-bigint 0.4.5",
- "solana-program",
- "solana-program-test",
- "solana-sdk",
- "thiserror",
- "tokio-test",
-]
-
-[[package]]
-name = "anagram-bonsol-channel-interface"
-version = "0.0.1"
-dependencies = [
- "anagram-bonsol-channel-utils",
- "anagram-bonsol-schema",
- "anchor-lang 0.30.1",
- "arrayref",
- "flatbuffers",
- "hex",
- "paste",
- "sha3 0.10.8",
- "solana-program",
- "solana-sdk",
- "thiserror",
-]
-
-[[package]]
-name = "anagram-bonsol-channel-utils"
-version = "0.0.1"
-dependencies = [
- "solana-program",
- "solana-sdk",
-]
-
-[[package]]
-name = "anagram-bonsol-schema"
-version = "0.0.1"
-dependencies = [
- "flatbuffers",
- "thiserror",
-]
-
-[[package]]
-name = "anagram-bonsol-sdk"
-version = "0.0.1"
-dependencies = [
- "anagram-bonsol-channel-interface",
- "anagram-bonsol-channel-utils",
- "anagram-bonsol-schema",
- "anyhow",
- "async-trait",
- "bytes",
- "flatbuffers",
- "futures-util",
- "reqwest",
- "serde",
- "serde_json",
- "solana-rpc-client",
- "solana-rpc-client-api",
- "solana-sdk",
- "tokio",
-]
-
-[[package]]
 name = "anchor-attribute-access-control"
 version = "0.26.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1216,11 +1140,58 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8d696c370c750c948ada61c69a0ee2cbbb9c50b1019ddb86d9317157a99c2cae"
 
 [[package]]
+name = "bonsol-channel"
+version = "0.0.1"
+dependencies = [
+ "anyhow",
+ "ark-bn254",
+ "ark-serialize",
+ "bonsol-channel-utils",
+ "bonsol-schema",
+ "bytemuck",
+ "flatbuffers",
+ "groth16-solana",
+ "hex",
+ "hex-literal",
+ "num-bigint 0.4.5",
+ "solana-program",
+ "solana-program-test",
+ "solana-sdk",
+ "thiserror",
+ "tokio-test",
+]
+
+[[package]]
+name = "bonsol-channel-interface"
+version = "0.0.1"
+dependencies = [
+ "anchor-lang 0.30.1",
+ "arrayref",
+ "bonsol-channel-utils",
+ "bonsol-schema",
+ "flatbuffers",
+ "hex",
+ "paste",
+ "sha3 0.10.8",
+ "solana-program",
+ "solana-sdk",
+ "thiserror",
+]
+
+[[package]]
+name = "bonsol-channel-utils"
+version = "0.0.1"
+dependencies = [
+ "solana-program",
+ "solana-sdk",
+]
+
+[[package]]
 name = "bonsol-cli"
 version = "0.0.1"
 dependencies = [
- "anagram-bonsol-sdk",
  "anyhow",
+ "bonsol-sdk",
  "byte-unit",
  "cargo_toml 0.20.3",
  "clap 4.5.9",
@@ -1232,6 +1203,35 @@ dependencies = [
  "shadow-drive-sdk",
  "solana-cli-config",
  "solana-rpc-client",
+ "solana-sdk",
+ "tokio",
+]
+
+[[package]]
+name = "bonsol-schema"
+version = "0.0.1"
+dependencies = [
+ "flatbuffers",
+ "thiserror",
+]
+
+[[package]]
+name = "bonsol-sdk"
+version = "0.0.1"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "bonsol-channel-interface",
+ "bonsol-channel-utils",
+ "bonsol-schema",
+ "bytes",
+ "flatbuffers",
+ "futures-util",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "solana-rpc-client",
+ "solana-rpc-client-api",
  "solana-sdk",
  "tokio",
 ]
@@ -5026,9 +5026,6 @@ checksum = "7a66a03ae7c801facd77a29370b4faec201768915ac14a721ba36f20bc9c209b"
 name = "relay"
 version = "0.1.9"
 dependencies = [
- "anagram-bonsol-channel-utils",
- "anagram-bonsol-schema",
- "anagram-bonsol-sdk",
  "anyhow",
  "ark-bn254",
  "ark-crypto-primitives",
@@ -5039,6 +5036,9 @@ dependencies = [
  "ark-serialize",
  "ark-std",
  "async-trait",
+ "bonsol-channel-utils",
+ "bonsol-schema",
+ "bonsol-sdk",
  "bytemuck",
  "byteorder",
  "bytes",

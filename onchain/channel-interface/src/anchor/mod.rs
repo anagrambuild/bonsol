@@ -1,4 +1,4 @@
-use anagram_bonsol_schema::{
+use bonsol_schema::{
     root_as_deploy_v1, root_as_execution_request_v1, root_as_input_set, DeployV1,
     ExecutionRequestV1, InputSet,
 };

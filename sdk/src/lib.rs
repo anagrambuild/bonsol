@@ -17,9 +17,9 @@ use {
     },
 };
 
-pub use anagram_bonsol_channel_interface::*;
-pub use anagram_bonsol_channel_utils::*;
-pub use anagram_bonsol_schema::*;
+pub use bonsol_channel_interface::*;
+pub use bonsol_channel_utils::*;
+pub use bonsol_schema::*;
 pub mod input_resolver;
 pub struct BonsolClient {
     rpc_client: RpcClient,
@@ -47,7 +47,7 @@ impl BonsolClient {
     }
 
     pub async fn get_fees(&self, signer: &Pubkey) -> Result<u64> {
-        let fee_accounts = vec![signer.to_owned(), anagram_bonsol_channel_utils::ID];
+        let fee_accounts = vec![signer.to_owned(), bonsol_channel_utils::ID];
         let compute_fees = self
             .rpc_client
             .get_recent_prioritization_fees(&fee_accounts)

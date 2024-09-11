@@ -3,6 +3,7 @@ import InitNewBonsol from '../shared/init-new-bonsol.mdx';
 import Build from '../shared/build.mdx';
 import Deploy from '../shared/deploy.mdx';
 import PowPowDemo from '@site/src/components/PowPowDemo';
+import CliTip from '../shared/cli-tip.mdx';
 
 # A Taste of Bonsol
 The best way to learn about Bonsol is to use it. In this tutorial we will walk you through using a simple bonsol example and breaking down what is happening step by step.
@@ -83,7 +84,7 @@ sequenceDiagram;
 We will break down a few parts of the code to show the bonsol specific parts. In `lib.rs` we have the following:
 
 ```rust
-use anagram_bonsol_channel_interface::{
+use bonsol_channel_interface::{
     macros:: {execute, execute_cb, callback},
     anchor::{
         BonsolChannel,
@@ -275,8 +276,10 @@ This is required by bonsol because it verifies the inputs to the risc0 zkvm.
 
 Congratulations! You have now built a zk program that can be used to prove the collatz sequence.
 
-There are only a few more things to do before we can use this program.
+There are only a few more things to do before we can use this program. We need to build the program and deploy it to the Bonsol network.
+## Building and Deploying
 
+<CliTip />
 <Build />
 
 The very last step is to deploy the program to the Bonsol network.

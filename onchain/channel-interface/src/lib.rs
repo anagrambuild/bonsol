@@ -1,5 +1,5 @@
 pub mod instructions;
-pub use anagram_bonsol_channel_utils::ID;
+pub use bonsol_channel_utils::ID;
 #[cfg(feature = "macros")]
 pub mod macros;
 #[cfg(feature = "anchor")]
@@ -7,5 +7,5 @@ pub mod anchor;
 #[cfg(feature = "on-chain")]
 pub mod callback;
 pub mod error;
-pub use anagram_bonsol_schema;
-pub use anagram_bonsol_channel_utils;
+pub use bonsol_schema;
+pub use bonsol_channel_utils;
