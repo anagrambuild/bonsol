@@ -12,6 +12,11 @@ But furst checkout the interactive demo to get started.
 ## Bonsol PoW Token
 The following example is showcase of how you could use bonsol to build a Proof of Work Token on Solana. A proof of work system is a form of verifiable compute, which is the very thing that Bonsol was built for. Bonsol allows you to prove almost any kind of computation, with native verification on solana. That verification can be used to interact with other programs, and in this case, mint a token. Before we show you how this was built go ahead and use the interactive demo to mint yourself som PowPow tokens.
 This fun little demo simulates the minig process for a Pow token, every pattern is different.
+
+:::info 
+This is a demo, if you experience an issue please put an issue on the PoW example repo [here](https://github.com/anagrambuild/bonsol-powpow/issues).
+:::
+
 <PowPowDemo />
 
 Congratulations! You have minted yourself some PowPow tokens.
@@ -84,15 +89,12 @@ sequenceDiagram;
 We will break down a few parts of the code to show the bonsol specific parts. In `lib.rs` we have the following:
 
 ```rust
-use bonsol_channel_interface::{
-    macros:: {execute, execute_cb, callback},
-    anchor::{
-        BonsolChannel,
-        DeploymentAccountV1, 
-        ExecutionRequestV1,
-    },
+use anagram_bonsol_channel_interface::anchor::{
+    Bonsol, DeployV1Account, ExecutionRequestV1Account,
 };
-
+use anagram_bonsol_channel_interface::instructions::{
+    execute_v1, CallbackConfig, ExecutionConfig, Input,
+};
 ...
 ```
 Here we import various macros and interfaces need to interact with the Bonsol channel program. 
@@ -100,8 +102,6 @@ The `execute` macro will request the execution of a desired program with specifi
 The `BonsolChannel` interface is used to interact with the Bonsol channel program via anchor and the `DeploymentAccountV1` and `ExecutionRequestV1` allow convenient access to the accounts needed to interact with the Bonsol channel program.
 
 ```rust
-
-#[derive(Accounts)]
 #[instruction(args: MineTokenArgs)]
 pub struct MineToken<'info> {
     #[account(
@@ -111,107 +111,168 @@ pub struct MineToken<'info> {
     pub pow_config: Account<'info, PoWConfig>,
     #[account(
         init_if_needed,
-        seeds = [b"powrecord", miner.key().as_ref()],
-        bump
+        space = 8 + PowMintLog::INIT_SPACE,
+        payer = miner,
+        seeds = [b"powmintlog", miner.key().as_ref()],
+        bump,
     )]
-    pub pow_record: Account<'info, PoWRecord>,
+    pub pow_mint_log: Account<'info, PowMintLog>,
+    #[account(mut,
+        constraint = pow_mint_log.miner == miner.key()
+    )]
     pub miner: Signer<'info>,
     #[account(mut,
-    ... // constraints omitted
+        constraint = mint.key() == pow_config.mint,
     )]
-    pub mint:  InterfaceAccount<'info, Mint>,
+    pub mint: InterfaceAccount<'info, Mint>,
+    #[account(
+        mut,
+        owner = token_program.key(),
+        associated_token::mint = mint,
+        associated_token::authority = miner,
+        associated_token::token_program = token_program,
+    )]
     pub token_account: InterfaceAccount<'info, TokenAccount>,
-    pub token_program: Interface<'info, TokenInterface>,
-    pub deploymentAccount: InterfaceAccount<'info, DeploymentAccountV1>,
-    pub execution_request: InterfaceAccount<'info, ExecutionRequestV1>,
-    pub bonsol_channel: Interface<'info, BonsolChannel>,
+    pub token_program: Program<'info, Token2022>,
+    pub bonsol_program: Program<'info, Bonsol>,
+    pub execution_request: Account<'info, ExecutionRequestV1Account<'info>>,
+    pub deployment_account: Account<'info, DeployV1Account<'info>>,
+    pub system_program: Program<'info, System>,
 }
+
 ```
 This is the anchor account struct that allows us to mine the tokens. 
 
 ```rust
+#[derive(AnchorDeserialize, AnchorSerialize)]
 pub struct MineTokenArgs {
-    pub signature: Vec<u8>, // the signature is the signature of the public key and the slot
-    pub slot: u64, // the slot is the selected slot to mine the token this must be recent 
+    pub current_req_id: String,
+    pub num: [u8; 64],
+    pub tip: u64,
 }
 
 //this is the image id of the collatz sequence program
 const MINE_IMAGE_ID: &str = "ec8b92b02509d174a1a07dbe228d40ea13ff4b4b71b84bdc690064dfea2b6f86";
 
 ...
+
 #[derive(Accounts)]
-pub struct Eureka { //eureka means "i found it" and its a nod to the gold mining era in california in the 1800s
-    pub execution_request: InterfaceAccount<'info, ExecutionRequestV1>,
-    pub deployment_account: InterfaceAccount<'info, DeploymentAccountV1>,
-    pub bonsol_channel: Interface<'info, BonsolChannel>,
-    // the above accounts are all a part of the bonsol callback interface, the rest are extra accounts to handle the callback these will be passed in as the extra_accounts field of the execution request
+pub struct BonsolCallback<'info> {
+    /// CHECK: This is the raw ER account, checked in the callback handler
+    pub execution_request: UncheckedAccount<'info>,
     #[account(
-        init_if_needed,
-        seeds = [b"powrecord", miner.key().as_ref()],
+        mut,
+        seeds = [b"powconfig"],
         bump
     )]
-    pub pow_record: Account<'info, PoWRecord>,
     pub pow_config: Account<'info, PoWConfig>,
-    pub mint:  InterfaceAccount<'info, Mint>,
+    #[account(mut, seeds = [b"powmintlog"], bump)]
+    pub pow_mint_log: Account<'info, PowMintLog>,
+    #[account(mut,
+        constraint = pow_mint_log.miner == miner.key()
+    )]
+    /// CHECK: Checked via constraint
+    pub miner: UncheckedAccount<'info>,
+    #[account(mut)]
+    pub mint: InterfaceAccount<'info, Mint>,
+    #[account(
+        mut,
+        owner = token_program.key(),
+        associated_token::mint = mint,
+        associated_token::authority = miner,
+        associated_token::token_program = token_program,
+    )]
     pub token_account: InterfaceAccount<'info, TokenAccount>,
-    pub token_program: Interface<'info, TokenInterface>,
+    pub token_program: Program<'info, Token2022>,
 }
+
 
 #[program]
 ...
-pub fn mine_token(
-    ctx: Context<MineToken>,
-    args: MineTokenArgs,
-) -> Result<()> {
-  ...
-  let exec_config = Execution {
-    image_id: MINE_IMAGE_ID,
-    callback_program_id: Some(crate::ID),
-    callback_instruction_prefix: Eureka::discriminator().to_vec(),
-    extra_accounts: vec![
-      AccountMeta::new(ctx.accounts.pow_record.key(), false),
-      AccountMeta::new_readonly(ctx.accounts.pow_config.key(), false),
-      AccountMeta::new_readonly(ctx.accounts.mint.key(), false),
-      AccountMeta::new_readonly(ctx.accounts.token_account.key(), false),
-      AccountMeta::new_readonly(ctx.accounts.token_program.key(), false),
-    ],
-    inputs: vec![
-      signature.as_ref(),
-    ],
-    forward_output: true,
-    verify_input_hash: true,
-    input: hashv(&[
-      ctx.accounts.miner.key().as_ref(),
-      args.slot.to_le_bytes()
-    ]),
-    max_block_height: clock::Clock::get()?.slot + 100,
-  }
-  execute!(exec_config)?; 
-  ...
+ pub fn mine_token(ctx: Context<MineToken>, args: MineTokenArgs) -> Result<()> {
+    let slot = sysvar::clock::Clock::get()?.slot;
+    let pkbytes = ctx.accounts.pow_config.mint.to_bytes();
+    let input_hash = keccak::hashv(&[&args.num, &pkbytes]);
+    if slot - ctx.accounts.pow_mint_log.slot < 100 {
+        return Err(PowError::MineTooFast.into());
+    }
+    if slot - ctx.accounts.pow_config.last_mined < 2 {
+        return Err(PowError::MineTooFast.into());
+    }
+    ctx.accounts.pow_mint_log.current_execution_account =
+        Some(ctx.accounts.execution_request.key());
+    execute_v1(
+        ctx.accounts.miner.key,
+        MINE_IMAGE_ID,
+        &args.current_req_id,
+        vec![
+            Input::public(pkbytes.to_vec()),
+            Input::public(args.num.to_vec()),
+        ],
+        args.tip,
+        slot + 100,
+        ExecutionConfig {
+            verify_input_hash: true,
+            input_hash: Some(input_hash.to_bytes().to_vec()),
+            forward_output: true,
+        },
+        Some(CallbackConfig {
+            program_id: crate::id(),
+            instruction_prefix: vec![0],
+            extra_accounts: vec![
+                AccountMeta::new_readonly(ctx.accounts.pow_config.key(), false),
+                AccountMeta::new(ctx.accounts.pow_mint_log.key(), false),
+                AccountMeta::new(ctx.accounts.mint.key(), false),
+                AccountMeta::new(ctx.accounts.token_account.key(), false),
+                AccountMeta::new_readonly(ctx.accounts.token_program.key(), false),
+            ],
+        }),
+    )
+    .map_err(|_| PowError::MineRequestFailed)?;
+    Ok(())
 }
+...
 ```
-
 Here you can see we use the execute macro with the config to setup the bonsol network to execute the collatz sequence program over the inputs which are the pubkey and the slot.
 
 ```rust
-pub fn eureka(ctx: Context<Eureka>, data: &[u8]) -> Result<()> {
-  let output = callback!(
-    &ctx.accounts,
-    ctx.accounts.pow_record.execution_id.as_ref(), // we need to pas the expected execution id to the callback that we saved in the pow_record account
-    data
-  )?; //performs all the nessesary checks to verify the callback  
+pub fn bonsol_callback(ctx: Context<BonsolCallback>, data: Vec<u8>) -> Result<()> {
+    let slot = sysvar::clock::Clock::get()?.slot;
+    if let Some(epub) = ctx.accounts.pow_mint_log.current_execution_account {
+        if ctx.accounts.execution_request.key() != epub {
+            return Err(PowError::InvalidCallback.into());
+        }
+        let ainfos = ctx.accounts.to_account_infos();
+        let output = handle_callback(epub, &ainfos.as_slice(), &data)?;
+        // this is application specific
+        let (_, difficulty) = output.split_at(32);
+        let difficulty =
+            u64::from_le_bytes(difficulty.try_into().map_err(|_| PowError::InvalidOutput)?);
+        //mint tokens to token account based on difficulty
+        ctx.accounts.pow_mint_log.slot = slot;
+        ctx.accounts.pow_mint_log.amount_mined += difficulty;
+        ctx.accounts.pow_mint_log.current_execution_account = None;
+        // mint tokens
 
-  // Output will be specific to the zkprogram you are using
-  // in this case it will be the difficulty of the sequence represended as a u64 in little endian byte order
-  let difficulty = u64::from_le_bytes(output.try_into().map_err(|_| ...)?);
-  ...
-  // mint tokens base on difficulty
-
-  Ok(())
+        mint_to(
+            CpiContext::new(
+                ctx.accounts.token_program.to_account_info(),
+                MintTo {
+                    mint: ctx.accounts.mint.to_account_info(),
+                    to: ctx.accounts.token_account.to_account_info(),
+                    authority: ctx.accounts.pow_config.to_account_info(),
+                },
+            ),
+            difficulty,
+        )?;
+        Ok(())
+    } else {
+        Err(PowError::InvalidCallback.into())
+    }
 }
 ```
 
-The eureka function is called by the Bonsol program after the proof is verified and it forwards the output as instruction data, 
+The callback function is called by the Bonsol program after the proof is verified and it forwards the output as instruction data, 
 we verify the callback in the callback macro and provide the output as the data parameter. 
 The callback macro will check that the execution id matches the one in the pow_record account and that the callback program id is the same as the program id of the Bonsol program. 
 If all the checks pass it will return the output as a ```Vec<u8>``` and the Bonsol program will forward it to the callback program. 

@@ -20,7 +20,6 @@ bonsol-channel-interface = { git = "https://github.com/anagrambuild/bonsol", bra
 ```
 
 ## Usage 
-
 See the [Interact with Bonsol Contracts/Programs](/docs/how-to/interact-with-contracts) section for more information on how to interact with Bonsol programs.
 
 
