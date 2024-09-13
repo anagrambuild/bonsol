@@ -25,24 +25,7 @@ Here is an example of a valid local proving payload json file.
 The json schema for the local proving payload is hosted [here](https://github.com/anagrambuild/bonsol/blob/main/schemas/prove.schema.json).
 
 #### Output 
-If proving succeeds, the cli will return the proof and the output of the execution. You can choose the format of the output with the `--format` flag.
-
-Two formats are supported:
-* `json` - The default format, the cli will return the proof and the output of the execution in json format.
-* `binary` - The cli will return the proof and the output of the execution in the flatbuffer binary format.
-
-##### Binary Format
-The binary format is a binary representation of the proof and the output of the execution. The binary format is useful for storing the proof on chain.
-There are two components to the binary format, the proof and the output.
-
-##### JSON Format 
-The json format is a json representation of the proof and the output of the execution.
-An example of the json format is shown below.
-```json
-{
-  "proof": "...", // 
-  "output": "adff...fsdfsdfZ=" //base64 encoded output of the execution
-}
-```
+If proving succeeds, the cli will return a serialized risc0 reciept. This is a binary format. 
+the cli will save a file called `<execution_id>.bin` in the current directory or the directory specified with the `--output-dir <dir>` flag.
 
 For more on how to use Proof Composition in Bonsol, check out the [Proof Composition](/docs/tutorials/proof-composition) guide.

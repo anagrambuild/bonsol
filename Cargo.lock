@@ -1221,6 +1221,7 @@ version = "0.0.1"
 dependencies = [
  "anyhow",
  "async-trait",
+ "bincode",
  "bonsol-channel-interface",
  "bonsol-channel-utils",
  "bonsol-schema",
@@ -1228,6 +1229,8 @@ dependencies = [
  "flatbuffers",
  "futures-util",
  "reqwest",
+ "risc0-binfmt",
+ "risc0-zkvm",
  "serde",
  "serde_json",
  "solana-rpc-client",

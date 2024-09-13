@@ -1,4 +1,5 @@
 pub mod util;
+pub mod prover;
 use instructions::{CallbackConfig, Input, ExecutionConfig};
 use serde::{Deserialize, Serialize, Serializer};
 use {

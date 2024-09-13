@@ -33,16 +33,17 @@ use bonsol_schema::root_as_deploy_v1;
 use bonsol_sdk::{
     input_resolver::{InputResolver, ProgramInput},
     util::get_body_max_size,
+    prover::{get_risc0_exec_env, get_risc0_prover},
 };
 use risc0_groth16::{ProofJson, Seal};
-use risc0_zkvm::{sha::Digest, InnerReceipt, MaybePruned, ReceiptClaim};
+use risc0_zkvm::{sha::Digest, InnerReceipt, MaybePruned, Receipt, ReceiptClaim};
 use tempfile::tempdir;
 use tokio::{fs::File, io::AsyncReadExt, process::Command, task::JoinSet};
 use tracing::{error, info};
 use {
     crate::types::{BonsolInstruction, ProgramExec},
-    bonsol_schema::{parse_ix_data, ChannelInstructionIxType},
     anyhow::Result,
+    bonsol_schema::{parse_ix_data, ChannelInstructionIxType},
     risc0_zkvm::{
         get_prover_server, recursion::identity_p254, sha::Digestible, ExecutorEnv, ExecutorImpl,
         ProverOpts, VerifierContext,
@@ -320,7 +321,9 @@ pub async fn handle_claim<'a>(
                 let start = SystemTime::now();
                 let since_the_epoch = start.duration_since(UNIX_EPOCH)?.as_secs();
                 image.last_used = since_the_epoch;
-                let mut inputs = input_staging_area.get_mut(execution_id).ok_or(Risc0RunnerError::InvalidData)?;
+                let mut inputs = input_staging_area
+                    .get_mut(execution_id)
+                    .ok_or(Risc0RunnerError::InvalidData)?;
                 let unresolved_count = inputs
                     .iter()
                     .filter(|i| match i {
@@ -328,10 +331,10 @@ pub async fn handle_claim<'a>(
                         _ => false,
                     })
                     .count();
-                
+
                 if unresolved_count > 0 {
                     info!("{} outstanding inputs", unresolved_count);
-              
+
                     emit_event_with_duration!(MetricEvents::InputDownload, {
                         input_resolver.resolve_private_inputs(execution_id, &mut inputs, Arc::new(transaction_sender)).await?;
                     }, execution_id => execution_id, stage => "private");
@@ -340,7 +343,9 @@ pub async fn handle_claim<'a>(
                 }
                 drop(inputs);
                 // drain the inputs and own them here, this is a bit of a hack but it works
-                let (eid, inputs) = input_staging_area.remove(execution_id).ok_or(Risc0RunnerError::InvalidData)?;
+                let (eid, inputs) = input_staging_area
+                    .remove(execution_id)
+                    .ok_or(Risc0RunnerError::InvalidData)?;
                 let mem_image = image.get_memory_image()?;
                 let result: Result<
                     (Journal, Digest, SuccinctReceipt<ReceiptClaim>),
@@ -563,39 +568,16 @@ async fn handle_image_deployment<'a>(
 
 // proving function, no async this is cpu/gpu intesive
 fn risc0_prove(
+    prover: Rc<dyn ProverServer>,
     memory_image: MemoryImage,
     sorted_inputs: Vec<ProgramInput>,
 ) -> Result<(Journal, Digest, SuccinctReceipt<ReceiptClaim>)> {
-    let mut env_builder = ExecutorEnv::builder();
-    for input in sorted_inputs.into_iter() {
-        match input {
-            
-            ProgramInput::Resolved(ri) => {
-                if ri.input_type == ProgramInputType::PublicProof {
-                    let reciept = 
-
-                    env_builder.add_assumption(assumption)
-                } else {
-                    env_builder.write_slice(&ri.data);
-                }
-                
-            }
-            _ => {
-                return Err(Risc0RunnerError::InvalidInputType.into());
-            }
-        }
-    }
-    
-    let env = env_builder.build()?;
-    
-    let mut exec = ExecutorImpl::new(env, memory_image)?;
-    
+    let exec = get_risc0_exec_env(memory_image, sorted_inputs)?;
     let session = exec.run()?;
 
     // Obtain the default prover.
-    let opts = ProverOpts::default();
-    let ctx = VerifierContext::default();
-    let prover = get_prover_server(&opts)?;
+    
+   
     let info = emit_event_with_duration!(MetricEvents::ProofGeneration,{
         prover.prove_session(&ctx, &session)
     }, system => "risc0")?;
