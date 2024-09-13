@@ -569,16 +569,27 @@ fn risc0_prove(
     let mut env_builder = ExecutorEnv::builder();
     for input in sorted_inputs.into_iter() {
         match input {
+            
             ProgramInput::Resolved(ri) => {
-                env_builder.write_slice(&ri.data);
+                if ri.input_type == ProgramInputType::PublicProof {
+                    let reciept = 
+
+                    env_builder.add_assumption(assumption)
+                } else {
+                    env_builder.write_slice(&ri.data);
+                }
+                
             }
             _ => {
                 return Err(Risc0RunnerError::InvalidInputType.into());
             }
         }
     }
+    
     let env = env_builder.build()?;
+    
     let mut exec = ExecutorImpl::new(env, memory_image)?;
+    
     let session = exec.run()?;
 
     // Obtain the default prover.

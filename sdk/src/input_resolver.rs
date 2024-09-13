@@ -118,6 +118,7 @@ impl DeafultInputResolver {
                     index as u8,
                     url.clone(),
                     self.max_input_size_mb.clone() as usize,
+                    ProgramInputType::Public,
                 ));
                 Ok(ProgramInput::Unresolved(UnresolvedInput {
                     index: index as u8,
@@ -151,14 +152,22 @@ impl DeafultInputResolver {
                 }))
             }
             InputType::PublicProof => {
-                let proof = input
+                let url = input
                     .data()
                     .map(|d| d.bytes())
                     .ok_or(anyhow::anyhow!("Invalid data"))?;
-                let proof = proof.to_vec();
-                Ok(ProgramInput::Resolved(ResolvedInput {
+                let url = from_utf8(url)?;
+                let url = Url::parse(url)?;
+                task_set.spawn(dowload_public_input(
+                    client,
+                    index as u8,
+                    url.clone(),
+                    self.max_input_size_mb.clone() as usize,
+                    ProgramInputType::PublicProof,
+                ));
+                Ok(ProgramInput::Unresolved(UnresolvedInput {
                     index: index as u8,
-                    data: proof,
+                    url,
                     input_type: ProgramInputType::PublicProof,
                 }))
             }
@@ -321,6 +330,7 @@ pub fn resolve_remote_public_data(
         index as u8,
         url,
         max_input_size_mb as usize,
+        ProgramInputType::Public,
     )))
 }
 
@@ -337,13 +347,14 @@ async fn dowload_public_input(
     index: u8,
     url: Url,
     max_size: usize,
+    input_type: ProgramInputType,
 ) -> Result<ResolvedInput> {
     let resp = client.get(url).send().await?.error_for_status()?;
     let byte = get_body_max_size(resp.bytes_stream(), max_size).await?;
     Ok(ResolvedInput {
         index,
         data: byte.to_vec(),
-        input_type: ProgramInputType::Public,
+        input_type,
     })
 }
 
