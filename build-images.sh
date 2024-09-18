@@ -1,4 +1,4 @@
-#!/usr/bin/zsh
+#!/bin/zsh
 mkdir -p elf
 pushd images/simple
 cargo clean
