@@ -170,32 +170,38 @@ probbably a fast computer
 
 You will need to run a few components.
 
+1. Download and setup the system with the needed binaries and keys to run the groth16 prover over the risc0 FRI
+``` bash
+./setup.sh
+```
+2. Build the 乃ㄖ几丂ㄖㄥ flavored zkprograms
+``` bash
+./build-images.sh
+```
 1. Solana validator localnet
 2. 乃ㄖ几丂ㄖㄥ on chain program
 3. 乃ㄖ几丂ㄖㄥ off chain relay
 4. 乃ㄖ几丂ㄖㄥ zkprogram compiler
 5. (Soon) Private input server (optional)
 
+To achieve this follow these steps:
+
+1. Download and setup the system with the needed binaries and keys to run the groth16 prover over the risc0 FRI
 ```bash
-#Download and setup the system with the needed binaries and keys to run the groth16 prover over the risc0 FRI
 ./setup.sh
-
-#Compiles any local 乃ㄖ几丂ㄖㄥ zkprograms
-./build-images.sh
-
-#Compiles the 乃ㄖ几丂ㄖㄥ on chain program and starts a localnet with the program loaded
-./validator.sh
-
-#Compiles the 乃ㄖ几丂ㄖㄥ off chain relay and starts it
-./run-relay.sh
-
 ```
-
-Currently I have the following flow:
-I run "./build-images.sh".
-
-Then "./validator" and "./run-relay.sh" , and run the ts-client tests in `channel` directory with `pnpm test` in three different terminals. This will deploy a zk program and start an execution request which the relay will respond to.
-
+2. Compile any local 乃ㄖ几丂ㄖㄥ zkprograms
+```bash
+./build-images.sh
+```
+3. Compile the 乃ㄖ几丂ㄖㄥ on chain program and starts a localnet with the program loaded
+```bash
+./validator.sh
+```
+4. On a separate terminal, compile the 乃ㄖ几丂ㄖㄥ off chain relay and starts it
+```bash
+./run-relay.sh
+```
 
 # Running a Prover Node
 The prover node is a binary that comes from the relay package. You configure it with the Node.toml file. There are a variety of options in there. `relay/src/config.rs` shows all the configurations. There are alot of defaults.

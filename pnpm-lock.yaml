@@ -6,6 +6,12 @@ settings:
 
 importers:
 
+  .:
+    devDependencies:
+      '@types/jest':
+        specifier: ^29.5.12
+        version: 29.5.12
+
   docs:
     dependencies:
       '@docusaurus/core':
