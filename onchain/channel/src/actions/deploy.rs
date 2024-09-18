@@ -1,12 +1,13 @@
 use crate::assertions::*;
 use crate::error::ChannelError;
 use crate::utilities::*;
-use anagram_bonsol_channel_utils::deployment_address_seeds;
-use anagram_bonsol_channel_utils::img_id_hash;
-use anagram_bonsol_schema::ChannelInstruction;
-use anagram_bonsol_schema::DeployV1;
+use bonsol_channel_utils::deployment_address_seeds;
+use bonsol_channel_utils::img_id_hash;
+use bonsol_schema::ChannelInstruction;
+use bonsol_schema::DeployV1;
 use solana_program::account_info::AccountInfo;
 use solana_program::system_program;
+use solana_program::msg;
 
 pub struct DeployAccounts<'a, 'b> {
     pub deployer: &'a AccountInfo<'a>,
@@ -62,7 +63,7 @@ impl<'a, 'b> DeployAccounts<'a, 'b> {
             da.deployment_bump = Some(check_pda(
                 &deployment_address_seeds(&img_id_hash(imageid)),
                 da.deployment.key,
-                ChannelError::InvalidDeploymentAccount,
+                ChannelError::InvalidDeploymentAccountPDA,
             )?);
             return Ok(da);
         }
@@ -75,6 +76,7 @@ pub fn process_deploy_v1<'a>(
     accounts: &'a [AccountInfo<'a>],
     ix: ChannelInstruction<'a>,
 ) -> Result<(), ChannelError> {
+    msg!("deploy");
     let dp = ix.deploy_v1_nested_flatbuffer();
     if dp.is_none() {
         return Err(ChannelError::InvalidInstruction.into());

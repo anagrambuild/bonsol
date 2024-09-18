@@ -1,5 +1,5 @@
 [package]
-name = "anagram-bonsol-channel"
+name = "bonsol-channel"
 version = "0.0.1"
 description = "Solana channel to bonsai"
 authors = ["anagram build team"]
@@ -18,12 +18,12 @@ ark-bn254 = "0.4.0"
 ark-serialize = "0.4.0"
 bytemuck = { version = "1.15.0", features = ["derive"] }
 solana-program = {workspace = true}
-anagram-bonsol-schema = {path = "../../schemas-rust"}
+bonsol-schema = {path = "../../schemas-rust"}
 flatbuffers = {workspace = true}
 thiserror = { workspace = true }
 groth16-solana = { version = "0.0.2" }
 num-bigint = "0.4.4"
-anagram-bonsol-channel-utils = { path = "../channel-utils", features = ["on-chain"], default-features = false}
+bonsol-channel-utils = { path = "../channel-utils", features = ["on-chain"], default-features = false}
 [dev-dependencies]
 solana-program-test = {workspace = true}
 solana-sdk = {workspace = true}

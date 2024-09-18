@@ -1,5 +1,5 @@
 [package]
-name = "anagram-bonsol-schema"
+name = "bonsol-schema"
 version = "0.0.1"
 description = "Bonsol types, schema definitions"
 authors = ["anagram build team"]
@@ -10,7 +10,6 @@ edition = "2021"
 [dependencies]
 flatbuffers = {workspace = true}
 thiserror = {workspace = true}
-serde = "1.0.196"
 
 [lints]
 workspace = true

@@ -1,0 +1,39 @@
+
+### `deploy`: Deploying a Bonsol Zk Program
+
+After building your zkprogram with "bonsol build ...", you can deploy it via the bonsol cli.
+
+You have a few options for how you want to deploy:
+Manual
+S3
+ShdwDrive
+
+#### Manual
+You can always upload your program anywhere on the internet as long as its publicly accessible by the relayer network.
+Bonsol is very strict that the size of the bytes must match the size expected from the onchain deployment record. 
+Manual deployment can be a cause of bugs and mismatches in this regard so we dont reccomend it.
+
+To deploy manually you can use the following command.
+
+```bash
+bonsol deploy -m ./path-to-your-manifest.json -t {s3|shadowdrive|manual}
+```
+
+#### S3
+You can upload your program to s3 and have it be accessible by the relayer network. This is the recommended way to deploy your program.
+
+```bash
+bonsol deploy -m ./path-to-your-manifest.json -t s3 --access-key {your access key} --secret-key {your secret key}
+```
+
+#### ShadowDrive
+ShadowDrive is a decentralized storage network that allows you to upload your program to a storage provider and have it be accessible by the relayer network. This is the recommended way to deploy your program.
+
+If you have not already created a storage account you can create and upload in one command.
+```bash
+bonsol deploy -m ./path-to-your-manifest.json -t shadowdrive --storage-account-name {your storage account} --storage-account-size-mb {your storage account size in mb} --storage-account-name {your storage account name} --alternate-keypair {path to your alternate keypair}
+```
+Once you have created your storage account you can upload your program to it for the future versions of your program.
+```bash
+bonsol deploy -m ./path-to-your-manifest.json -t shadowdrive --storage-account {your storage account}  
+```

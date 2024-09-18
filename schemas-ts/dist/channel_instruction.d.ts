@@ -1,3 +1,4 @@
+export { Account } from './account.js';
 export { ChannelInstruction } from './channel-instruction.js';
 export { ChannelInstructionIxType } from './channel-instruction-ix-type.js';
 export { ClaimV1 } from './claim-v1.js';

@@ -26,6 +26,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ExecutionRequestV1 = void 0;
 const flatbuffers = __importStar(require("flatbuffers"));
+const account_js_1 = require("./account.js");
 const input_js_1 = require("./input.js");
 class ExecutionRequestV1 {
     constructor() {
@@ -144,8 +145,16 @@ class ExecutionRequestV1 {
         this.bb.writeUint64(this.bb_pos + offset, value);
         return true;
     }
+    callbackExtraAccounts(index, obj) {
+        const offset = this.bb.__offset(this.bb_pos, 24);
+        return offset ? (obj || new account_js_1.Account()).__init(this.bb.__vector(this.bb_pos + offset) + index * 33, this.bb) : null;
+    }
+    callbackExtraAccountsLength() {
+        const offset = this.bb.__offset(this.bb_pos, 24);
+        return offset ? this.bb.__vector_len(this.bb_pos + offset) : 0;
+    }
     static startExecutionRequestV1(builder) {
-        builder.startObject(10);
+        builder.startObject(11);
     }
     static addTip(builder, tip) {
         builder.addFieldInt64(0, tip, BigInt('0'));
@@ -217,6 +226,12 @@ class ExecutionRequestV1 {
     static addMaxBlockHeight(builder, maxBlockHeight) {
         builder.addFieldInt64(9, maxBlockHeight, BigInt('0'));
     }
+    static addCallbackExtraAccounts(builder, callbackExtraAccountsOffset) {
+        builder.addFieldOffset(10, callbackExtraAccountsOffset, 0);
+    }
+    static startCallbackExtraAccountsVector(builder, numElems) {
+        builder.startVector(33, numElems, 1);
+    }
     static endExecutionRequestV1(builder) {
         const offset = builder.endObject();
         return offset;
@@ -227,7 +242,7 @@ class ExecutionRequestV1 {
     static finishSizePrefixedExecutionRequestV1Buffer(builder, offset) {
         builder.finish(offset, undefined, true);
     }
-    static createExecutionRequestV1(builder, tip, executionIdOffset, imageIdOffset, callbackProgramIdOffset, callbackInstructionPrefixOffset, forwardOutput, verifyInputHash, inputOffset, inputDigestOffset, maxBlockHeight) {
+    static createExecutionRequestV1(builder, tip, executionIdOffset, imageIdOffset, callbackProgramIdOffset, callbackInstructionPrefixOffset, forwardOutput, verifyInputHash, inputOffset, inputDigestOffset, maxBlockHeight, callbackExtraAccountsOffset) {
         ExecutionRequestV1.startExecutionRequestV1(builder);
         ExecutionRequestV1.addTip(builder, tip);
         ExecutionRequestV1.addExecutionId(builder, executionIdOffset);
@@ -239,6 +254,7 @@ class ExecutionRequestV1 {
         ExecutionRequestV1.addInput(builder, inputOffset);
         ExecutionRequestV1.addInputDigest(builder, inputDigestOffset);
         ExecutionRequestV1.addMaxBlockHeight(builder, maxBlockHeight);
+        ExecutionRequestV1.addCallbackExtraAccounts(builder, callbackExtraAccountsOffset);
         return ExecutionRequestV1.endExecutionRequestV1(builder);
     }
 }

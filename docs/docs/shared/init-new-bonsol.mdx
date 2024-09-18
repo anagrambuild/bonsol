@@ -1,0 +1,26 @@
+### `init`: Initializing a new Bonsol Program
+
+With the bonsol cli installed we can create a new bonsol program using the following command.
+
+```bash
+mkdir zkprograms
+cd zkprograms
+bonsol init collatz
+```
+This will create a new directory called `collatz` and initialize a new bonsol program in it. Your directory structure should look like this:
+```
+├── Cargo.toml
+├── Cargo.lock
+├── src
+│   └── main.rs
+├── README.md
+
+Notice that in Cargo.toml we have a new metadata section that specifies the zkprogram inputs.
+When you generate a blank bonsol program it will look like this:
+
+```toml
+[package.metadata.zkprogram]
+input_order = ["Public"]
+```
+This section is used when building the program to specify the types and order of the inputs.
+The valid options are ["Public", "Private", "PublicProof"].

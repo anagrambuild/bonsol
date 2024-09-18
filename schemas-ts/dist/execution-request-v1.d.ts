@@ -1,4 +1,5 @@
 import * as flatbuffers from 'flatbuffers';
+import { Account } from './account.js';
 import { Input } from './input.js';
 export declare class ExecutionRequestV1 {
     bb: flatbuffers.ByteBuffer | null;
@@ -29,6 +30,8 @@ export declare class ExecutionRequestV1 {
     inputDigestArray(): Uint8Array | null;
     maxBlockHeight(): bigint;
     mutate_max_block_height(value: bigint): boolean;
+    callbackExtraAccounts(index: number, obj?: Account): Account | null;
+    callbackExtraAccountsLength(): number;
     static startExecutionRequestV1(builder: flatbuffers.Builder): void;
     static addTip(builder: flatbuffers.Builder, tip: bigint): void;
     static addExecutionId(builder: flatbuffers.Builder, executionIdOffset: flatbuffers.Offset): void;
@@ -48,8 +51,10 @@ export declare class ExecutionRequestV1 {
     static createInputDigestVector(builder: flatbuffers.Builder, data: number[] | Uint8Array): flatbuffers.Offset;
     static startInputDigestVector(builder: flatbuffers.Builder, numElems: number): void;
     static addMaxBlockHeight(builder: flatbuffers.Builder, maxBlockHeight: bigint): void;
+    static addCallbackExtraAccounts(builder: flatbuffers.Builder, callbackExtraAccountsOffset: flatbuffers.Offset): void;
+    static startCallbackExtraAccountsVector(builder: flatbuffers.Builder, numElems: number): void;
     static endExecutionRequestV1(builder: flatbuffers.Builder): flatbuffers.Offset;
     static finishExecutionRequestV1Buffer(builder: flatbuffers.Builder, offset: flatbuffers.Offset): void;
     static finishSizePrefixedExecutionRequestV1Buffer(builder: flatbuffers.Builder, offset: flatbuffers.Offset): void;
-    static createExecutionRequestV1(builder: flatbuffers.Builder, tip: bigint, executionIdOffset: flatbuffers.Offset, imageIdOffset: flatbuffers.Offset, callbackProgramIdOffset: flatbuffers.Offset, callbackInstructionPrefixOffset: flatbuffers.Offset, forwardOutput: boolean, verifyInputHash: boolean, inputOffset: flatbuffers.Offset, inputDigestOffset: flatbuffers.Offset, maxBlockHeight: bigint): flatbuffers.Offset;
+    static createExecutionRequestV1(builder: flatbuffers.Builder, tip: bigint, executionIdOffset: flatbuffers.Offset, imageIdOffset: flatbuffers.Offset, callbackProgramIdOffset: flatbuffers.Offset, callbackInstructionPrefixOffset: flatbuffers.Offset, forwardOutput: boolean, verifyInputHash: boolean, inputOffset: flatbuffers.Offset, inputDigestOffset: flatbuffers.Offset, maxBlockHeight: bigint, callbackExtraAccountsOffset: flatbuffers.Offset): flatbuffers.Offset;
 }

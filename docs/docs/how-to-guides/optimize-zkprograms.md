@@ -1,0 +1,4 @@
+# Optimize a Zk Program
+
+Since Bonsol programs are actually just Risco Elf binaries any optimizations that can be done to the risc0 zkvm can be applied to the Bonsol program. Usually optimizations on the zkvm come in the form of reducing the cycles that are used in the program. For more in depth infoformation on how rust code gets optimized for risc0 check out the [Guest Optimization](https://dev.risczero.com/api/zkvm/optimization) section of the risc0 docs. Also something to keep in mind is that changing constants in crypto librarties to use arithmetic that is firendly to the finite fields risc0 uses can also help with optimization. See [Cryptography Acceleration](https://dev.risczero.com/api/zkvm/acceleration) for more information on acceleration.
+Finally, if you need to speed up something that many Solana developers need, it may be possible for us to work together on a precompile for this operation. In this case get in touch with the bonsol team over github.

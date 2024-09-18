@@ -1,0 +1,352 @@
+import Prereq from '../shared/prereq.mdx';
+import InitNewBonsol from '../shared/init-new-bonsol.mdx';
+import Build from '../shared/build.mdx';
+import Deploy from '../shared/deploy.mdx';
+import PowPowDemo from '@site/src/components/PowPowDemo';
+import CliTip from '../shared/cli-tip.mdx';
+
+# A Taste of Bonsol
+The best way to learn about Bonsol is to use it. In this tutorial we will walk you through using a simple bonsol example and breaking down what is happening step by step.
+But first checkout the interactive demo to get started.
+
+## Bonsol PoW Token
+The following example is showcase of how you could use bonsol to build a Proof of Work Token on Solana. A proof of work system is a form of verifiable compute, which is the very thing that Bonsol was built for. Bonsol allows you to prove almost any kind of computation, with native verification on solana. That verification can be used to interact with other programs, and in this case, mint a token. Before we show you how this was built go ahead and use the interactive demo to mint yourself som PowPow tokens.
+This fun little demo simulates the minig process for a Pow token, every pattern is different.
+
+:::info 
+This is a demo, if you experience an issue please put an issue on the PoW example repo [here](https://github.com/anagrambuild/bonsol-powpow/issues).
+:::
+
+<PowPowDemo />
+
+Congratulations! You have minted yourself some PowPow tokens.
+Lets take a moment to break down what happened in this example.
+When you clicked the Mint button you sent a transaction to the Solana blockchain. You sent it to the Bonsol PoW example program which then sent a message to the Bonsol Channel program to request a proof. A node in the prover network claimed that compute and rand the sequence for you, and then sent you a proof. The Bonsol Channel program then verified the proof and minted you and the node that provider the proof some PowPow tokens according to the difficulty of the sequence. While this is a contrived example it is a non trivial one that shows the folowing:
+- Building a solana program that uses Bonsol
+- Using Bonsol to prove a computation
+- Builsing a Bonsol zk program 
+- Creating a callback that bonsol Calls after the proof is verified
+- Interacting with Bonsol on the frontend
+
+Since this is a turotial we will break down each of these steps in detail. Starting with the creation of an Anchor program that uses Bonsol.
+
+## Getting Started Quickly
+If you want to skip all the mindless setup and get stright into a fully setup environment, try our GitPod for this demo here.
+
+[PowPow GitPod](https://gitpod.io/#https://github.com/anagrambuild/bonsol-powpow)
+
+## Building an Anchor Program that uses Bonsol
+Get the latest version of anchor using `avm` and ensure you are using the correct version of rust and solana. At the time of writing this tutorial the version of anchor is 0.30.1 with the reccomended rust version is 1.79.0 and the solana version is 1.18.17.
+<Prereq />
+
+#### Building the Anchor Workspace
+First we need to create a new anchor workspace. This is done by running the following command in the root of your project directory.
+```bash
+anchor init powpow
+```
+This will create a new directory called `powpow` and initialize a new anchor workspace in it. Your directory structure should look like this:
+```
+├── Anchor.toml
+├── Cargo.lock
+├── package.json
+├── Cargo.toml
+├── app
+│   └── ...
+├── programs
+│   └── powpow
+        ├── Xargo.toml
+│       ├── Cargo.toml
+│       └── src
+│           └── lib.rs
+├── tests
+│   └── powpow.ts
+... //other files
+```
+
+In lib.rs we will build out our program that requests execution from Bonsol and recieves the callback. 
+You can see the full code for this example [here](https://github.com/anagrambuild/bonsol-powpow/tree/main/programs/bonsol-pow-pow/src/lib.rs).
+We highly reccomend reading that code as the docs may drift from the implementation. The following will be a close approximation of the code.
+
+Here is a diagram of how the program works.
+
+```mermaid
+sequenceDiagram;
+  participant SC as Solana Smart Contract;
+  participant BSC as Bonsol Smart Contract(PowPow);
+  participant R as Relayers;
+  participant ZK as ZK Computation;
+  
+  SC->>BSC: Call Bonsol Smart Contract(PowPow);
+  BSC->>R: Emit event;
+  R->>ZK: Listen and initiate ZK computation;
+  ZK->>R: Generate ZK proof;
+  R->>BSC: Submit ZK proof;
+  BSC->>BSC: Verify ZK proof;
+  BSC->>SC: Call back with result;
+  SC->>SC: Mint tokens;
+```
+
+We will break down a few parts of the code to show the bonsol specific parts. In `lib.rs` we have the following:
+
+```rust
+use anagram_bonsol_channel_interface::anchor::{
+    Bonsol, DeployV1Account, ExecutionRequestV1Account,
+};
+use anagram_bonsol_channel_interface::instructions::{
+    execute_v1, CallbackConfig, ExecutionConfig, Input,
+};
+...
+```
+Here we import various macros and interfaces need to interact with the Bonsol channel program. 
+The `execute` macro will request the execution of a desired program with specified inputs and the `callback` macro will recieve the callback from the Bonsol channel program.
+The `BonsolChannel` interface is used to interact with the Bonsol channel program via anchor and the `DeploymentAccountV1` and `ExecutionRequestV1` allow convenient access to the accounts needed to interact with the Bonsol channel program.
+
+```rust
+#[instruction(args: MineTokenArgs)]
+pub struct MineToken<'info> {
+    #[account(
+        seeds = [b"powconfig"],
+        bump
+    )]
+    pub pow_config: Account<'info, PoWConfig>,
+    #[account(
+        init_if_needed,
+        space = 8 + PowMintLog::INIT_SPACE,
+        payer = miner,
+        seeds = [b"powmintlog", miner.key().as_ref()],
+        bump,
+    )]
+    pub pow_mint_log: Account<'info, PowMintLog>,
+    #[account(mut,
+        constraint = pow_mint_log.miner == miner.key()
+    )]
+    pub miner: Signer<'info>,
+    #[account(mut,
+        constraint = mint.key() == pow_config.mint,
+    )]
+    pub mint: InterfaceAccount<'info, Mint>,
+    #[account(
+        mut,
+        owner = token_program.key(),
+        associated_token::mint = mint,
+        associated_token::authority = miner,
+        associated_token::token_program = token_program,
+    )]
+    pub token_account: InterfaceAccount<'info, TokenAccount>,
+    pub token_program: Program<'info, Token2022>,
+    pub bonsol_program: Program<'info, Bonsol>,
+    pub execution_request: Account<'info, ExecutionRequestV1Account<'info>>,
+    pub deployment_account: Account<'info, DeployV1Account<'info>>,
+    pub system_program: Program<'info, System>,
+}
+
+```
+This is the anchor account struct that allows us to mine the tokens. 
+
+```rust
+#[derive(AnchorDeserialize, AnchorSerialize)]
+pub struct MineTokenArgs {
+    pub current_req_id: String,
+    pub num: [u8; 64],
+    pub tip: u64,
+}
+
+//this is the image id of the collatz sequence program
+const MINE_IMAGE_ID: &str = "ec8b92b02509d174a1a07dbe228d40ea13ff4b4b71b84bdc690064dfea2b6f86";
+
+...
+
+#[derive(Accounts)]
+pub struct BonsolCallback<'info> {
+    /// CHECK: This is the raw ER account, checked in the callback handler
+    pub execution_request: UncheckedAccount<'info>,
+    #[account(
+        mut,
+        seeds = [b"powconfig"],
+        bump
+    )]
+    pub pow_config: Account<'info, PoWConfig>,
+    #[account(mut, seeds = [b"powmintlog"], bump)]
+    pub pow_mint_log: Account<'info, PowMintLog>,
+    #[account(mut,
+        constraint = pow_mint_log.miner == miner.key()
+    )]
+    /// CHECK: Checked via constraint
+    pub miner: UncheckedAccount<'info>,
+    #[account(mut)]
+    pub mint: InterfaceAccount<'info, Mint>,
+    #[account(
+        mut,
+        owner = token_program.key(),
+        associated_token::mint = mint,
+        associated_token::authority = miner,
+        associated_token::token_program = token_program,
+    )]
+    pub token_account: InterfaceAccount<'info, TokenAccount>,
+    pub token_program: Program<'info, Token2022>,
+}
+
+
+#[program]
+...
+ pub fn mine_token(ctx: Context<MineToken>, args: MineTokenArgs) -> Result<()> {
+    let slot = sysvar::clock::Clock::get()?.slot;
+    let pkbytes = ctx.accounts.pow_config.mint.to_bytes();
+    let input_hash = keccak::hashv(&[&args.num, &pkbytes]);
+    if slot - ctx.accounts.pow_mint_log.slot < 100 {
+        return Err(PowError::MineTooFast.into());
+    }
+    if slot - ctx.accounts.pow_config.last_mined < 2 {
+        return Err(PowError::MineTooFast.into());
+    }
+    ctx.accounts.pow_mint_log.current_execution_account =
+        Some(ctx.accounts.execution_request.key());
+    execute_v1(
+        ctx.accounts.miner.key,
+        MINE_IMAGE_ID,
+        &args.current_req_id,
+        vec![
+            Input::public(pkbytes.to_vec()),
+            Input::public(args.num.to_vec()),
+        ],
+        args.tip,
+        slot + 100,
+        ExecutionConfig {
+            verify_input_hash: true,
+            input_hash: Some(input_hash.to_bytes().to_vec()),
+            forward_output: true,
+        },
+        Some(CallbackConfig {
+            program_id: crate::id(),
+            instruction_prefix: vec![0],
+            extra_accounts: vec![
+                AccountMeta::new_readonly(ctx.accounts.pow_config.key(), false),
+                AccountMeta::new(ctx.accounts.pow_mint_log.key(), false),
+                AccountMeta::new(ctx.accounts.mint.key(), false),
+                AccountMeta::new(ctx.accounts.token_account.key(), false),
+                AccountMeta::new_readonly(ctx.accounts.token_program.key(), false),
+            ],
+        }),
+    )
+    .map_err(|_| PowError::MineRequestFailed)?;
+    Ok(())
+}
+...
+```
+Here you can see we use the execute macro with the config to setup the bonsol network to execute the collatz sequence program over the inputs which are the pubkey and the slot.
+
+```rust
+pub fn bonsol_callback(ctx: Context<BonsolCallback>, data: Vec<u8>) -> Result<()> {
+    let slot = sysvar::clock::Clock::get()?.slot;
+    if let Some(epub) = ctx.accounts.pow_mint_log.current_execution_account {
+        if ctx.accounts.execution_request.key() != epub {
+            return Err(PowError::InvalidCallback.into());
+        }
+        let ainfos = ctx.accounts.to_account_infos();
+        let output = handle_callback(epub, &ainfos.as_slice(), &data)?;
+        // this is application specific
+        let (_, difficulty) = output.split_at(32);
+        let difficulty =
+            u64::from_le_bytes(difficulty.try_into().map_err(|_| PowError::InvalidOutput)?);
+        //mint tokens to token account based on difficulty
+        ctx.accounts.pow_mint_log.slot = slot;
+        ctx.accounts.pow_mint_log.amount_mined += difficulty;
+        ctx.accounts.pow_mint_log.current_execution_account = None;
+        // mint tokens
+
+        mint_to(
+            CpiContext::new(
+                ctx.accounts.token_program.to_account_info(),
+                MintTo {
+                    mint: ctx.accounts.mint.to_account_info(),
+                    to: ctx.accounts.token_account.to_account_info(),
+                    authority: ctx.accounts.pow_config.to_account_info(),
+                },
+            ),
+            difficulty,
+        )?;
+        Ok(())
+    } else {
+        Err(PowError::InvalidCallback.into())
+    }
+}
+```
+
+The callback function is called by the Bonsol program after the proof is verified and it forwards the output as instruction data, 
+we verify the callback in the callback macro and provide the output as the data parameter. 
+The callback macro will check that the execution id matches the one in the pow_record account and that the callback program id is the same as the program id of the Bonsol program. 
+If all the checks pass it will return the output as a ```Vec<u8>``` and the Bonsol program will forward it to the callback program. 
+In this case the callback program is the PowPow program, which upon recieving the output will mint the tokens based on the difficulty.
+Thats all for the solana program. Now we will move on to proving the collatz sequence using a zk program.
+
+## Proving the Collatz Sequence
+The first thing we did was to create a program that calculates the collatz sequence for a given number. The collatz sequence is a sequence of numbers that are generated by applying the following rule to a starting number: 
+
+```
+if the number is even, divide it by 2, if the number is odd, multiply it by 3 and add 1. 
+```
+The Collatz sequence comes from a conjecture that still has not been proven. The conjecture is that every starting number will eventually reach 1.
+While many mathemeticians have tried to produce a proof that every number will end in 1 so far there has not been a complete proof. Could there be some numbers that produce infinte loops?
+Anyway here is how we made the program.
+
+<InitNewBonsol />
+
+With the new bonsol program created we can now start building the collatz sequence program. Lets break down the code in main.rs.
+Keep in mind the full code for this example can be found [here](https://github.com/anagrambuild/bonsol-powpow/zkprograms/collatz/src/main.rs), while we will looking at this code here, the docs may drift from the implementation.
+The following will be a close approximation of the code.
+
+```rust
+use num_bigint::BigUint;
+use risc0_zkvm::{
+    guest::{env, sha::Impl},
+    sha::{Digest, Sha256},
+};
+```
+
+We need to run the collatz sequence over a big number so we import the `num_bigint` crate. We also import the `risc0_zkvm` crate which is required in order to have this zkprogram communicate with the Node running it.
+The big number we will be using is actually a signature that the user signed when they called the mine method on the PowPow program.
+We can take those 64 bytes and turn them into a huge number by using the `BigUint` struct from the `num_bigint` crate.
+That is a huge huge number ```1.3 * 10^154~```, so this should take a little bit of time to calculate.
+
+
+```rust
+fn main() {
+    let mut sig = Vec::new(); // create a buffer for the signature over the slot
+    env::read_slice(&mut sig); // read the public key input into the buffer
+    let digest = Impl::hash_bytes(&[sig.as_slice()].concat()); // hash the public key and number together
+    let (sequence, sum, max) = calculate_sequence(&sig); // calculate the sequence
+    let sequence_length = sequence.len() as u64;
+    let difficulty = calculate_difficulty(sequence_length, max, sum);
+    env::commit_slice(digest.as_bytes());
+    env::commit_slice(&[difficulty.to_le_bytes()]);
+}
+
+fn calculate_sequence(num: &[u8]) -> (Vec<BigUint>, BigUint, BigUint) {
+  ...
+  //sequence, sum, max
+  let bignum = BigUint::from_bytes_le(num);
+
+  ...
+}
+```
+
+A few things stand out here. 
+First, reading inputs uses the `env::read_slice` function. This function reads a slice of bytes from the execution context and stores it in the provided buffer. In this case, we are reading the signature of the user who called the `mine_token` function.
+Second, we hash the input and commit to it using the `env::commit_slice` function. This function commits a slice of bytes to the execution context. In this case, we are committing the hash of the signature.
+This is required by bonsol because it verifies the inputs to the risc0 zkvm.
+
+Congratulations! You have now built a zk program that can be used to prove the collatz sequence.
+
+There are only a few more things to do before we can use this program. We need to build the program and deploy it to the Bonsol network.
+## Building and Deploying
+
+<CliTip />
+<Build />
+
+The very last step is to deploy the program to the Bonsol network.
+
+<Deploy />
+
+Congratulations! You have now built a zk program that can be used to prove the collatz sequence.
+Feel free to poke around in the [Code](https://github.com/anagrambuild/bonsol-powpow) to see how the program works.
+The source code for the simple ui can be found [here](https://github.com/anagrambuild/bonsol/tree/main/docs/src/components/PowPowDemo).

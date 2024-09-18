@@ -69,6 +69,10 @@ pub enum ChannelError {
     InputSetNestingError,
     #[error("Execution expired")]
     ExecutionExpired,
+    #[error("Invalid Deployment Account PDA")]
+    InvalidDeploymentAccountPDA,
+    #[error("Invalid Callback Extra Accounts")]
+    InvalidCallbackExtraAccounts,
 }
 
 impl From<ChannelError> for ProgramError {

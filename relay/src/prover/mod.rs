@@ -9,7 +9,7 @@ use crate::{
 use crate::{observe::*, MissingImageStrategy};
 use std::{env::consts::ARCH, io::Cursor, path::Path};
 use {
-    anagram_bonsol_schema::{ClaimV1, DeployV1, ExecutionRequestV1, InputType, ProgramInputType},
+    bonsol_schema::{ClaimV1, DeployV1, ExecutionRequestV1, InputType, ProgramInputType},
     dashmap::DashMap,
 };
 use {
@@ -29,8 +29,8 @@ use {
     },
 };
 
-use anagram_bonsol_schema::root_as_deploy_v1;
-use anagram_bonsol_sdk::{
+use bonsol_schema::root_as_deploy_v1;
+use bonsol_sdk::{
     input_resolver::{InputResolver, ProgramInput},
     util::get_body_max_size,
 };
@@ -41,7 +41,7 @@ use tokio::{fs::File, io::AsyncReadExt, process::Command, task::JoinSet};
 use tracing::{error, info};
 use {
     crate::types::{BonsolInstruction, ProgramExec},
-    anagram_bonsol_schema::{parse_ix_data, ChannelInstructionIxType},
+    bonsol_schema::{parse_ix_data, ChannelInstructionIxType},
     anyhow::Result,
     risc0_zkvm::{
         get_prover_server, recursion::identity_p254, sha::Digestible, ExecutorEnv, ExecutorImpl,

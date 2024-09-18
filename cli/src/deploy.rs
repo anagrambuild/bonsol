@@ -9,7 +9,7 @@ use crate::{
     command::{DeployType, S3UploadDestination, ShadowDriveUpload},
     common::ZkProgramManifest,
 };
-use anagram_bonsol_sdk::{BonsolClient, ProgramInputType};
+use bonsol_sdk::{BonsolClient, ProgramInputType};
 use anyhow::Result;
 use byte_unit::{Byte, ByteUnit};
 use indicatif::ProgressBar;
@@ -17,8 +17,6 @@ use object_store::{aws::AmazonS3Builder, ObjectStore};
 use shadow_drive_sdk::{models::ShadowFile, ShadowDriveClient};
 use solana_rpc_client::nonblocking::rpc_client::RpcClient;
 use solana_sdk::pubkey::Pubkey;
-use solana_sdk::signer::Signer;
-use solana_sdk::signer::keypair::Keypair;
 use solana_sdk::signature::read_keypair_file;
 
 pub async fn deploy(

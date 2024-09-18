@@ -1,0 +1,65 @@
+### `execute`: Requesting Execution
+
+Being able to request a one off execution is a key feature of Bonsol. This allows you to prove computations that are impossible to run on-chain.
+You can do this with the cli, using the `bonsol execute` command.
+
+```bash 
+bonsol execute -f execution-request.json 
+```
+Since there are quite a few options for how you can request execution, the cli takes a json file as an argument.
+Here is an example of a valid execution request json file.
+```json
+{
+  "imageId": "20b9db715f989e3f57842787badafae101ce0b16202491bac1a3aebf573da0ba",
+  "executionId": "9878798-987987-987987-987987",
+  "tip": 100,
+  "maxBlockHeight": 100, // can also override with --expires-from-now flag
+  "inputs": [
+    {
+      "inputType": "Public",
+      "data": "0x1234567890"
+    }
+  ],
+  "callbackConfig": {
+    "programId": "your program id",
+    "instructionPrefix": [0, 1, 2, 3],
+    "extraAccounts": [
+      {
+        "address": "",
+        "role": "writable"
+      }
+    ]
+  },
+  "executionConfig": {
+    "verifyInputHash": true,
+    "forwardOutput": true,
+    "inputHash": "0x1234567890" //sha256 hash of the input data if ommited the hash will be calculated
+  }
+}
+```
+The json schema for the execution request is hosted [here](https://github.com/anagrambuild/bonsol/blob/main/schemas/execution_request_v1.schema.json).
+
+#### Waiting 
+If you pass the `--wait` flag to the cli, the cli will wait for the execution to be completed and then return the result.
+
+```bash
+bonsol execute -f execution-request.json --wait
+```
+When a node claims the execution, the cli will notify you with a message.
+```bash 
+Execution 9878798-987987-987987-987987 claimed by 6zT31kLCj8yM1RnJuiCbhHyybxsEGuvr8DP2biNi6j7o
+```
+The default timeout for the cli is to wait until the expiry block, you can change this with the `--timeout` flag.
+If execution is not completed within the timeout, the cli will return an message.
+```bash 
+Error: Execution 9878798-987987-987987-987987 timed out 
+```
+If the execution request expired without being claimed, the cli will return an message.
+```bash 
+Error: Execution 9878798-987987-987987-987987 expired 
+```
+When everything is successful, the cli will return the result of the execution.
+```bash 
+Execution 9878798-987987-987987-987987 completed successfully
+Callback: Program 1234567890 invoked successfully
+```

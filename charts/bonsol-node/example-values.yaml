@@ -1,7 +1,7 @@
 image:
   repository: ghcr.io/anagrambuild/bonsol
   pullPolicy: IfNotPresent
-  tag: cuda-slim
+  tag: <version you want to use>
 replicaCount: 1
 max_input_size_mb: 10
 image_download_timeout_secs: 60

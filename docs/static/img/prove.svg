@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <linearGradient id="proveGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#285870;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#06e0c1;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <circle cx="50" cy="50" r="48" fill="#f8f8f8"/>
+  <path d="M30,50 L45,65 L70,40" stroke="url(#proveGradient)" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

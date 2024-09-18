@@ -4,7 +4,7 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 
-use anagram_bonsol_schema::{root_as_input_set, Input, InputType, ProgramInputType};
+use bonsol_schema::{root_as_input_set, Input, InputType, ProgramInputType};
 use anyhow::Result;
 use async_trait::async_trait;
 use reqwest::Url;
