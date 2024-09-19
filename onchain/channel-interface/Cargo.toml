@@ -5,7 +5,7 @@ edition = "2021"
 
 [features]
 on-chain = ["solana-program", "bonsol-channel-utils/on-chain"]
-default = ["solana-sdk", "bonsol-channel-utils/default"]
+default = ["solana-sdk", "bonsol-channel-utils/default", "serde"]
 anchor = ["on-chain", "anchor-lang"]
 idl-build = ["anchor-lang/idl-build"]
 
@@ -16,10 +16,10 @@ flatbuffers = {workspace = true}
 solana-program = { workspace = true, optional = true}
 solana-sdk = { workspace = true, optional = true }
 thiserror = { workspace = true }
-sha3 = "0.10"
-hex = "0.4.3"
 arrayref = "0.3.6"
 paste = "1.0"
+serde = { version = "1.0.197", optional = true }
+bytemuck = { version = "1.15.0", features = ["derive"] }
 
 [dependencies.anchor-lang]
 version = ">=0.28"

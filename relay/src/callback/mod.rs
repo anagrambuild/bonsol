@@ -40,6 +40,7 @@ pub trait TransactionSender {
     async fn claim(
         &self,
         execution_id: &str,
+        requester: Pubkey,
         execution_account: Pubkey,
         block_commitment: u64,
     ) -> Result<Signature>;
@@ -129,13 +130,15 @@ impl TransactionSender for RpcTransactionSender {
     async fn claim(
         &self,
         execution_id: &str,
+        requester: Pubkey,
         execution_account: Pubkey,
         block_commitment: u64,
     ) -> Result<Signature> {
-        let (execution_claim_account, _) = execution_claim_address(&execution_id.as_bytes());
+        let (execution_claim_account, _) = execution_claim_address(&execution_account.as_ref());
         eprintln!("{:?}", execution_account);
         let accounts = vec![
             AccountMeta::new(execution_account, false),
+            AccountMeta::new_readonly(requester, false),
             AccountMeta::new(execution_claim_account, false),
             AccountMeta::new(self.signer.pubkey(), true),
             AccountMeta::new(self.signer.pubkey(), true),

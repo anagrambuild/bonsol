@@ -2,10 +2,10 @@
 
 import * as flatbuffers from 'flatbuffers';
 
-import { Input } from './input.js';
+import { Input, InputT } from './input.js';
 
 
-export class InputSet {
+export class InputSet implements flatbuffers.IUnpackableObject<InputSetT> {
   bb: flatbuffers.ByteBuffer|null = null;
   bb_pos = 0;
   __init(i:number, bb:flatbuffers.ByteBuffer):InputSet {
@@ -70,5 +70,31 @@ static createInputSet(builder:flatbuffers.Builder, inputsOffset:flatbuffers.Offs
   InputSet.startInputSet(builder);
   InputSet.addInputs(builder, inputsOffset);
   return InputSet.endInputSet(builder);
+}
+
+unpack(): InputSetT {
+  return new InputSetT(
+    this.bb!.createObjList<Input, InputT>(this.inputs.bind(this), this.inputsLength())
+  );
+}
+
+
+unpackTo(_o: InputSetT): void {
+  _o.inputs = this.bb!.createObjList<Input, InputT>(this.inputs.bind(this), this.inputsLength());
+}
+}
+
+export class InputSetT implements flatbuffers.IGeneratedObject {
+constructor(
+  public inputs: (InputT)[] = []
+){}
+
+
+pack(builder:flatbuffers.Builder): flatbuffers.Offset {
+  const inputs = InputSet.createInputsVector(builder, builder.createObjectOffsetList(this.inputs));
+
+  return InputSet.createInputSet(builder,
+    inputs
+  );
 }
 }

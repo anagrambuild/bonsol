@@ -117,6 +117,26 @@ impl<'a> Account {
     unsafe { flatbuffers::emplace_scalar_array(&mut self.0, 1, items) };
   }
 
+  pub fn unpack(&self) -> AccountT {
+    AccountT {
+      writable: self.writable(),
+      pubkey: self.pubkey().into(),
+    }
+  }
+}
+
+#[derive(Debug, Clone, PartialEq, Default)]
+pub struct AccountT {
+  pub writable: bool,
+  pub pubkey: [u8; 32],
+}
+impl AccountT {
+  pub fn pack(&self) -> Account {
+    Account::new(
+      self.writable,
+      &self.pubkey,
+    )
+  }
 }
 
 pub enum ExecutionRequestV1Offset {}
@@ -171,6 +191,46 @@ impl<'a> ExecutionRequestV1<'a> {
     builder.finish()
   }
 
+  pub fn unpack(&self) -> ExecutionRequestV1T {
+    let tip = self.tip();
+    let execution_id = self.execution_id().map(|x| {
+      x.to_string()
+    });
+    let image_id = self.image_id().map(|x| {
+      x.to_string()
+    });
+    let callback_program_id = self.callback_program_id().map(|x| {
+      x.into_iter().collect()
+    });
+    let callback_instruction_prefix = self.callback_instruction_prefix().map(|x| {
+      x.into_iter().collect()
+    });
+    let forward_output = self.forward_output();
+    let verify_input_hash = self.verify_input_hash();
+    let input = self.input().map(|x| {
+      x.iter().map(|t| t.unpack()).collect()
+    });
+    let input_digest = self.input_digest().map(|x| {
+      x.into_iter().collect()
+    });
+    let max_block_height = self.max_block_height();
+    let callback_extra_accounts = self.callback_extra_accounts().map(|x| {
+      x.iter().map(|t| t.unpack()).collect()
+    });
+    ExecutionRequestV1T {
+      tip,
+      execution_id,
+      image_id,
+      callback_program_id,
+      callback_instruction_prefix,
+      forward_output,
+      verify_input_hash,
+      input,
+      input_digest,
+      max_block_height,
+      callback_extra_accounts,
+    }
+  }
 
   #[inline]
   pub fn tip(&self) -> u64 {
@@ -384,6 +444,83 @@ impl core::fmt::Debug for ExecutionRequestV1<'_> {
       ds.field("max_block_height", &self.max_block_height());
       ds.field("callback_extra_accounts", &self.callback_extra_accounts());
       ds.finish()
+  }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct ExecutionRequestV1T {
+  pub tip: u64,
+  pub execution_id: Option<String>,
+  pub image_id: Option<String>,
+  pub callback_program_id: Option<Vec<u8>>,
+  pub callback_instruction_prefix: Option<Vec<u8>>,
+  pub forward_output: bool,
+  pub verify_input_hash: bool,
+  pub input: Option<Vec<InputT>>,
+  pub input_digest: Option<Vec<u8>>,
+  pub max_block_height: u64,
+  pub callback_extra_accounts: Option<Vec<AccountT>>,
+}
+impl Default for ExecutionRequestV1T {
+  fn default() -> Self {
+    Self {
+      tip: 0,
+      execution_id: None,
+      image_id: None,
+      callback_program_id: None,
+      callback_instruction_prefix: None,
+      forward_output: false,
+      verify_input_hash: true,
+      input: None,
+      input_digest: None,
+      max_block_height: 0,
+      callback_extra_accounts: None,
+    }
+  }
+}
+impl ExecutionRequestV1T {
+  pub fn pack<'b>(
+    &self,
+    _fbb: &mut flatbuffers::FlatBufferBuilder<'b>
+  ) -> flatbuffers::WIPOffset<ExecutionRequestV1<'b>> {
+    let tip = self.tip;
+    let execution_id = self.execution_id.as_ref().map(|x|{
+      _fbb.create_string(x)
+    });
+    let image_id = self.image_id.as_ref().map(|x|{
+      _fbb.create_string(x)
+    });
+    let callback_program_id = self.callback_program_id.as_ref().map(|x|{
+      _fbb.create_vector(x)
+    });
+    let callback_instruction_prefix = self.callback_instruction_prefix.as_ref().map(|x|{
+      _fbb.create_vector(x)
+    });
+    let forward_output = self.forward_output;
+    let verify_input_hash = self.verify_input_hash;
+    let input = self.input.as_ref().map(|x|{
+      let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();_fbb.create_vector(&w)
+    });
+    let input_digest = self.input_digest.as_ref().map(|x|{
+      _fbb.create_vector(x)
+    });
+    let max_block_height = self.max_block_height;
+    let callback_extra_accounts = self.callback_extra_accounts.as_ref().map(|x|{
+      let w: Vec<_> = x.iter().map(|t| t.pack()).collect();_fbb.create_vector(&w)
+    });
+    ExecutionRequestV1::create(_fbb, &ExecutionRequestV1Args{
+      tip,
+      execution_id,
+      image_id,
+      callback_program_id,
+      callback_instruction_prefix,
+      forward_output,
+      verify_input_hash,
+      input,
+      input_digest,
+      max_block_height,
+      callback_extra_accounts,
+    })
   }
 }
 #[inline]

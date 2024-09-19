@@ -1,4 +1,5 @@
 pub mod instructions;
+pub mod claim_state;
 pub use bonsol_channel_utils::ID;
 #[cfg(feature = "macros")]
 pub mod macros;

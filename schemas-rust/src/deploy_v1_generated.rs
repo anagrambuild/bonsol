@@ -52,6 +52,32 @@ impl<'a> DeployV1<'a> {
     builder.finish()
   }
 
+  pub fn unpack(&self) -> DeployV1T {
+    let owner = self.owner().map(|x| {
+      x.into_iter().collect()
+    });
+    let image_id = self.image_id().map(|x| {
+      x.to_string()
+    });
+    let program_name = self.program_name().map(|x| {
+      x.to_string()
+    });
+    let url = self.url().map(|x| {
+      x.to_string()
+    });
+    let size_ = self.size_();
+    let inputs = self.inputs().map(|x| {
+      x.into_iter().collect()
+    });
+    DeployV1T {
+      owner,
+      image_id,
+      program_name,
+      url,
+      size_,
+      inputs,
+    }
+  }
 
   #[inline]
   pub fn owner(&self) -> Option<flatbuffers::Vector<'a, u8>> {
@@ -190,6 +216,59 @@ impl core::fmt::Debug for DeployV1<'_> {
       ds.field("size_", &self.size_());
       ds.field("inputs", &self.inputs());
       ds.finish()
+  }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct DeployV1T {
+  pub owner: Option<Vec<u8>>,
+  pub image_id: Option<String>,
+  pub program_name: Option<String>,
+  pub url: Option<String>,
+  pub size_: u64,
+  pub inputs: Option<Vec<ProgramInputType>>,
+}
+impl Default for DeployV1T {
+  fn default() -> Self {
+    Self {
+      owner: None,
+      image_id: None,
+      program_name: None,
+      url: None,
+      size_: 0,
+      inputs: None,
+    }
+  }
+}
+impl DeployV1T {
+  pub fn pack<'b>(
+    &self,
+    _fbb: &mut flatbuffers::FlatBufferBuilder<'b>
+  ) -> flatbuffers::WIPOffset<DeployV1<'b>> {
+    let owner = self.owner.as_ref().map(|x|{
+      _fbb.create_vector(x)
+    });
+    let image_id = self.image_id.as_ref().map(|x|{
+      _fbb.create_string(x)
+    });
+    let program_name = self.program_name.as_ref().map(|x|{
+      _fbb.create_string(x)
+    });
+    let url = self.url.as_ref().map(|x|{
+      _fbb.create_string(x)
+    });
+    let size_ = self.size_;
+    let inputs = self.inputs.as_ref().map(|x|{
+      _fbb.create_vector(x)
+    });
+    DeployV1::create(_fbb, &DeployV1Args{
+      owner,
+      image_id,
+      program_name,
+      url,
+      size_,
+      inputs,
+    })
   }
 }
 #[inline]

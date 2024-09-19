@@ -2,11 +2,11 @@
 
 import * as flatbuffers from 'flatbuffers';
 
-import { Account } from './account.js';
-import { Input } from './input.js';
+import { Account, AccountT } from './account.js';
+import { Input, InputT } from './input.js';
 
 
-export class ExecutionRequestV1 {
+export class ExecutionRequestV1 implements flatbuffers.IUnpackableObject<ExecutionRequestV1T> {
   bb: flatbuffers.ByteBuffer|null = null;
   bb_pos = 0;
   __init(i:number, bb:flatbuffers.ByteBuffer):ExecutionRequestV1 {
@@ -294,5 +294,77 @@ static createExecutionRequestV1(builder:flatbuffers.Builder, tip:bigint, executi
   ExecutionRequestV1.addMaxBlockHeight(builder, maxBlockHeight);
   ExecutionRequestV1.addCallbackExtraAccounts(builder, callbackExtraAccountsOffset);
   return ExecutionRequestV1.endExecutionRequestV1(builder);
+}
+
+unpack(): ExecutionRequestV1T {
+  return new ExecutionRequestV1T(
+    this.tip(),
+    this.executionId(),
+    this.imageId(),
+    this.bb!.createScalarList<number>(this.callbackProgramId.bind(this), this.callbackProgramIdLength()),
+    this.bb!.createScalarList<number>(this.callbackInstructionPrefix.bind(this), this.callbackInstructionPrefixLength()),
+    this.forwardOutput(),
+    this.verifyInputHash(),
+    this.bb!.createObjList<Input, InputT>(this.input.bind(this), this.inputLength()),
+    this.bb!.createScalarList<number>(this.inputDigest.bind(this), this.inputDigestLength()),
+    this.maxBlockHeight(),
+    this.bb!.createObjList<Account, AccountT>(this.callbackExtraAccounts.bind(this), this.callbackExtraAccountsLength())
+  );
+}
+
+
+unpackTo(_o: ExecutionRequestV1T): void {
+  _o.tip = this.tip();
+  _o.executionId = this.executionId();
+  _o.imageId = this.imageId();
+  _o.callbackProgramId = this.bb!.createScalarList<number>(this.callbackProgramId.bind(this), this.callbackProgramIdLength());
+  _o.callbackInstructionPrefix = this.bb!.createScalarList<number>(this.callbackInstructionPrefix.bind(this), this.callbackInstructionPrefixLength());
+  _o.forwardOutput = this.forwardOutput();
+  _o.verifyInputHash = this.verifyInputHash();
+  _o.input = this.bb!.createObjList<Input, InputT>(this.input.bind(this), this.inputLength());
+  _o.inputDigest = this.bb!.createScalarList<number>(this.inputDigest.bind(this), this.inputDigestLength());
+  _o.maxBlockHeight = this.maxBlockHeight();
+  _o.callbackExtraAccounts = this.bb!.createObjList<Account, AccountT>(this.callbackExtraAccounts.bind(this), this.callbackExtraAccountsLength());
+}
+}
+
+export class ExecutionRequestV1T implements flatbuffers.IGeneratedObject {
+constructor(
+  public tip: bigint = BigInt('0'),
+  public executionId: string|Uint8Array|null = null,
+  public imageId: string|Uint8Array|null = null,
+  public callbackProgramId: (number)[] = [],
+  public callbackInstructionPrefix: (number)[] = [],
+  public forwardOutput: boolean = false,
+  public verifyInputHash: boolean = true,
+  public input: (InputT)[] = [],
+  public inputDigest: (number)[] = [],
+  public maxBlockHeight: bigint = BigInt('0'),
+  public callbackExtraAccounts: (AccountT)[] = []
+){}
+
+
+pack(builder:flatbuffers.Builder): flatbuffers.Offset {
+  const executionId = (this.executionId !== null ? builder.createString(this.executionId!) : 0);
+  const imageId = (this.imageId !== null ? builder.createString(this.imageId!) : 0);
+  const callbackProgramId = ExecutionRequestV1.createCallbackProgramIdVector(builder, this.callbackProgramId);
+  const callbackInstructionPrefix = ExecutionRequestV1.createCallbackInstructionPrefixVector(builder, this.callbackInstructionPrefix);
+  const input = ExecutionRequestV1.createInputVector(builder, builder.createObjectOffsetList(this.input));
+  const inputDigest = ExecutionRequestV1.createInputDigestVector(builder, this.inputDigest);
+  const callbackExtraAccounts = builder.createStructOffsetList(this.callbackExtraAccounts, ExecutionRequestV1.startCallbackExtraAccountsVector);
+
+  return ExecutionRequestV1.createExecutionRequestV1(builder,
+    this.tip,
+    executionId,
+    imageId,
+    callbackProgramId,
+    callbackInstructionPrefix,
+    this.forwardOutput,
+    this.verifyInputHash,
+    input,
+    inputDigest,
+    this.maxBlockHeight,
+    callbackExtraAccounts
+  );
 }
 }

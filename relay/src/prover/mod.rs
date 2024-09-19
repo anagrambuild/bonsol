@@ -1,6 +1,4 @@
-mod image;
 mod utils;
-use self::image::Image;
 use crate::{
     callback::{RpcTransactionSender, TransactionSender},
     config::ProverNodeConfig,
@@ -31,9 +29,10 @@ use {
 
 use bonsol_schema::root_as_deploy_v1;
 use bonsol_sdk::{
+    image::Image,
     input_resolver::{InputResolver, ProgramInput},
     util::get_body_max_size,
-    prover::{get_risc0_exec_env, get_risc0_prover},
+    prover::{new_risc0_exec_env, get_risc0_prover},
 };
 use risc0_groth16::{ProofJson, Seal};
 use risc0_zkvm::{sha::Digest, InnerReceipt, MaybePruned, Receipt, ReceiptClaim};
@@ -468,11 +467,13 @@ async fn handle_execution_request<'a>(
             // them before we change the value of g so we optimistically change to inflight and we will decrement if we dont win the claim
             let inputs = exec.input().ok_or(Risc0RunnerError::InvalidData)?;
             let program_inputs = emit_event_with_duration!(MetricEvents::InputDownload, {
-                input_resolver.resolve_public_inputs(inputs.iter().collect()).await?
+                input_resolver.resolve_public_inputs(
+                    inputs.iter().map(|i| i.unpack()).collect()
+                ).await?
             }, execution_id => eid, stage => "public");
             input_staging_area.insert(eid.clone(), program_inputs);
             let sig = transaction_sender
-                .claim(&eid, accounts[2], computable_by)
+                .claim(&eid, accounts[2], accounts[1], computable_by)
                 .await
                 .map_err(|e| Risc0RunnerError::TransactionError(e.to_string()));
             match sig {
@@ -568,16 +569,14 @@ async fn handle_image_deployment<'a>(
 
 // proving function, no async this is cpu/gpu intesive
 fn risc0_prove(
-    prover: Rc<dyn ProverServer>,
     memory_image: MemoryImage,
     sorted_inputs: Vec<ProgramInput>,
 ) -> Result<(Journal, Digest, SuccinctReceipt<ReceiptClaim>)> {
-    let exec = get_risc0_exec_env(memory_image, sorted_inputs)?;
+    let mut exec = new_risc0_exec_env(memory_image, sorted_inputs)?;
     let session = exec.run()?;
-
     // Obtain the default prover.
-    
-   
+    let prover = get_risc0_prover()?;
+    let ctx = VerifierContext::default();
     let info = emit_event_with_duration!(MetricEvents::ProofGeneration,{
         prover.prove_session(&ctx, &session)
     }, system => "risc0")?;

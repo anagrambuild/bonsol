@@ -24,7 +24,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.InputSetOpV1 = void 0;
+exports.InputSetOpV1T = exports.InputSetOpV1 = void 0;
 const flatbuffers = __importStar(require("flatbuffers"));
 const input_js_1 = require("./input.js");
 const input_set_op_js_1 = require("./input-set-op.js");
@@ -108,5 +108,26 @@ class InputSetOpV1 {
         InputSetOpV1.addInputs(builder, inputsOffset);
         return InputSetOpV1.endInputSetOpV1(builder);
     }
+    unpack() {
+        return new InputSetOpV1T(this.id(), this.op(), this.bb.createObjList(this.inputs.bind(this), this.inputsLength()));
+    }
+    unpackTo(_o) {
+        _o.id = this.id();
+        _o.op = this.op();
+        _o.inputs = this.bb.createObjList(this.inputs.bind(this), this.inputsLength());
+    }
 }
 exports.InputSetOpV1 = InputSetOpV1;
+class InputSetOpV1T {
+    constructor(id = null, op = input_set_op_js_1.InputSetOp.Create, inputs = []) {
+        this.id = id;
+        this.op = op;
+        this.inputs = inputs;
+    }
+    pack(builder) {
+        const id = (this.id !== null ? builder.createString(this.id) : 0);
+        const inputs = InputSetOpV1.createInputsVector(builder, builder.createObjectOffsetList(this.inputs));
+        return InputSetOpV1.createInputSetOpV1(builder, id, this.op, inputs);
+    }
+}
+exports.InputSetOpV1T = InputSetOpV1T;

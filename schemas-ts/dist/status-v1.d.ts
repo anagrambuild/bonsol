@@ -1,6 +1,6 @@
 import * as flatbuffers from 'flatbuffers';
 import { StatusTypes } from './status-types.js';
-export declare class StatusV1 {
+export declare class StatusV1 implements flatbuffers.IUnpackableObject<StatusV1T> {
     bb: flatbuffers.ByteBuffer | null;
     bb_pos: number;
     __init(i: number, bb: flatbuffers.ByteBuffer): StatusV1;
@@ -53,4 +53,19 @@ export declare class StatusV1 {
     static finishStatusV1Buffer(builder: flatbuffers.Builder, offset: flatbuffers.Offset): void;
     static finishSizePrefixedStatusV1Buffer(builder: flatbuffers.Builder, offset: flatbuffers.Offset): void;
     static createStatusV1(builder: flatbuffers.Builder, executionIdOffset: flatbuffers.Offset, status: StatusTypes, proofOffset: flatbuffers.Offset, executionDigestOffset: flatbuffers.Offset, inputDigestOffset: flatbuffers.Offset, committedOutputsOffset: flatbuffers.Offset, assumptionDigestOffset: flatbuffers.Offset, exitCodeSystem: number, exitCodeUser: number): flatbuffers.Offset;
+    unpack(): StatusV1T;
+    unpackTo(_o: StatusV1T): void;
+}
+export declare class StatusV1T implements flatbuffers.IGeneratedObject {
+    executionId: string | Uint8Array | null;
+    status: StatusTypes;
+    proof: (number)[];
+    executionDigest: (number)[];
+    inputDigest: (number)[];
+    committedOutputs: (number)[];
+    assumptionDigest: (number)[];
+    exitCodeSystem: number;
+    exitCodeUser: number;
+    constructor(executionId?: string | Uint8Array | null, status?: StatusTypes, proof?: (number)[], executionDigest?: (number)[], inputDigest?: (number)[], committedOutputs?: (number)[], assumptionDigest?: (number)[], exitCodeSystem?: number, exitCodeUser?: number);
+    pack(builder: flatbuffers.Builder): flatbuffers.Offset;
 }

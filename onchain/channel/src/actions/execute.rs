@@ -1,12 +1,16 @@
 use crate::assertions::*;
 use crate::error::ChannelError;
 use crate::utilities::*;
-use bonsol_channel_utils::execution_address_seeds;
-use bonsol_schema::root_as_deploy_v1;
-use bonsol_schema::root_as_input_set;
-use bonsol_schema::ChannelInstruction;
-use bonsol_schema::ExecutionRequestV1;
-use bonsol_schema::InputType;
+
+use bonsol_channel_interface::{
+    bonsol_channel_utils::execution_address_seeds,
+    bonsol_schema::root_as_deploy_v1,
+    bonsol_schema::root_as_input_set,
+    bonsol_schema::ChannelInstruction,
+    bonsol_schema::ExecutionRequestV1,
+    bonsol_schema::InputType,
+};
+
 use solana_program::account_info::AccountInfo;
 use solana_program::system_program;
 use solana_program::bpf_loader_upgradeable;

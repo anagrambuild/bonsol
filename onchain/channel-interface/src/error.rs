@@ -25,7 +25,9 @@ pub enum ClientError {
     #[error("InvalidCallbackSignature")]
     InvalidCallbackSignature,
     #[error("InvalidCallbackData")]
-    InvalidCallbackData
+    InvalidCallbackData,
+    #[error("InvalidClaimAccount")]
+    InvalidClaimAccount
 }
 
 impl Into<ProgramError> for ClientError {

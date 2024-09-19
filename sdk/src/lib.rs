@@ -1,7 +1,11 @@
-pub mod util;
 pub mod prover;
-use instructions::{CallbackConfig, Input, ExecutionConfig};
-use serde::{Deserialize, Serialize, Serializer};
+pub mod util;
+pub mod image;
+use bonsol_channel_interface::claim_state::{ClaimStateHolder, ClaimStateV1};
+use bytes::Bytes;
+use futures_util::TryFutureExt;
+use instructions::{CallbackConfig, ExecutionConfig};
+use num_traits::FromPrimitive;
 use {
     anyhow::Result,
     solana_rpc_client::nonblocking::rpc_client::RpcClient,
@@ -18,12 +22,19 @@ use {
     },
 };
 
-pub use bonsol_channel_interface::*;
+pub use bonsol_channel_interface::instructions;
+pub use bonsol_channel_interface::ID;
 pub use bonsol_channel_utils::*;
 pub use bonsol_schema::*;
+pub use flatbuffers;
 pub mod input_resolver;
 pub struct BonsolClient {
     rpc_client: RpcClient,
+}
+
+pub enum ExecutionAccountStatus {
+    Completed(ExitCode),
+    Pending(ExecutionRequestV1T),
 }
 
 impl BonsolClient {
@@ -33,8 +44,83 @@ impl BonsolClient {
         }
     }
 
+    pub async fn get_block_height(&self) -> Result<u64> {
+        self.rpc_client
+            .get_block_height()
+            .map_err(|_| anyhow::anyhow!("Failed to get block height"))
+            .await
+    }
+
     pub fn with_rpc_client(rpc_client: RpcClient) -> Self {
         BonsolClient { rpc_client }
+    }
+
+    pub async fn get_deployment_v1(&self, image_id: &str) -> Result<DeployV1T> {
+        let (deployment_account, _) = deployment_address(image_id);
+        let account = self
+            .rpc_client
+            .get_account_with_commitment(&deployment_account, CommitmentConfig::confirmed())
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to get account: {:?}", e))?
+            .value
+            .ok_or(anyhow::anyhow!("Invalid deployment account"))?;
+        let deployment =
+            root_as_deploy_v1(&account.data).map_err(|_| anyhow::anyhow!("Invalid deployment account"))?;
+        Ok(deployment.unpack())
+    }
+
+    pub async fn get_execution_request_v1(
+        &self,
+        requester_pubkey: &Pubkey,
+        execution_id: &str,
+    ) -> Result<ExecutionAccountStatus> {
+        let (er, _) = execution_address(requester_pubkey, execution_id.as_bytes());
+        let account = self
+            .rpc_client
+            .get_account_with_commitment(&er, CommitmentConfig::confirmed())
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to get account: {:?}", e))?
+            .value
+            .ok_or(anyhow::anyhow!("Invalid execution request account"))?;
+        if account.data.len() == 1 {
+            let ec =
+                ExitCode::from_u8(account.data[0]).ok_or(anyhow::anyhow!("Invalid exit code"))?;
+            return Ok(ExecutionAccountStatus::Completed(ec));
+        } 
+        let er = root_as_execution_request_v1(&account.data)
+            .map_err(|_| anyhow::anyhow!("Invalid execution request account"))?;
+        Ok(ExecutionAccountStatus::Pending(er.unpack()))
+    }
+
+    pub async fn get_claim_state_v1<'a>(
+        &self,
+        requester_pubkey: &Pubkey,
+        execution_id: &str,
+    ) -> Result<ClaimStateHolder> {
+        let (exad, _) = execution_address(requester_pubkey, execution_id.as_bytes());
+        let (eca, _) = execution_claim_address(exad.as_ref());
+        let account = self
+            .rpc_client
+            .get_account_with_commitment(&eca, CommitmentConfig::confirmed())
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to get account: {:?}", e))?
+            .value
+            .ok_or(anyhow::anyhow!("Invalid claim account"))?;
+        Ok(ClaimStateHolder::new(account.data))
+    }
+
+    pub async fn download_program(&self, image_id: &str) -> Result<Bytes> {
+        let deployment = self.get_deployment_v1(image_id).await?;
+        let url = deployment
+            .url
+            .ok_or(anyhow::anyhow!("Invalid deployment"))?;
+        let resp = reqwest::get(url)
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to download program: {:?}", e))?;
+        Ok(resp
+            .bytes()
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to download program: {:?}", e))?)
     }
 
     pub async fn get_deployment(&self, image_id: &str) -> Result<Option<Account>> {
@@ -82,7 +168,7 @@ impl BonsolClient {
         signer: &Pubkey,
         image_id: &str,
         execution_id: &str,
-        inputs: Vec<Input>,
+        inputs: Vec<InputT>,
         tip: u64,
         expiration: u64,
         config: ExecutionConfig,
@@ -152,46 +238,6 @@ impl BonsolClient {
                 }
             }
             tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
-        }
-    }
-}
-
-pub struct SdkInputType(InputType);
-
-impl Serialize for SdkInputType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        match self.0 {
-            InputType::PublicData => serializer.serialize_str("Public"),
-            InputType::PublicAccountData => serializer.serialize_str("PublicAccountData"),
-            InputType::PublicUrl => serializer.serialize_str("PublicUrl"),
-            InputType::Private => serializer.serialize_str("Private"),
-            InputType::InputSet => serializer.serialize_str("InputSet"),
-            InputType::PublicProof => serializer.serialize_str("PublicProof"),
-            _ => Err(serde::ser::Error::custom("Invalid input type")),
-        }
-    }
-}
-
-impl<'de> Deserialize<'de> for SdkInputType {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        let s = String::deserialize(deserializer)?;
-        match s.as_str() {
-            "Public" => Ok(SdkInputType(InputType::PublicData)),
-            "PublicAccountData" => Ok(SdkInputType(InputType::PublicAccountData)),
-            "PublicUrl" => Ok(SdkInputType(InputType::PublicUrl)),
-            "Private" => Ok(SdkInputType(InputType::Private)),
-            "InputSet" => Ok(SdkInputType(InputType::InputSet)),
-            "PublicProof" => Ok(SdkInputType(InputType::PublicProof)),
-            _ => Err(serde::de::Error::custom(format!(
-                "Invalid input type: {}",
-                s
-            ))),
         }
     }
 }

@@ -3,8 +3,7 @@ use std::{
     sync::Arc,
     time::{SystemTime, UNIX_EPOCH},
 };
-
-use bonsol_schema::{root_as_input_set, Input, InputType, ProgramInputType};
+use bonsol_schema::{root_as_input_set, Input, InputT, InputType, ProgramInputType};
 use anyhow::Result;
 use async_trait::async_trait;
 use reqwest::Url;
@@ -54,10 +53,11 @@ pub trait InputResolver: Send + Sync {
     /// Returns true if the input resolver supports the input type
     fn supports(&self, input_type: InputType) -> bool;
     /// Resolves public inputs by parsing them or if remote downloading them
-    async fn resolve_public_inputs<'a>(
+    async fn resolve_public_inputs(
         &self,
-        inputs: Vec<Input<'a>>,
+        inputs: Vec<InputT>,
     ) -> Result<Vec<ProgramInput>, anyhow::Error>;
+    
     /// Resolves private inputs by sigining the request and attempting to download the inputs
     async fn resolve_private_inputs(
         &self,
@@ -68,18 +68,23 @@ pub trait InputResolver: Send + Sync {
 }
 
 // naive resolver that downloads inputs and resolves inputsets just in time
-pub struct DeafultInputResolver {
+pub struct DefaultInputResolver {
     http_client: Arc<reqwest::Client>,
     solana_rpc_client: Arc<solana_rpc_client::nonblocking::rpc_client::RpcClient>,
     max_input_size_mb: u64,
 }
 
-impl DeafultInputResolver {
+pub struct LocalProvingInputResolver {
+    http_client: Arc<reqwest::Client>,
+    solana_rpc_client: Arc<solana_rpc_client::nonblocking::rpc_client::RpcClient>,
+}
+
+impl DefaultInputResolver {
     pub fn new(
         http_client: Arc<reqwest::Client>,
         solana_rpc_client: Arc<solana_rpc_client::nonblocking::rpc_client::RpcClient>,
     ) -> Self {
-        DeafultInputResolver {
+        DefaultInputResolver {
             http_client,
             solana_rpc_client,
             max_input_size_mb: 10,
@@ -91,27 +96,26 @@ impl DeafultInputResolver {
         solana_rpc_client: Arc<solana_rpc_client::nonblocking::rpc_client::RpcClient>,
         max_input_size_mb: Option<u64>,
     ) -> Self {
-        DeafultInputResolver {
+        DefaultInputResolver {
             http_client,
             solana_rpc_client,
             max_input_size_mb: max_input_size_mb.unwrap_or(10),
         }
     }
 
-    fn par_resolve_input<'a>(
+    fn par_resolve_input(
         &self,
         client: Arc<reqwest::Client>,
         index: u8,
-        input: Input<'a>,
+        input: InputT,
         task_set: &mut JoinSet<Result<ResolvedInput>>,
     ) -> Result<ProgramInput> {
-        match input.input_type() {
+        match input.input_type {
             InputType::PublicUrl => {
                 let url = input
-                    .data()
-                    .map(|d| d.bytes())
+                    .data
                     .ok_or(anyhow::anyhow!("Invalid data"))?;
-                let url = from_utf8(url)?;
+                let url = from_utf8(&url)?;
                 let url = Url::parse(url)?;
                 task_set.spawn(dowload_public_input(
                     client,
@@ -128,10 +132,9 @@ impl DeafultInputResolver {
             }
             InputType::Private => {
                 let url = input
-                    .data()
-                    .map(|d| d.bytes())
+                    .data
                     .ok_or(anyhow::anyhow!("Invalid data"))?;
-                let url = from_utf8(url)?;
+                let url = from_utf8(&url)?;
                 let url = Url::parse(url)?;
                 Ok(ProgramInput::Unresolved(UnresolvedInput {
                     index: index as u8,
@@ -141,8 +144,7 @@ impl DeafultInputResolver {
             }
             InputType::PublicData => {
                 let data = input
-                    .data()
-                    .map(|d| d.bytes())
+                    .data
                     .ok_or(anyhow::anyhow!("Invalid data"))?;
                 let data = data.to_vec();
                 Ok(ProgramInput::Resolved(ResolvedInput {
@@ -153,10 +155,9 @@ impl DeafultInputResolver {
             }
             InputType::PublicProof => {
                 let url = input
-                    .data()
-                    .map(|d| d.bytes())
+                    .data
                     .ok_or(anyhow::anyhow!("Invalid data"))?;
-                let url = from_utf8(url)?;
+                let url = from_utf8(&url)?;
                 let url = Url::parse(url)?;
                 task_set.spawn(dowload_public_input(
                     client,
@@ -200,6 +201,7 @@ impl DeafultInputResolver {
             if input.input_type() == InputType::InputSet {
                 return Err(anyhow::anyhow!("Input set nesting not supported"));
             }
+            let input = input.unpack();
             res.push(self.par_resolve_input(client.clone(), index, input, &mut task_set)?);
         }
         Ok(res)
@@ -207,7 +209,7 @@ impl DeafultInputResolver {
 }
 
 #[async_trait]
-impl InputResolver for DeafultInputResolver {
+impl InputResolver for DefaultInputResolver {
     fn supports(&self, input_type: InputType) -> bool {
         match input_type {
             InputType::PublicUrl => true,
@@ -220,21 +222,21 @@ impl InputResolver for DeafultInputResolver {
         }
     }
 
-    async fn resolve_public_inputs<'a>(
+    async fn resolve_public_inputs(
         &self,
-        inputs: Vec<Input<'a>>,
+        inputs: Vec<InputT>,
     ) -> Result<Vec<ProgramInput>, anyhow::Error> {
         let mut url_set = JoinSet::new();
         let mut res = vec![ProgramInput::Empty; inputs.len()];
         let mut index_offset = 0;
-        for (index, input) in inputs.iter().enumerate() {
+        for (index, input) in inputs.into_iter().enumerate() {
             let index: u8 = index as u8 + index_offset;
             let client = self.http_client.clone();
 
-            match input.input_type() {
+            match input.input_type {
                 InputType::InputSet => {
                     if let Some(input_set_account) =
-                        input.data().and_then(|i| Pubkey::try_from(i.bytes()).ok())
+                        input.data.as_ref().and_then(|i| Pubkey::try_from(i.as_slice()).ok())
                     {
                         let inputs = self
                             .par_resolve_input_set(input_set_account, client, index, &mut url_set)
@@ -247,7 +249,7 @@ impl InputResolver for DeafultInputResolver {
                 }
                 _ => {
                     res[index as usize] =
-                        self.par_resolve_input(client, index, *input, &mut url_set)?;
+                        self.par_resolve_input(client, index, input, &mut url_set)?;
                 }
             }
         }
@@ -381,4 +383,9 @@ async fn download_private_input(
         data: byte.to_vec(),
         input_type: ProgramInputType::Private,
     })
+}
+
+
+impl LocalProvingInputResolver {
+    
 }

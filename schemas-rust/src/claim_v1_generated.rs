@@ -43,6 +43,16 @@ impl<'a> ClaimV1<'a> {
     builder.finish()
   }
 
+  pub fn unpack(&self) -> ClaimV1T {
+    let execution_id = self.execution_id().map(|x| {
+      x.to_string()
+    });
+    let block_commitment = self.block_commitment();
+    ClaimV1T {
+      execution_id,
+      block_commitment,
+    }
+  }
 
   #[inline]
   pub fn execution_id(&self) -> Option<&'a str> {
@@ -121,6 +131,35 @@ impl core::fmt::Debug for ClaimV1<'_> {
       ds.field("execution_id", &self.execution_id());
       ds.field("block_commitment", &self.block_commitment());
       ds.finish()
+  }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct ClaimV1T {
+  pub execution_id: Option<String>,
+  pub block_commitment: u64,
+}
+impl Default for ClaimV1T {
+  fn default() -> Self {
+    Self {
+      execution_id: None,
+      block_commitment: 0,
+    }
+  }
+}
+impl ClaimV1T {
+  pub fn pack<'b>(
+    &self,
+    _fbb: &mut flatbuffers::FlatBufferBuilder<'b>
+  ) -> flatbuffers::WIPOffset<ClaimV1<'b>> {
+    let execution_id = self.execution_id.as_ref().map(|x|{
+      _fbb.create_string(x)
+    });
+    let block_commitment = self.block_commitment;
+    ClaimV1::create(_fbb, &ClaimV1Args{
+      execution_id,
+      block_commitment,
+    })
   }
 }
 #[inline]

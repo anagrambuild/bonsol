@@ -1,6 +1,6 @@
 import * as flatbuffers from 'flatbuffers';
 import { ProgramInputType } from './program-input-type.js';
-export declare class DeployV1 {
+export declare class DeployV1 implements flatbuffers.IUnpackableObject<DeployV1T> {
     bb: flatbuffers.ByteBuffer | null;
     bb_pos: number;
     __init(i: number, bb: flatbuffers.ByteBuffer): DeployV1;
@@ -35,4 +35,16 @@ export declare class DeployV1 {
     static finishDeployV1Buffer(builder: flatbuffers.Builder, offset: flatbuffers.Offset): void;
     static finishSizePrefixedDeployV1Buffer(builder: flatbuffers.Builder, offset: flatbuffers.Offset): void;
     static createDeployV1(builder: flatbuffers.Builder, ownerOffset: flatbuffers.Offset, imageIdOffset: flatbuffers.Offset, programNameOffset: flatbuffers.Offset, urlOffset: flatbuffers.Offset, size: bigint, inputsOffset: flatbuffers.Offset): flatbuffers.Offset;
+    unpack(): DeployV1T;
+    unpackTo(_o: DeployV1T): void;
+}
+export declare class DeployV1T implements flatbuffers.IGeneratedObject {
+    owner: (number)[];
+    imageId: string | Uint8Array | null;
+    programName: string | Uint8Array | null;
+    url: string | Uint8Array | null;
+    size: bigint;
+    inputs: (ProgramInputType)[];
+    constructor(owner?: (number)[], imageId?: string | Uint8Array | null, programName?: string | Uint8Array | null, url?: string | Uint8Array | null, size?: bigint, inputs?: (ProgramInputType)[]);
+    pack(builder: flatbuffers.Builder): flatbuffers.Offset;
 }

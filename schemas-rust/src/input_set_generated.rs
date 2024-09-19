@@ -42,6 +42,14 @@ impl<'a> InputSet<'a> {
     builder.finish()
   }
 
+  pub fn unpack(&self) -> InputSetT {
+    let inputs = self.inputs().map(|x| {
+      x.iter().map(|t| t.unpack()).collect()
+    });
+    InputSetT {
+      inputs,
+    }
+  }
 
   #[inline]
   pub fn inputs(&self) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<Input<'a>>>> {
@@ -105,6 +113,31 @@ impl core::fmt::Debug for InputSet<'_> {
     let mut ds = f.debug_struct("InputSet");
       ds.field("inputs", &self.inputs());
       ds.finish()
+  }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct InputSetT {
+  pub inputs: Option<Vec<InputT>>,
+}
+impl Default for InputSetT {
+  fn default() -> Self {
+    Self {
+      inputs: None,
+    }
+  }
+}
+impl InputSetT {
+  pub fn pack<'b>(
+    &self,
+    _fbb: &mut flatbuffers::FlatBufferBuilder<'b>
+  ) -> flatbuffers::WIPOffset<InputSet<'b>> {
+    let inputs = self.inputs.as_ref().map(|x|{
+      let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();_fbb.create_vector(&w)
+    });
+    InputSet::create(_fbb, &InputSetArgs{
+      inputs,
+    })
   }
 }
 #[inline]

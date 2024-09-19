@@ -1,7 +1,7 @@
 import * as flatbuffers from 'flatbuffers';
-import { Account } from './account.js';
-import { Input } from './input.js';
-export declare class ExecutionRequestV1 {
+import { Account, AccountT } from './account.js';
+import { Input, InputT } from './input.js';
+export declare class ExecutionRequestV1 implements flatbuffers.IUnpackableObject<ExecutionRequestV1T> {
     bb: flatbuffers.ByteBuffer | null;
     bb_pos: number;
     __init(i: number, bb: flatbuffers.ByteBuffer): ExecutionRequestV1;
@@ -57,4 +57,21 @@ export declare class ExecutionRequestV1 {
     static finishExecutionRequestV1Buffer(builder: flatbuffers.Builder, offset: flatbuffers.Offset): void;
     static finishSizePrefixedExecutionRequestV1Buffer(builder: flatbuffers.Builder, offset: flatbuffers.Offset): void;
     static createExecutionRequestV1(builder: flatbuffers.Builder, tip: bigint, executionIdOffset: flatbuffers.Offset, imageIdOffset: flatbuffers.Offset, callbackProgramIdOffset: flatbuffers.Offset, callbackInstructionPrefixOffset: flatbuffers.Offset, forwardOutput: boolean, verifyInputHash: boolean, inputOffset: flatbuffers.Offset, inputDigestOffset: flatbuffers.Offset, maxBlockHeight: bigint, callbackExtraAccountsOffset: flatbuffers.Offset): flatbuffers.Offset;
+    unpack(): ExecutionRequestV1T;
+    unpackTo(_o: ExecutionRequestV1T): void;
+}
+export declare class ExecutionRequestV1T implements flatbuffers.IGeneratedObject {
+    tip: bigint;
+    executionId: string | Uint8Array | null;
+    imageId: string | Uint8Array | null;
+    callbackProgramId: (number)[];
+    callbackInstructionPrefix: (number)[];
+    forwardOutput: boolean;
+    verifyInputHash: boolean;
+    input: (InputT)[];
+    inputDigest: (number)[];
+    maxBlockHeight: bigint;
+    callbackExtraAccounts: (AccountT)[];
+    constructor(tip?: bigint, executionId?: string | Uint8Array | null, imageId?: string | Uint8Array | null, callbackProgramId?: (number)[], callbackInstructionPrefix?: (number)[], forwardOutput?: boolean, verifyInputHash?: boolean, input?: (InputT)[], inputDigest?: (number)[], maxBlockHeight?: bigint, callbackExtraAccounts?: (AccountT)[]);
+    pack(builder: flatbuffers.Builder): flatbuffers.Offset;
 }

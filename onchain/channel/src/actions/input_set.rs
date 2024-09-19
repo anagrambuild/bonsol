@@ -1,10 +1,12 @@
 use crate::assertions::*;
 use crate::error::ChannelError;
 use crate::utilities::*;
-use bonsol_channel_utils::input_set_address_seeds;
-use bonsol_schema::input_set_op_v1_generated::InputSetOp;
-use bonsol_schema::input_set_op_v1_generated::InputSetOpV1;
-use bonsol_schema::ChannelInstruction;
+use bonsol_channel_interface::{
+    bonsol_channel_utils::input_set_address_seeds,
+    bonsol_schema::input_set_op_v1_generated::InputSetOp,
+    bonsol_schema::input_set_op_v1_generated::InputSetOpV1,
+    bonsol_schema::ChannelInstruction,
+};
 use solana_program::account_info::AccountInfo;
 use solana_program::system_program;
 

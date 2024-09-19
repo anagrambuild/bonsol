@@ -1,7 +1,7 @@
 import * as flatbuffers from 'flatbuffers';
-import { Input } from './input.js';
+import { Input, InputT } from './input.js';
 import { InputSetOp } from './input-set-op.js';
-export declare class InputSetOpV1 {
+export declare class InputSetOpV1 implements flatbuffers.IUnpackableObject<InputSetOpV1T> {
     bb: flatbuffers.ByteBuffer | null;
     bb_pos: number;
     __init(i: number, bb: flatbuffers.ByteBuffer): InputSetOpV1;
@@ -23,4 +23,13 @@ export declare class InputSetOpV1 {
     static finishInputSetOpV1Buffer(builder: flatbuffers.Builder, offset: flatbuffers.Offset): void;
     static finishSizePrefixedInputSetOpV1Buffer(builder: flatbuffers.Builder, offset: flatbuffers.Offset): void;
     static createInputSetOpV1(builder: flatbuffers.Builder, idOffset: flatbuffers.Offset, op: InputSetOp, inputsOffset: flatbuffers.Offset): flatbuffers.Offset;
+    unpack(): InputSetOpV1T;
+    unpackTo(_o: InputSetOpV1T): void;
+}
+export declare class InputSetOpV1T implements flatbuffers.IGeneratedObject {
+    id: string | Uint8Array | null;
+    op: InputSetOp;
+    inputs: (InputT)[];
+    constructor(id?: string | Uint8Array | null, op?: InputSetOp, inputs?: (InputT)[]);
+    pack(builder: flatbuffers.Builder): flatbuffers.Offset;
 }

@@ -1,6 +1,6 @@
 import * as flatbuffers from 'flatbuffers';
 import { ChannelInstructionIxType } from './channel-instruction-ix-type.js';
-export declare class ChannelInstruction {
+export declare class ChannelInstruction implements flatbuffers.IUnpackableObject<ChannelInstructionT> {
     bb: flatbuffers.ByteBuffer | null;
     bb_pos: number;
     __init(i: number, bb: flatbuffers.ByteBuffer): ChannelInstruction;
@@ -44,4 +44,16 @@ export declare class ChannelInstruction {
     static finishChannelInstructionBuffer(builder: flatbuffers.Builder, offset: flatbuffers.Offset): void;
     static finishSizePrefixedChannelInstructionBuffer(builder: flatbuffers.Builder, offset: flatbuffers.Offset): void;
     static createChannelInstruction(builder: flatbuffers.Builder, ixType: ChannelInstructionIxType, executeV1Offset: flatbuffers.Offset, statusV1Offset: flatbuffers.Offset, deployV1Offset: flatbuffers.Offset, claimV1Offset: flatbuffers.Offset, inputSetV1Offset: flatbuffers.Offset): flatbuffers.Offset;
+    unpack(): ChannelInstructionT;
+    unpackTo(_o: ChannelInstructionT): void;
+}
+export declare class ChannelInstructionT implements flatbuffers.IGeneratedObject {
+    ixType: ChannelInstructionIxType;
+    executeV1: (number)[];
+    statusV1: (number)[];
+    deployV1: (number)[];
+    claimV1: (number)[];
+    inputSetV1: (number)[];
+    constructor(ixType?: ChannelInstructionIxType, executeV1?: (number)[], statusV1?: (number)[], deployV1?: (number)[], claimV1?: (number)[], inputSetV1?: (number)[]);
+    pack(builder: flatbuffers.Builder): flatbuffers.Offset;
 }

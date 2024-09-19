@@ -1,5 +1,7 @@
 use clap::{command, Args, Parser, Subcommand, ValueEnum};
 
+use crate::common::CliInput;
+
 #[derive(Parser, Debug)]
 #[command(version)]
 pub struct BonsolCli {
@@ -34,9 +36,8 @@ pub struct ShadowDriveUpload {
     #[arg(long)]
     pub storage_account_name: Option<String>,
     #[arg(long)]
-    pub alternate_keypair: Option<String>, // for testing on devnet but deploying to shadow drive 
+    pub alternate_keypair: Option<String>, // for testing on devnet but deploying to shadow drive
 }
-
 
 #[derive(Debug, Clone, ValueEnum)]
 pub enum DeployType {
@@ -63,23 +64,38 @@ pub enum Commands {
         zk_program_path: String,
     },
     Execute {
+        #[arg(short = 'f', long)]
+        execution_request_file: Option<String>,
+        // overridable settings
         #[arg(short = 'p', long)]
-        program_id: String,
-        #[arg(short, long)]
-        inputs: Option<Vec<String>>,
-        #[arg(short, long)]
-        input_file: Option<String>,
-        #[arg(short, long)]
-        tip: Option<u64>,
-        #[arg(short, long)]
+        program_id: Option<String>,
+        #[arg(short = 'e', long)]
+        execution_id: Option<String>,
+        #[arg(short = 'x', long)]
         expiry: Option<u64>,
+        #[arg(short = 'm', long)]
+        tip: Option<u64>,
+        #[arg(short = 'i')]
+        input_file: Option<String>, // overrides inputs in execution request file
+        /// wait for execution to be proven
+        #[arg(short = 'w', long)]
+        wait: bool,
+        /// timeout in seconds
+        #[arg(short = 't', long)]
+        timeout: Option<u64>,
     },
     Prove {
         #[arg(short = 'm', long)]
         manifest_path: Option<String>,
-        #[arg(short, long)]
-        inputs: Option<Vec<String>>,
-        #[arg(short, long)]
-        input_file: Option<String>,
+        #[arg(short = 'p', long)]
+        program_id: Option<String>,
+        #[arg(short = 'i')]
+        input_file: Option<String>, 
     },
+    Init {
+        #[arg(short = 'd', long)]
+        dir: Option<String>,
+        #[arg(short = 'n', long)]
+        project_name: String,
+    }
 }

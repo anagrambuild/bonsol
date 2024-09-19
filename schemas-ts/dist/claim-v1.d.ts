@@ -1,5 +1,5 @@
 import * as flatbuffers from 'flatbuffers';
-export declare class ClaimV1 {
+export declare class ClaimV1 implements flatbuffers.IUnpackableObject<ClaimV1T> {
     bb: flatbuffers.ByteBuffer | null;
     bb_pos: number;
     __init(i: number, bb: flatbuffers.ByteBuffer): ClaimV1;
@@ -16,4 +16,12 @@ export declare class ClaimV1 {
     static finishClaimV1Buffer(builder: flatbuffers.Builder, offset: flatbuffers.Offset): void;
     static finishSizePrefixedClaimV1Buffer(builder: flatbuffers.Builder, offset: flatbuffers.Offset): void;
     static createClaimV1(builder: flatbuffers.Builder, executionIdOffset: flatbuffers.Offset, blockCommitment: bigint): flatbuffers.Offset;
+    unpack(): ClaimV1T;
+    unpackTo(_o: ClaimV1T): void;
+}
+export declare class ClaimV1T implements flatbuffers.IGeneratedObject {
+    executionId: string | Uint8Array | null;
+    blockCommitment: bigint;
+    constructor(executionId?: string | Uint8Array | null, blockCommitment?: bigint);
+    pack(builder: flatbuffers.Builder): flatbuffers.Offset;
 }

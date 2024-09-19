@@ -10,9 +10,10 @@ enum InputType: uint8 {
   PublicData = 1,
   PublicAccountData = 3,
   PublicUrl = 4,
-  Private = 5,
+  Private = 5, // only used for local proving
   InputSet = 6,
   PublicProof = 7,
+  PrivateUrl = 8,
 }
 
 table Input {

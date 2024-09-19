@@ -7,7 +7,7 @@ mod callback;
 pub mod config;
 mod prover;
 use {
-    bonsol_sdk::input_resolver::DeafultInputResolver, anyhow::Result, callback::{RpcTransactionSender, TransactionSender}, config::*, ingest::{GrpcIngester, Ingester, RpcIngester}, metrics::counter, metrics_exporter_prometheus::PrometheusBuilder, observe::MetricEvents, prover::Risc0Runner, rlimit::Resource, solana_rpc_client::nonblocking::rpc_client::RpcClient, solana_sdk::{pubkey::Pubkey, signature::read_keypair_file, signer::Signer}, std::{str::FromStr, sync::Arc}, thiserror::Error, tokio::{select, signal}, tracing::{error, info}, tracing_subscriber
+    bonsol_sdk::input_resolver::DefaultInputResolver, anyhow::Result, callback::{RpcTransactionSender, TransactionSender}, config::*, ingest::{GrpcIngester, Ingester, RpcIngester}, metrics::counter, metrics_exporter_prometheus::PrometheusBuilder, observe::MetricEvents, prover::Risc0Runner, rlimit::Resource, solana_rpc_client::nonblocking::rpc_client::RpcClient, solana_sdk::{pubkey::Pubkey, signature::read_keypair_file, signer::Signer}, std::{str::FromStr, sync::Arc}, thiserror::Error, tokio::{select, signal}, tracing::{error, info}, tracing_subscriber
 };
 
 #[derive(Error, Debug)]
@@ -95,7 +95,7 @@ async fn main() -> Result<()> {
         _ => return Err(CliError::InvalidRpcUrl.into()),
     };
     transaction_sender.start();
-    let input_resolver = DeafultInputResolver::new(
+    let input_resolver = DefaultInputResolver::new(
         Arc::new(reqwest::Client::new()),
         Arc::new(solana_rpc_client),
     );

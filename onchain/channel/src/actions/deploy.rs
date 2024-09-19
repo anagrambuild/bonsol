@@ -1,10 +1,14 @@
 use crate::assertions::*;
 use crate::error::ChannelError;
 use crate::utilities::*;
-use bonsol_channel_utils::deployment_address_seeds;
-use bonsol_channel_utils::img_id_hash;
-use bonsol_schema::ChannelInstruction;
-use bonsol_schema::DeployV1;
+
+use bonsol_channel_interface::{
+    bonsol_channel_utils::deployment_address_seeds,
+    bonsol_channel_utils::img_id_hash,
+    bonsol_schema::ChannelInstruction,
+    bonsol_schema::DeployV1,
+};
+
 use solana_program::account_info::AccountInfo;
 use solana_program::system_program;
 use solana_program::msg;
