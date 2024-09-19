@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "scripts": {
     "lint": "eslint src/ --ext .js,.jsx,.ts,.tsx",
-    "test": "jest --silent=false --detectOpenHandles",
+    "test": "jest --silent=false",
     "clean": "rm -rf dist build package",
     "ts-node": "ts-node",
     "docs": "typedoc --entryPoints src/main.ts",
