@@ -15,14 +15,14 @@ Here is an example of a valid local proving payload json file.
   "imageId": "20b9db715f989e3f57842787badafae101ce0b16202491bac1a3aebf573da0ba",
   "inputs": [
     {
-      "inputType": "Public",
-      "data": "0x1234567890"
+      "inputType": "PrivateLocal",
+      "data": "<base64 encoded data>"
     }
   ]
 }
 ```
 
-The json schema for the local proving payload is hosted [here](https://github.com/anagrambuild/bonsol/blob/main/schemas/prove.schema.json).
+Only private local inputs are supported
 
 #### Output 
 If proving succeeds, the cli will return a serialized risc0 reciept. This is a binary format. 

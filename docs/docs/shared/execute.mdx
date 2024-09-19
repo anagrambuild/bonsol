@@ -13,11 +13,11 @@ Here is an example of a valid execution request json file.
   "imageId": "20b9db715f989e3f57842787badafae101ce0b16202491bac1a3aebf573da0ba",
   "executionId": "9878798-987987-987987-987987",
   "tip": 100,
-  "maxBlockHeight": 100, // can also override with --expires-from-now flag
+  "maxBlockHeight": 100,
   "inputs": [
     {
       "inputType": "Public",
-      "data": "0x1234567890"
+      "data": "<base64 encoded data>"
     }
   ],
   "callbackConfig": {
@@ -37,7 +37,10 @@ Here is an example of a valid execution request json file.
   }
 }
 ```
-The json schema for the execution request is hosted [here](https://github.com/anagrambuild/bonsol/blob/main/schemas/execution_request_v1.schema.json).
+Many of the fields can be overriden with cli flags, the only required fields in the execution request json are 
+* "imageId"
+* "executionConfig"
+And the only way to set a callback config is through the json file.
 
 #### Waiting 
 If you pass the `--wait` flag to the cli, the cli will wait for the execution to be completed and then return the result.
