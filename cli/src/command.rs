@@ -1,7 +1,4 @@
 use clap::{command, Args, Parser, Subcommand, ValueEnum};
-
-use crate::common::CliInput;
-
 #[derive(Parser, Debug)]
 #[command(version)]
 pub struct BonsolCli {

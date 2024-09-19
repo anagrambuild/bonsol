@@ -1,0 +1,18 @@
+{
+  "imageId": "7cb4887749266c099ad1793e8a7d486a27ff1426d614ec0cc9ff50e686d17699",
+  "executionConfig": {
+    "verifyInputHash": true,
+    "forwardOutput": true
+  },
+  "callbackConfig": {
+    "programId": "exay1T7QqsJPNcwzMiWubR6vZnqrgM16jZRraHgqBGG",
+    "instructionPrefix": [1],
+    "extraAccounts": [
+      {
+        "address": "BoNsHRcyLLNdtnoDf8hiCNZpyehMC4FDMxs6NTxFi3ew",
+        "role": "writable"
+      }
+    ]
+  }
+    
+}

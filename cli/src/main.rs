@@ -7,6 +7,7 @@ mod prove;
 // mod execute;
 pub mod command;
 pub mod common;
+use atty::Stream;
 use bonsol_sdk::BonsolClient;
 use clap::Parser;
 use command::{BonsolCli, Commands};
@@ -16,6 +17,7 @@ use std::{
     io::{self, Read},
     path::Path,
 };
+use anyhow::anyhow;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -26,7 +28,8 @@ async fn main() -> anyhow::Result<()> {
     let (rpc, kpp) = match (rpc_url, keypair, config) {
         (Some(rpc_url), Some(keypair), None) => (rpc_url, keypair),
         (None, None, config) => {
-            let config = Config::load(&config.unwrap_or(CONFIG_FILE.clone().unwrap()));
+            let config_location = CONFIG_FILE.clone().ok_or(anyhow!("Please provide a config file"))?;
+            let config = Config::load(&config.unwrap_or(config_location));
             match config {
                 Ok(config) => (config.json_rpc_url, config.keypair_path),
                 Err(e) => {
@@ -42,15 +45,20 @@ async fn main() -> anyhow::Result<()> {
     if keypair.is_err() {
         anyhow::bail!("Invalid keypair");
     }
-    let keypair = keypair.unwrap();
     let command = cli.command;
-    let mut buffer = String::new();
-    io::stdin().read_to_string(&mut buffer)?;
-    let stdin = if buffer.trim().is_empty() {
-        None
+    let keypair = keypair.unwrap();
+    let stdin = if atty::isnt(Stream::Stdin) {
+        let mut buffer = String::new();
+        io::stdin().read_to_string(&mut buffer)?;
+        if buffer.trim().is_empty() {
+            None
+        } else {
+            Some(buffer)
+        }
     } else {
-        Some(buffer)
+        None
     };
+    
     let sdk = BonsolClient::new(rpc.clone());
     match command {
         Commands::Build { zk_program_path } => match build::build(&keypair, zk_program_path) {
@@ -125,10 +133,6 @@ async fn main() -> anyhow::Result<()> {
         }
         Commands::Init { project_name, dir } => {
             init::init_project(&project_name, dir)?;
-        }
-        _ => {
-            println!("Invalid command");
-            return Ok(());
         }
     };
     Ok(())

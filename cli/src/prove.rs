@@ -1,4 +1,4 @@
-use crate::common::{get_inputs, resolve_inputs_for_local_proving, ZkProgramManifest};
+use crate::common::{proof_get_inputs, ZkProgramManifest};
 use anyhow::Result;
 use bincode;
 use bonsol_sdk::{
@@ -8,12 +8,11 @@ use bonsol_sdk::{
 };
 use bytes::Bytes;
 use risc0_zkvm::VerifierContext;
+use anyhow::anyhow;
 use std::{
     fs::{read, File},
-    io::Read,
     io::Write,
     path::Path,
-    sync::Arc,
 };
 
 pub async fn prove(
@@ -25,19 +24,26 @@ pub async fn prove(
     output_location: Option<String>,
     stdin: Option<String>,
 ) -> Result<()> {
+    let pwd = std::env::current_dir()?;
     let image_bytes = match (&program_id, manifest_path) {
         (Some(i), None) => {
             let bytes: Bytes = sdk.download_program(&i).await?;
             Ok(bytes)
         }
         (None, Some(m)) => {
-            let manifest_file = File::open(Path::new(&m))?;
+            let manifest_path = Path::new(&m);
+            let manifest_file = if manifest_path.is_relative() {
+                File::open(pwd.join(manifest_path))?
+            } else {
+                File::open(manifest_path)?
+            };
             let manifest: ZkProgramManifest = serde_json::from_reader(manifest_file)?;
             let binary_path = Path::new(&manifest.binary_path);
-            let bytes = read(binary_path)?;
+            let bytes = read(binary_path)
+            .map_err(|_| anyhow!("Failed to read binary in manifest file"))?;
             Ok(Bytes::from(bytes))
         }
-        _ => Err(anyhow::anyhow!(
+        _ => Err(anyhow!(
             "Please provide a program id or a manifest path"
         )),
     }?;
@@ -47,12 +53,12 @@ pub async fn prove(
         .unwrap_or(ext);
     let image = Image::from_bytes(image_bytes)?;
     let memory_image = image.get_memory_image()?;
-    let cli_inputs = get_inputs(input_file, stdin)?;
-    let program_inputs = resolve_inputs_for_local_proving(cli_inputs)?;
+    let program_inputs = proof_get_inputs(input_file, stdin)?;
     let mut exec = new_risc0_exec_env(memory_image, program_inputs)?;
     let session = exec.run()?;
     let prover = get_risc0_prover()?;
     let ctx = VerifierContext::default();
+    println!("Generating proof");
     let info = prover.prove_session(&ctx, &session);
     match info {
         Ok(proveinfo) => {

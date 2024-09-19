@@ -97,7 +97,7 @@ pub async fn execute(
     let inputs = if let Some(inputs) = execution_request_file.inputs {
         inputs
     } else {
-        get_inputs(inputs_file, stdin)?
+        execute_get_inputs(inputs_file, stdin)?
     };
     let execution_id = execution_id
         .or(execution_request_file.execution_id)
@@ -114,7 +114,7 @@ pub async fn execute(
     let callback_config = execution_request_file.callback_config;
     let mut execution_config = execution_request_file.execution_config;
     let signer = keypair.pubkey();
-    let inputs = transform_inputs(inputs)?;
+    let inputs = execute_transform_cli_inputs(inputs)?;
     let hash_inputs = execution_config.verify_input_hash
         && inputs.iter().all(|i| i.input_type != InputType::Private);
     if hash_inputs {

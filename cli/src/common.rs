@@ -1,10 +1,15 @@
-use std::process::Command;
-
-use bonsol_sdk::{input_resolver::{ProgramInput, ResolvedInput}, instructions::{CallbackConfig, ExecutionConfig}, InputT, InputType, ProgramInputType};
+use anyhow::Result;
+use base64::{engine::general_purpose, Engine as _};
+use bonsol_sdk::{
+    input_resolver::{ProgramInput, ResolvedInput},
+    instructions::{CallbackConfig, ExecutionConfig},
+    InputT, InputType, ProgramInputType,
+};
 use clap::{Args, ValueEnum};
 use serde::{Deserialize, Serialize, Serializer};
+use serde_json::Value;
 use std::fs::File;
-use anyhow::Result;
+use std::process::Command;
 
 pub fn cargo_has_plugin(plugin_name: &str) -> bool {
     Command::new("cargo")
@@ -36,7 +41,6 @@ pub struct ZkProgramManifest {
     pub signature: String,
     pub size: u64,
 }
-
 
 #[derive(Debug, Deserialize, Serialize, Clone, Args)]
 pub struct CliInput {
@@ -103,58 +107,147 @@ pub struct InputFile {
     pub inputs: Vec<CliInput>,
 }
 
-pub fn get_inputs(inputs_file: Option<String>, stdin: Option<String>) -> Result<Vec<CliInput>> {
-    let inputs = if let Some(istr) = inputs_file {
+pub fn execute_get_inputs(inputs_file: Option<String>, stdin: Option<String>) -> Result<Vec<CliInput>> {
+    if let Some(std) = stdin {
+        let parsed = serde_json::from_str::<InputFile>(&std)
+            .map_err(|e| anyhow::anyhow!("Error parsing stdin: {:?}", e))?;
+        return Ok(parsed.inputs);
+    }
+
+    if let Some(istr) = inputs_file {
         let ifile = File::open(istr)?;
-        let input_file: InputFile = serde_json::from_reader(&ifile)?;
-        input_file.inputs
-    } else if let Some(stdin) = stdin {
-        let input_file: InputFile = serde_json::from_str(&stdin)?;
-        input_file.inputs
-    } else {
-        return Err(anyhow::anyhow!("No inputs provided"));
-    };
-    Ok(inputs)
+        let parsed: InputFile = serde_json::from_reader(&ifile)
+            .map_err(|e| anyhow::anyhow!("Error parsing inputs file: {:?}", e))?;
+        return Ok(parsed.inputs);
+    }
+
+    Err(anyhow::anyhow!("No inputs provided"))
 }
 
-pub fn transform_inputs(inputs: Vec<CliInput>) -> Result<Vec<InputT>> {
+pub fn proof_get_inputs(
+    inputs_file: Option<String>,
+    stdin: Option<String>,
+) -> Result<Vec<ProgramInput>> {
+    if let Some(std) = stdin {
+        return proof_parse_stdin(&std);
+    }
+    if let Some(istr) = inputs_file {
+        return proof_parse_input_file(&istr);
+    }
+    Err(anyhow::anyhow!("No inputs provided"))
+}
+
+pub fn execute_transform_cli_inputs(inputs: Vec<CliInput>) -> Result<Vec<InputT>> {
     let mut res = vec![];
     for input in inputs.into_iter() {
         let input_type = serde_json::from_str::<CliInputType>(&input.input_type)?.0;
         match input_type {
             InputType::PublicData => {
-                let data = base64::decode(&input.data)?;
+                let data = general_purpose::STANDARD.decode(&input.data)?;
                 res.push(InputT::public(data));
             }
-            _ => {
-                res.push(InputT::new(input_type, Some(input.data.into_bytes())))
-            }
+            _ => res.push(InputT::new(input_type, Some(input.data.into_bytes()))),
         }
     }
     Ok(res)
 }
 
-//
-pub fn resolve_inputs_for_local_proving(
-    inputs: Vec<CliInput>,
-) -> Result<Vec<ProgramInput>, anyhow::Error> {
-    let mut res = vec![];
-    for (index, input) in inputs.into_iter().enumerate() {
-        let input_type = serde_json::from_str::<CliInputType>(&input.input_type)?.0;
-
-        match input_type {
-            InputType::PrivateLocal => {
-                let data = base64::decode(&input.data)?;
-                res.push(ProgramInput::Resolved(ResolvedInput{
-                    index: index as u8,
-                    data: data,
-                    input_type: ProgramInputType::Private,
-                }));
-            }
-            _ => {
-                return Err(anyhow::anyhow!("Invalid input type, local proving only supports private inputs"));
-            }
-        }
+fn is_valid_base64(s: &str) -> bool {
+    if s.len() % 4 != 0 {
+        return false;
     }
-    Ok(res)
+    let is_base64_char = |c: char| c.is_ascii_alphanumeric() || c == '+' || c == '/' || c == '=';
+    if !s.chars().all(is_base64_char) {
+        return false;
+    }
+    let padding_count = s.chars().rev().take_while(|&c| c == '=').count();
+    if padding_count > 2 {
+        return false;
+    }
+    general_purpose::STANDARD.decode(s).is_ok()
+}
+
+fn parse_entry(index: u8, s: &str) -> Result<ProgramInput> {
+    if let Ok(num) = s.parse::<f64>() {
+        return Ok(ProgramInput::Resolved(ResolvedInput {
+            index: index,
+            data: num.to_le_bytes().to_vec(),
+            input_type: ProgramInputType::Private,
+        }));
+    }
+    if let Ok(num) = s.parse::<u64>() {
+        return Ok(ProgramInput::Resolved(ResolvedInput {
+            index: index,
+            data: num.to_le_bytes().to_vec(),
+            input_type: ProgramInputType::Private,
+        }));
+    }
+    if let Ok(num) = s.parse::<i64>() {
+        return Ok(ProgramInput::Resolved(ResolvedInput {
+            index: index,
+            data: num.to_le_bytes().to_vec(),
+            input_type: ProgramInputType::Private,
+        }));
+    }
+    if is_valid_base64(s) {
+        let decoded = general_purpose::STANDARD
+            .decode(s)
+            .map_err(|e| anyhow::anyhow!("Error decoding base64 input: {:?}", e))?;
+        return Ok(ProgramInput::Resolved(ResolvedInput {
+            index: index,
+            data: decoded,
+            input_type: ProgramInputType::Private,
+        }));
+    }
+    
+    return Ok(ProgramInput::Resolved(ResolvedInput {
+        index: index,
+        data: s.as_bytes().to_vec(),
+        input_type: ProgramInputType::Private,
+    }));
+}
+
+fn proof_parse_input_file(input_file: &str) -> Result<Vec<ProgramInput>> {
+    if let Ok(ifile) = serde_json::from_str::<InputFile>(input_file) {
+        let len = ifile.inputs.len();
+        let parsed: Vec<ProgramInput> = ifile
+            .inputs
+            .into_iter()
+            .enumerate()
+            .flat_map(|(index, input)| parse_entry(index as u8, &input.data).ok())
+            .collect();
+        if parsed.len() != len {
+            return Err(anyhow::anyhow!("Invalid input file"));
+        }
+        return Ok(parsed);
+    }
+    Err(anyhow::anyhow!("Invalid input file"))
+}
+
+fn proof_parse_stdin(input: &str) -> Result<Vec<ProgramInput>> {
+    let mut entries = Vec::new();
+    let mut current_entry = String::new();
+    let mut in_quotes = false;
+    let mut in_brackets = 0;
+    for c in input.chars() {
+        match c {
+            '"' if !in_quotes => in_quotes = true,
+            '"' if in_quotes => in_quotes = false,
+            '{' | '[' if !in_quotes => in_brackets += 1,
+            '}' | ']' if !in_quotes => in_brackets -= 1,
+            ' ' if !in_quotes && in_brackets == 0 && !current_entry.is_empty() => {
+                let index = entries.len() as u8;
+                println!("{}", current_entry);
+                entries.push(parse_entry(index, &current_entry)?);
+                current_entry.clear();
+                continue;
+            }
+            _ => {}
+        }
+        current_entry.push(c);
+    }
+    if !current_entry.is_empty() {
+        entries.push(parse_entry(entries.len() as u8, &current_entry)?);
+    }
+    Ok(entries)
 }
