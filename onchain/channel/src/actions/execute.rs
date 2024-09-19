@@ -67,6 +67,10 @@ impl<'a, 'b> ExecuteAccounts<'a, 'b> {
                 .map_err(|_| ChannelError::InvalidDeploymentAccount)?;
 
             let inputs = data.input().ok_or(ChannelError::InvalidInputs)?;
+            let invalid_input_type_count = inputs.iter().filter(|i| i.input_type() == InputType::PrivateLocal).count();
+            if invalid_input_type_count > 0 {
+                return Err(ChannelError::InvalidInputType.into());
+            }
             // this should never be less than 1
             let required_input_size = deploy.inputs().map(|x| x.len()).unwrap_or(1);
             let mut num_sets = 0;

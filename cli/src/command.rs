@@ -91,6 +91,10 @@ pub enum Commands {
         program_id: Option<String>,
         #[arg(short = 'i')]
         input_file: Option<String>, 
+        #[arg(short = 'e', long)]
+        execution_id: String,
+        #[arg(short = 'o')]
+        output_location: Option<String>
     },
     Init {
         #[arg(short = 'd', long)]

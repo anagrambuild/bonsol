@@ -74,11 +74,6 @@ pub struct DefaultInputResolver {
     max_input_size_mb: u64,
 }
 
-pub struct LocalProvingInputResolver {
-    http_client: Arc<reqwest::Client>,
-    solana_rpc_client: Arc<solana_rpc_client::nonblocking::rpc_client::RpcClient>,
-}
-
 impl DefaultInputResolver {
     pub fn new(
         http_client: Arc<reqwest::Client>,
@@ -383,9 +378,4 @@ async fn download_private_input(
         data: byte.to_vec(),
         input_type: ProgramInputType::Private,
     })
-}
-
-
-impl LocalProvingInputResolver {
-    
 }

@@ -12,7 +12,10 @@ use clap::Parser;
 use command::{BonsolCli, Commands};
 use solana_cli_config::{Config, CONFIG_FILE};
 use solana_sdk::signature::read_keypair_file;
-use std::{io::{self, Read}, path::Path};
+use std::{
+    io::{self, Read},
+    path::Path,
+};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -41,6 +44,13 @@ async fn main() -> anyhow::Result<()> {
     }
     let keypair = keypair.unwrap();
     let command = cli.command;
+    let mut buffer = String::new();
+    io::stdin().read_to_string(&mut buffer)?;
+    let stdin = if buffer.trim().is_empty() {
+        None
+    } else {
+        Some(buffer)
+    };
     let sdk = BonsolClient::new(rpc.clone());
     match command {
         Commands::Build { zk_program_path } => match build::build(&keypair, zk_program_path) {
@@ -79,13 +89,6 @@ async fn main() -> anyhow::Result<()> {
             tip,
             timeout,
         } => {
-            let mut buffer = String::new();
-            io::stdin().read_to_string(&mut buffer)?;
-            let stdin = if buffer.trim().is_empty() {
-                None 
-            } else {
-                Some(buffer)
-            };
             execute::execute(
                 &sdk,
                 rpc,
@@ -98,7 +101,25 @@ async fn main() -> anyhow::Result<()> {
                 tip,
                 timeout,
                 stdin,
-                wait
+                wait,
+            )
+            .await?;
+        }
+        Commands::Prove {
+            manifest_path,
+            program_id,
+            input_file,
+            execution_id,
+            output_location,
+        } => {
+            prove::prove(
+                &sdk,
+                execution_id,
+                manifest_path,
+                program_id,
+                input_file,
+                output_location,
+                stdin,
             )
             .await?;
         }

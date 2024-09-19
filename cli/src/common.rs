@@ -1,6 +1,6 @@
 use std::process::Command;
 
-use bonsol_sdk::{instructions::{CallbackConfig, ExecutionConfig}, InputType, InputT};
+use bonsol_sdk::{input_resolver::{ProgramInput, ResolvedInput}, instructions::{CallbackConfig, ExecutionConfig}, InputT, InputType, ProgramInputType};
 use clap::{Args, ValueEnum};
 use serde::{Deserialize, Serialize, Serializer};
 use std::fs::File;
@@ -59,6 +59,7 @@ impl Serialize for CliInputType {
             InputType::Private => serializer.serialize_str("Private"),
             InputType::InputSet => serializer.serialize_str("InputSet"),
             InputType::PublicProof => serializer.serialize_str("PublicProof"),
+            InputType::PrivateLocal => serializer.serialize_str("PrivateLocal"),
             _ => Err(serde::ser::Error::custom("Invalid input type")),
         }
     }
@@ -77,6 +78,7 @@ impl<'de> Deserialize<'de> for CliInputType {
             "Private" => Ok(CliInputType(InputType::Private)),
             "InputSet" => Ok(CliInputType(InputType::InputSet)),
             "PublicProof" => Ok(CliInputType(InputType::PublicProof)),
+            "PrivateLocal" => Ok(CliInputType(InputType::PrivateLocal)),
             _ => Err(serde::de::Error::custom(format!(
                 "Invalid input type: {}",
                 s
@@ -126,6 +128,31 @@ pub fn transform_inputs(inputs: Vec<CliInput>) -> Result<Vec<InputT>> {
             }
             _ => {
                 res.push(InputT::new(input_type, Some(input.data.into_bytes())))
+            }
+        }
+    }
+    Ok(res)
+}
+
+//
+pub fn resolve_inputs_for_local_proving(
+    inputs: Vec<CliInput>,
+) -> Result<Vec<ProgramInput>, anyhow::Error> {
+    let mut res = vec![];
+    for (index, input) in inputs.into_iter().enumerate() {
+        let input_type = serde_json::from_str::<CliInputType>(&input.input_type)?.0;
+
+        match input_type {
+            InputType::PrivateLocal => {
+                let data = base64::decode(&input.data)?;
+                res.push(ProgramInput::Resolved(ResolvedInput{
+                    index: index as u8,
+                    data: data,
+                    input_type: ProgramInputType::Private,
+                }));
+            }
+            _ => {
+                return Err(anyhow::anyhow!("Invalid input type, local proving only supports private inputs"));
             }
         }
     }

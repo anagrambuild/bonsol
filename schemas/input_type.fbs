@@ -13,7 +13,7 @@ enum InputType: uint8 {
   Private = 5, // only used for local proving
   InputSet = 6,
   PublicProof = 7,
-  PrivateUrl = 8,
+  PrivateLocal = 8
 }
 
 table Input {

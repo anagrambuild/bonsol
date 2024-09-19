@@ -1190,6 +1190,7 @@ version = "0.0.1"
 dependencies = [
  "anyhow",
  "base64 0.21.7",
+ "bincode",
  "bonsol-sdk",
  "bs58 0.4.0",
  "byte-unit",

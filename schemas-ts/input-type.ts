@@ -8,5 +8,5 @@ export enum InputType {
   Private = 5,
   InputSet = 6,
   PublicProof = 7,
-  PrivateUrl = 8
+  PrivateLocal = 8
 }

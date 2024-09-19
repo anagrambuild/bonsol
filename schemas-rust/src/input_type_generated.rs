@@ -116,7 +116,7 @@ pub const ENUM_VALUES_INPUT_TYPE: [InputType; 8] = [
   InputType::Private,
   InputType::InputSet,
   InputType::PublicProof,
-  InputType::PrivateUrl,
+  InputType::PrivateLocal,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -131,7 +131,7 @@ impl InputType {
   pub const Private: Self = Self(5);
   pub const InputSet: Self = Self(6);
   pub const PublicProof: Self = Self(7);
-  pub const PrivateUrl: Self = Self(8);
+  pub const PrivateLocal: Self = Self(8);
 
   pub const ENUM_MIN: u8 = 0;
   pub const ENUM_MAX: u8 = 8;
@@ -143,7 +143,7 @@ impl InputType {
     Self::Private,
     Self::InputSet,
     Self::PublicProof,
-    Self::PrivateUrl,
+    Self::PrivateLocal,
   ];
   /// Returns the variant's name or "" if unknown.
   pub fn variant_name(self) -> Option<&'static str> {
@@ -155,7 +155,7 @@ impl InputType {
       Self::Private => Some("Private"),
       Self::InputSet => Some("InputSet"),
       Self::PublicProof => Some("PublicProof"),
-      Self::PrivateUrl => Some("PrivateUrl"),
+      Self::PrivateLocal => Some("PrivateLocal"),
       _ => None,
     }
   }

@@ -30,6 +30,7 @@ sha2 = "0.10.6"
 num-traits = "0.2.15"
 tera = "1.17.1"
 bytes = "1.4.0"
+bincode = "1.3.3"
 reqwest = { version = "0.11.26", features = [
   "gzip",
   "deflate",
