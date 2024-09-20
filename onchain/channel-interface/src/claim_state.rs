@@ -1,4 +1,3 @@
-use arrayref::array_ref;
 use bytemuck::{Pod, Zeroable};
 
 use crate::error::ClientError;
@@ -32,11 +31,9 @@ impl ClaimStateHolder {
     }
 
     pub fn claim<'a>(&'a self) -> Result<&'a ClaimStateV1, ClientError> {
-        bytemuck::try_from_bytes(&self.data)
-        .map_err(|_| ClientError::InvalidClaimAccount)
+        bytemuck::try_from_bytes(&self.data).map_err(|_| ClientError::InvalidClaimAccount)
     }
 }
-
 
 impl ClaimStateV1 {
     pub fn load_claim<'a>(ca_data: &'a mut [u8]) -> Result<&'a Self, ClientError> {

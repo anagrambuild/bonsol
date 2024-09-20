@@ -7,6 +7,7 @@ edition = "2021"
 
 [features]
 cuda = ["risc0-zkvm/cuda"]
+metal = ["risc0-zkvm/metal"]
 
 [dependencies]
 rlimit = "0.10.1"

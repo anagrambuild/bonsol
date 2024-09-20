@@ -1,20 +1,26 @@
+use anyhow::Result;
 use std::fs;
 use std::path::Path;
-use tera::{Tera, Context};
-use anyhow::Result;
+use tera::{Context, Tera};
 
 pub fn init_project(project_name: &str, dir: Option<String>) -> Result<()> {
+    let pwd = std::env::current_dir()?;
     let project_path = if let Some(dir) = dir {
-        Path::new(&dir).join(project_name)
+        let dir =Path::new(&dir);
+        if dir.is_relative() {
+            pwd.join(dir).to_path_buf()
+        } else {
+            dir.to_path_buf()
+        }
     } else {
-        Path::new(project_name).to_path_buf()
+        pwd.join(project_name).to_path_buf()
     };
     if project_path.exists() {
         return Err(anyhow::anyhow!("Project already exists"));
     }
-  
+
     // Create src directory
-    fs::create_dir(format!("{}/src", project_name))?;
+    fs::create_dir_all(project_path.join("src"))?;
 
     // Initialize Tera
     let mut tera = Tera::default();

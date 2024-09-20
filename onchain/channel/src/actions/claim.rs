@@ -1,19 +1,14 @@
 use bonsol_channel_interface::{
     bonsol_channel_utils::{execution_address_seeds, execution_claim_address_seeds},
-    bonsol_schema::root_as_execution_request_v1,
-    bonsol_schema::{ChannelInstruction, ClaimV1},
+    bonsol_schema::{root_as_execution_request_v1, ChannelInstruction, ClaimV1},
     claim_state::ClaimStateV1,
 };
 
-use solana_program::account_info::AccountInfo;
-use solana_program::msg;
-use solana_program::program_error::ProgramError;
-use solana_program::system_program;
-use solana_program::sysvar::Sysvar;
+use solana_program::{
+    account_info::AccountInfo, msg, program_error::ProgramError, system_program, sysvar::Sysvar,
+};
 
-use crate::assertions::*;
-use crate::error::ChannelError;
-use crate::utilities::*;
+use crate::{assertions::*, error::ChannelError, utilities::*};
 
 pub struct ClaimAccounts<'a, 'b> {
     pub exec: &'a AccountInfo<'a>,
@@ -126,12 +121,12 @@ pub fn process_claim_v1<'a>(
     }
     if ca.existing_claim {
         let mut data = ca.exec_claim.try_borrow_mut_data()?;
-        let current_claim = ClaimStateV1::load_claim(*data)
-        .map_err(|_| ChannelError::InvalidClaimAccount)?;
+        let current_claim =
+            ClaimStateV1::load_claim(*data).map_err(|_| ChannelError::InvalidClaimAccount)?;
         transfer_owned(ca.exec_claim, ca.claimer, ca.stake)?;
         if current_block > current_claim.block_commitment {
             let claim =
-            ClaimStateV1::from_claim_ix(&ca.claimer.key, current_block, ca.block_commitment);
+                ClaimStateV1::from_claim_ix(&ca.claimer.key, current_block, ca.block_commitment);
             drop(data);
             ClaimStateV1::save_claim(&claim, ca.exec_claim);
             transfer_unowned(ca.claimer, ca.exec_claim, ca.stake)
@@ -139,7 +134,8 @@ pub fn process_claim_v1<'a>(
             Err(ChannelError::ActiveClaimExists.into())
         }
     } else {
-        let claim = ClaimStateV1::from_claim_ix(&ca.claimer.key, current_block, ca.block_commitment);
+        let claim =
+            ClaimStateV1::from_claim_ix(&ca.claimer.key, current_block, ca.block_commitment);
         transfer_unowned(ca.claimer, ca.exec_claim, ca.stake)?;
         ClaimStateV1::save_claim(&claim, ca.exec_claim);
         Ok(())

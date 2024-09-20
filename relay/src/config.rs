@@ -8,7 +8,9 @@ use {
 
 #[derive(Debug, Deserialize, Clone)]
 pub enum IngesterConfig {
-    RpcBlockSubscription { wss_rpc_url: String },
+    RpcBlockSubscription {
+        wss_rpc_url: String,
+    },
     GrpcSubscription {
         grpc_url: String,
         connection_timeout_secs: u32,
@@ -78,7 +80,7 @@ pub struct ProverNodeConfig {
 
 #[derive(Debug, Deserialize, Clone)]
 pub enum MetricsConfig {
-    Prometheus { },
+    Prometheus {},
     None,
 }
 

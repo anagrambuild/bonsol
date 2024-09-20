@@ -7,17 +7,15 @@ mod prove;
 // mod execute;
 pub mod command;
 pub mod common;
+use anyhow::anyhow;
 use atty::Stream;
 use bonsol_sdk::BonsolClient;
 use clap::Parser;
 use command::{BonsolCli, Commands};
 use solana_cli_config::{Config, CONFIG_FILE};
 use solana_sdk::signature::read_keypair_file;
-use std::{
-    io::{self, Read},
-    path::Path,
-};
-use anyhow::anyhow;
+use std::io::{self, Read};
+use std::path::Path;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -28,7 +26,9 @@ async fn main() -> anyhow::Result<()> {
     let (rpc, kpp) = match (rpc_url, keypair, config) {
         (Some(rpc_url), Some(keypair), None) => (rpc_url, keypair),
         (None, None, config) => {
-            let config_location = CONFIG_FILE.clone().ok_or(anyhow!("Please provide a config file"))?;
+            let config_location = CONFIG_FILE
+                .clone()
+                .ok_or(anyhow!("Please provide a config file"))?;
             let config = Config::load(&config.unwrap_or(config_location));
             match config {
                 Ok(config) => (config.json_rpc_url, config.keypair_path),
@@ -58,7 +58,7 @@ async fn main() -> anyhow::Result<()> {
     } else {
         None
     };
-    
+
     let sdk = BonsolClient::new(rpc.clone());
     match command {
         Commands::Build { zk_program_path } => match build::build(&keypair, zk_program_path) {
@@ -75,6 +75,7 @@ async fn main() -> anyhow::Result<()> {
             shadow_drive_upload,
             auto_confirm,
             deploy_type,
+            url_upload,
         } => {
             deploy::deploy(
                 rpc,
@@ -82,6 +83,7 @@ async fn main() -> anyhow::Result<()> {
                 manifest_path,
                 s3_upload,
                 shadow_drive_upload,
+                url_upload,
                 auto_confirm,
                 deploy_type,
             )

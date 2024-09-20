@@ -8,7 +8,6 @@ license = "MIT"
 edition = "2021"
 
 [features]
-no-entrypoint = []
 test-sbf = []
 
 [dependencies]

@@ -1,8 +1,7 @@
 mod dragon;
 mod rpc;
 use anyhow::Result;
-pub use dragon::GrpcIngester;
-pub use rpc::RpcIngester;
+pub use {dragon::GrpcIngester, rpc::RpcIngester};
 
 use {
     solana_sdk::pubkey::Pubkey,

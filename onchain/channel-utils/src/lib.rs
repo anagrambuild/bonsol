@@ -51,4 +51,3 @@ pub fn deployment_address(image_id: &str) -> (Pubkey, u8) {
 pub fn execution_claim_address(execution_id: &[u8]) -> (Pubkey, u8) {
     Pubkey::find_program_address(&execution_claim_address_seeds(execution_id), &ID)
 }
-

@@ -1,16 +1,15 @@
-use {
-    crate::input_resolver::ProgramInput,
-    anyhow::Result,
-    bonsol_schema::ProgramInputType,
-    risc0_binfmt::MemoryImage,
-    risc0_zkvm::{
-        get_prover_server, ExecutorEnv, ExecutorImpl, ProverOpts, ProverServer, Receipt, VerifierContext,
-    }, std::rc::Rc
-};
-
+use crate::input_resolver::ProgramInput;
+use anyhow::Result;
+use bonsol_schema::ProgramInputType;
+use risc0_binfmt::MemoryImage;
+use risc0_zkvm::{get_prover_server, ExecutorEnv, ExecutorImpl, ProverOpts, ProverServer, Receipt};
+use std::rc::Rc;
 
 /// Creates a new risc0 executor environment from the provided inputs, it hadles setting up the execution env in the same way across types of provers.
-pub fn new_risc0_exec_env(image: MemoryImage, sorted_inputs: Vec<ProgramInput>) -> Result<ExecutorImpl<'static>> {
+pub fn new_risc0_exec_env(
+    image: MemoryImage,
+    sorted_inputs: Vec<ProgramInput>,
+) -> Result<ExecutorImpl<'static>> {
     let mut env_builder = ExecutorEnv::builder();
     for input in sorted_inputs.into_iter() {
         match input {
@@ -34,6 +33,6 @@ pub fn new_risc0_exec_env(image: MemoryImage, sorted_inputs: Vec<ProgramInput>) 
 /// Gets the default r0 prover for this application
 /// Since the cli and the relay both produce proofs there is a need for a central prover configuration.
 pub fn get_risc0_prover() -> Result<Rc<dyn ProverServer>> {
-  let opts = ProverOpts::default();
-  get_prover_server(&opts)
+    let opts = ProverOpts::default();
+    get_prover_server(&opts)
 }

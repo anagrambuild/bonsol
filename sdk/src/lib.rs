@@ -1,32 +1,34 @@
+pub mod image;
 pub mod prover;
 pub mod util;
-pub mod image;
-use bonsol_channel_interface::claim_state::{ClaimStateHolder, ClaimStateV1};
+use std::time::Duration;
+
+use anyhow::Result;
+use bonsol_channel_interface::claim_state::ClaimStateHolder;
+use bonsol_schema::{root_as_deploy_v1, root_as_execution_request_v1};
 use bytes::Bytes;
 use futures_util::TryFutureExt;
 use instructions::{CallbackConfig, ExecutionConfig};
 use num_traits::FromPrimitive;
-use {
-    anyhow::Result,
-    solana_rpc_client::nonblocking::rpc_client::RpcClient,
-    solana_rpc_client_api::config::RpcSendTransactionConfig,
-    solana_sdk::{
-        account::Account,
-        commitment_config::CommitmentConfig,
-        compute_budget::ComputeBudgetInstruction,
-        instruction::Instruction,
-        message::{v0, VersionedMessage},
-        pubkey::Pubkey,
-        signer::Signer,
-        transaction::VersionedTransaction,
-    },
-};
+use solana_rpc_client::nonblocking::rpc_client::RpcClient;
+use solana_rpc_client_api::config::RpcSendTransactionConfig;
+use solana_sdk::account::Account;
+use solana_sdk::commitment_config::CommitmentConfig;
+use solana_sdk::compute_budget::ComputeBudgetInstruction;
+use solana_sdk::instruction::Instruction;
+use solana_sdk::message::{v0, VersionedMessage};
+use solana_sdk::pubkey::Pubkey;
+use solana_sdk::signer::Signer;
+use solana_sdk::transaction::VersionedTransaction;
 
-pub use bonsol_channel_interface::instructions;
-pub use bonsol_channel_interface::ID;
+pub use bonsol_channel_interface::{instructions, ID};
 pub use bonsol_channel_utils::*;
-pub use bonsol_schema::*;
+pub use bonsol_schema::{
+    ClaimV1T, DeployV1T, ExecutionRequestV1T, ExitCode, InputSetT, InputT, InputType,
+    ProgramInputType, StatusTypes,
+};
 pub use flatbuffers;
+use tokio::time::Instant;
 pub mod input_resolver;
 pub struct BonsolClient {
     rpc_client: RpcClient,
@@ -64,8 +66,8 @@ impl BonsolClient {
             .map_err(|e| anyhow::anyhow!("Failed to get account: {:?}", e))?
             .value
             .ok_or(anyhow::anyhow!("Invalid deployment account"))?;
-        let deployment =
-            root_as_deploy_v1(&account.data).map_err(|_| anyhow::anyhow!("Invalid deployment account"))?;
+        let deployment = root_as_deploy_v1(&account.data)
+            .map_err(|_| anyhow::anyhow!("Invalid deployment account"))?;
         Ok(deployment.unpack())
     }
 
@@ -86,7 +88,7 @@ impl BonsolClient {
             let ec =
                 ExitCode::from_u8(account.data[0]).ok_or(anyhow::anyhow!("Invalid exit code"))?;
             return Ok(ExecutionAccountStatus::Completed(ec));
-        } 
+        }
         let er = root_as_execution_request_v1(&account.data)
             .map_err(|_| anyhow::anyhow!("Invalid execution request account"))?;
         Ok(ExecutionAccountStatus::Pending(er.unpack()))
@@ -190,10 +192,20 @@ impl BonsolClient {
         Ok(vec![compute, compute_price, instruction])
     }
 
+    pub async fn send_txn_standard(
+        &self,
+        signer: impl Signer,
+        instructions: Vec<Instruction>,
+    ) -> Result<()> {
+        self.send_txn(signer, instructions, true, 1, 5).await
+    }
+
     pub async fn send_txn(
         &self,
         signer: impl Signer,
         instructions: Vec<Instruction>,
+        skip_preflight: bool,
+        retry_timeout: u64,
         retry_count: usize,
     ) -> Result<()> {
         let mut rt = retry_count;
@@ -213,31 +225,43 @@ impl BonsolClient {
                     },
                 )
                 .await?;
-            let conf = self
-                .rpc_client
-                .confirm_transaction(&sig)
-                .await
-                .map_err(|e| anyhow::anyhow!("Failed to confirm transaction: {:?}", e));
-            match conf {
-                Ok(true) => {
+
+            let now = Instant::now();
+            let confirm_transaction_initial_timeout = Duration::from_secs(retry_timeout);
+            let (_, status) = loop {
+                let status = self
+                    .rpc_client
+                    .get_signature_status_with_commitment(&sig, CommitmentConfig::processed())
+                    .await?;
+                if status.is_none() {
+                    let blockhash_not_found = !self
+                        .rpc_client
+                        .is_blockhash_valid(&blockhash, CommitmentConfig::processed())
+                        .await?;
+                    if blockhash_not_found && now.elapsed() >= confirm_transaction_initial_timeout {
+                        break (sig, status);
+                    }
+                } else {
+                    break (sig, status);
+                }
+                tokio::time::sleep(Duration::from_millis(500)).await;
+            };
+
+            
+            match status {
+                Some(Ok(())) => {
                     return Ok(());
                 }
-                Ok(false) => {
-                    rt -= 1;
-                    if rt == 0 {
-                        return Err(anyhow::anyhow!(
-                            "Failed to confirm transaction: max retries exceeded"
-                        ));
-                    }
+                Some(Err(e)) => { 
+                    return Err(anyhow::anyhow!("Transaction Falure Cannot Recover {:?}", e));
                 }
-                Err(e) => {
+                None => {
                     rt -= 1;
                     if rt == 0 {
-                        return Err(anyhow::anyhow!("Failed to confirm transaction: {:?}", e));
+                        return Err(anyhow::anyhow!("Timeout: Failed to confirm transaction"));
                     }
                 }
             }
-            tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
         }
     }
 }

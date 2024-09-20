@@ -1,16 +1,21 @@
-use iop::*;
-use anyhow::{Context, Result};
-use num_bigint::BigUint;
-use num_traits::Num;
-use risc0_core::field::baby_bear::BabyBearElem;
-use risc0_zkp::core::{
-    digest::{Digest, DIGEST_WORDS},
-    hash::poseidon_254::digest_to_fr,
+use {
+    anyhow::{Context, Result},
+    iop::*,
+    num_bigint::BigUint,
+    num_traits::Num,
+    risc0_core::field::baby_bear::BabyBearElem,
+    risc0_zkp::core::{
+        digest::{Digest, DIGEST_WORDS},
+        hash::poseidon_254::digest_to_fr,
+    },
+    std::io::Write,
+    tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt},
 };
-use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt};
-use std::io::Write;
 
-pub async fn async_to_json<R: AsyncRead + std::marker::Unpin, W: AsyncWrite + std::marker::Unpin>(
+pub async fn async_to_json<
+    R: AsyncRead + std::marker::Unpin,
+    W: AsyncWrite + std::marker::Unpin,
+>(
     mut reader: R,
     mut writer: W,
 ) -> Result<()> {
@@ -56,5 +61,3 @@ fn to_decimal(s: &str) -> Option<String> {
         .and_then(|stripped| BigUint::from_str_radix(stripped, 16).ok())
         .map(|n| n.to_str_radix(10))
 }
-
-

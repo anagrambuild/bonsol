@@ -1,14 +1,13 @@
-use std::{
-    str::from_utf8,
-    sync::Arc,
-    time::{SystemTime, UNIX_EPOCH},
-};
-use bonsol_schema::{root_as_input_set, Input, InputT, InputType, ProgramInputType};
 use anyhow::Result;
 use async_trait::async_trait;
+use bonsol_schema::{root_as_input_set, InputT, InputType, ProgramInputType};
 use reqwest::Url;
 use serde::{Deserialize, Serialize};
-use solana_sdk::{pubkey::Pubkey, signer::Signer};
+use solana_sdk::pubkey::Pubkey;
+use solana_sdk::signer::Signer;
+use std::str::from_utf8;
+use std::sync::Arc;
+use std::time::{SystemTime, UNIX_EPOCH};
 use tokio::task::{JoinHandle, JoinSet};
 
 use crate::util::get_body_max_size;
@@ -57,7 +56,7 @@ pub trait InputResolver: Send + Sync {
         &self,
         inputs: Vec<InputT>,
     ) -> Result<Vec<ProgramInput>, anyhow::Error>;
-    
+
     /// Resolves private inputs by sigining the request and attempting to download the inputs
     async fn resolve_private_inputs(
         &self,
@@ -107,9 +106,7 @@ impl DefaultInputResolver {
     ) -> Result<ProgramInput> {
         match input.input_type {
             InputType::PublicUrl => {
-                let url = input
-                    .data
-                    .ok_or(anyhow::anyhow!("Invalid data"))?;
+                let url = input.data.ok_or(anyhow::anyhow!("Invalid data"))?;
                 let url = from_utf8(&url)?;
                 let url = Url::parse(url)?;
                 task_set.spawn(dowload_public_input(
@@ -126,9 +123,7 @@ impl DefaultInputResolver {
                 }))
             }
             InputType::Private => {
-                let url = input
-                    .data
-                    .ok_or(anyhow::anyhow!("Invalid data"))?;
+                let url = input.data.ok_or(anyhow::anyhow!("Invalid data"))?;
                 let url = from_utf8(&url)?;
                 let url = Url::parse(url)?;
                 Ok(ProgramInput::Unresolved(UnresolvedInput {
@@ -138,9 +133,7 @@ impl DefaultInputResolver {
                 }))
             }
             InputType::PublicData => {
-                let data = input
-                    .data
-                    .ok_or(anyhow::anyhow!("Invalid data"))?;
+                let data = input.data.ok_or(anyhow::anyhow!("Invalid data"))?;
                 let data = data.to_vec();
                 Ok(ProgramInput::Resolved(ResolvedInput {
                     index: index as u8,
@@ -149,9 +142,7 @@ impl DefaultInputResolver {
                 }))
             }
             InputType::PublicProof => {
-                let url = input
-                    .data
-                    .ok_or(anyhow::anyhow!("Invalid data"))?;
+                let url = input.data.ok_or(anyhow::anyhow!("Invalid data"))?;
                 let url = from_utf8(&url)?;
                 let url = Url::parse(url)?;
                 task_set.spawn(dowload_public_input(
@@ -230,8 +221,10 @@ impl InputResolver for DefaultInputResolver {
 
             match input.input_type {
                 InputType::InputSet => {
-                    if let Some(input_set_account) =
-                        input.data.as_ref().and_then(|i| Pubkey::try_from(i.as_slice()).ok())
+                    if let Some(input_set_account) = input
+                        .data
+                        .as_ref()
+                        .and_then(|i| Pubkey::try_from(i.as_slice()).ok())
                     {
                         let inputs = self
                             .par_resolve_input_set(input_set_account, client, index, &mut url_set)

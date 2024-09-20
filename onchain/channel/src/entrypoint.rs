@@ -1,8 +1,7 @@
 use crate::program::program;
-use solana_program::account_info::AccountInfo;
-use solana_program::entrypoint;
-use solana_program::entrypoint::ProgramResult;
-use solana_program::pubkey::Pubkey;
+use solana_program::{
+    account_info::AccountInfo, entrypoint, entrypoint::ProgramResult, pubkey::Pubkey,
+};
 
 entrypoint!(process_instruction);
 pub fn process_instruction<'a>(

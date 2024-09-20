@@ -1,18 +1,30 @@
 {
   "imageId": "7cb4887749266c099ad1793e8a7d486a27ff1426d614ec0cc9ff50e686d17699",
   "executionConfig": {
-    "verifyInputHash": true,
+    "verifyInputHash": false,
     "forwardOutput": true
   },
+  "inputs": [
+    {
+      "inputType": "PublicData",
+      "data": "{\"attestation\":\"test\"}"
+    },
+    {
+      "inputType": "Private",
+      "data": "https://echoserver.dev/server?response=N4IgFgpghgJhBOBnEAuA2mkBjA9gOwBcJCBaAgTwAcIQAaEIgDwIHpKAbKASzxAF0+9AEY4Y5VKArVUDCMzogYUAlBlFEBEAF96G5QFdkKAEwAGU1qA"
+    }
+  ],
+  "tip": 12000,
+  "expiry": 100,
   "callbackConfig": {
     "programId": "exay1T7QqsJPNcwzMiWubR6vZnqrgM16jZRraHgqBGG",
     "instructionPrefix": [1],
     "extraAccounts": [
       {
-        "address": "BoNsHRcyLLNdtnoDf8hiCNZpyehMC4FDMxs6NTxFi3ew",
-        "role": "writable"
+        "pubkey": "BoNsHRcyLLNdtnoDf8hiCNZpyehMC4FDMxs6NTxFi3ew",
+        "isSigner": false,
+        "isWritable": false
       }
     ]
   }
-    
 }

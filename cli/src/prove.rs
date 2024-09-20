@@ -1,19 +1,14 @@
 use crate::common::{proof_get_inputs, ZkProgramManifest};
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use bincode;
-use bonsol_sdk::{
-    image::Image,
-    prover::{get_risc0_prover, new_risc0_exec_env},
-    BonsolClient,
-};
+use bonsol_sdk::image::Image;
+use bonsol_sdk::prover::{get_risc0_prover, new_risc0_exec_env};
+use bonsol_sdk::BonsolClient;
 use bytes::Bytes;
 use risc0_zkvm::VerifierContext;
-use anyhow::anyhow;
-use std::{
-    fs::{read, File},
-    io::Write,
-    path::Path,
-};
+use std::fs::{read, File};
+use std::io::Write;
+use std::path::Path;
 
 pub async fn prove(
     sdk: &BonsolClient,
@@ -39,13 +34,11 @@ pub async fn prove(
             };
             let manifest: ZkProgramManifest = serde_json::from_reader(manifest_file)?;
             let binary_path = Path::new(&manifest.binary_path);
-            let bytes = read(binary_path)
-            .map_err(|_| anyhow!("Failed to read binary in manifest file"))?;
+            let bytes =
+                read(binary_path).map_err(|_| anyhow!("Failed to read binary in manifest file"))?;
             Ok(Bytes::from(bytes))
         }
-        _ => Err(anyhow!(
-            "Please provide a program id or a manifest path"
-        )),
+        _ => Err(anyhow!("Please provide a program id or a manifest path")),
     }?;
     let ext = Path::new(&execution_id).with_extension("bin");
     let output_binary_path = output_location

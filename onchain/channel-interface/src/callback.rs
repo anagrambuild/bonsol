@@ -1,25 +1,19 @@
-use {
-    crate::error::ClientError,
-    bonsol_channel_utils::execution_address,
-    bonsol_schema::root_as_execution_request_v1,
-    solana_program::{
-        account_info::AccountInfo,
-        instruction::{AccountMeta, Instruction},
-        msg,
-        program_error::ProgramError,
-        pubkey::Pubkey,
-        system_program,
-        program_memory::sol_memcmp
-    }
-};
+use crate::error::ClientError;
+use bonsol_channel_utils::execution_address;
+use bonsol_schema::root_as_execution_request_v1;
+use solana_program::account_info::AccountInfo;
+use solana_program::program_error::ProgramError;
+use solana_program::program_memory::sol_memcmp;
+use solana_program::pubkey::Pubkey;
 
 /// This is the callback handler for the bonsol program, use this to properly validate an incoming callback from bonsol
 /// Ensure you strip the instruction prefix from the data before passing it to this function and that the Execution Id
 /// matches the one in the execution request account
 pub fn handle_callback<'a>(
-    execution_account: Pubkey,
+    image_id: &str,
+    execution_account: &Pubkey,
     accounts: &[AccountInfo],
-    stripped_data: &'a[u8],
+    stripped_data: &'a [u8],
 ) -> Result<&'a [u8], ProgramError> {
     let er_info = accounts
         .get(0)
@@ -35,17 +29,21 @@ pub fn handle_callback<'a>(
         return Err(ClientError::InvalidCallbackInstructionAccounts.into());
     }
     // Ensure this is a valid execution request data
-    root_as_execution_request_v1(er_data).map_err(|_| ProgramError::InvalidInstructionData)?;
+    let er =
+        root_as_execution_request_v1(er_data).map_err(|_| ProgramError::InvalidInstructionData)?;
+    if er.image_id() != Some(image_id) {
+        return Err(ClientError::InvalidCallbackImageId.into());
+    }
     Ok(stripped_data)
 }
 
-
 pub fn handle_callback_id<'a>(
+    image_id: &str,
     execution_id: &str,
     request_account: &Pubkey,
     accounts: &'a [AccountInfo<'a>],
     data: &'a [u8],
 ) -> Result<&'a [u8], ProgramError> {
-  let (execution_account, _) = execution_address(request_account, execution_id.as_bytes());
-  handle_callback(execution_account, accounts, data)
+    let (execution_account, _) = execution_address(request_account, execution_id.as_bytes());
+    handle_callback(image_id, &execution_account, accounts, data)
 }

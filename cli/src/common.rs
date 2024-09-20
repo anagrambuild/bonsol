@@ -1,15 +1,18 @@
 use anyhow::Result;
-use base64::{engine::general_purpose, Engine as _};
-use bonsol_sdk::{
-    input_resolver::{ProgramInput, ResolvedInput},
-    instructions::{CallbackConfig, ExecutionConfig},
-    InputT, InputType, ProgramInputType,
-};
+use base64::engine::general_purpose;
+use base64::Engine as _;
+use bonsol_sdk::input_resolver::{ProgramInput, ResolvedInput};
+use bonsol_sdk::instructions::{CallbackConfig, ExecutionConfig};
+use bonsol_sdk::{InputT, InputType, ProgramInputType};
 use clap::{Args, ValueEnum};
-use serde::{Deserialize, Serialize, Serializer};
-use serde_json::Value;
+use rand::distributions::Alphanumeric;
+use rand::Rng;
+use serde::{Deserialize, Serialize};
+use solana_sdk::instruction::AccountMeta;
+use solana_sdk::pubkey::Pubkey;
 use std::fs::File;
 use std::process::Command;
+use std::str::FromStr;
 
 pub fn cargo_has_plugin(plugin_name: &str) -> bool {
     Command::new("cargo")
@@ -43,6 +46,7 @@ pub struct ZkProgramManifest {
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, Args)]
+#[serde(rename_all = "camelCase")]
 pub struct CliInput {
     pub input_type: String,
     pub data: String, // base64 encoded if binary
@@ -50,64 +54,101 @@ pub struct CliInput {
 
 #[derive(Debug, Clone)]
 pub struct CliInputType(InputType);
-
-impl Serialize for CliInputType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+impl ToString for CliInputType {
+    fn to_string(&self) -> String {
         match self.0 {
-            InputType::PublicData => serializer.serialize_str("Public"),
-            InputType::PublicAccountData => serializer.serialize_str("PublicAccountData"),
-            InputType::PublicUrl => serializer.serialize_str("PublicUrl"),
-            InputType::Private => serializer.serialize_str("Private"),
-            InputType::InputSet => serializer.serialize_str("InputSet"),
-            InputType::PublicProof => serializer.serialize_str("PublicProof"),
-            InputType::PrivateLocal => serializer.serialize_str("PrivateLocal"),
-            _ => Err(serde::ser::Error::custom("Invalid input type")),
+            InputType::PublicData => "PublicData".to_string(),
+            InputType::PublicAccountData => "PublicAccountData".to_string(),
+            InputType::PublicUrl => "PublicUrl".to_string(),
+            InputType::Private => "Private".to_string(),
+            InputType::InputSet => "InputSet".to_string(),
+            InputType::PublicProof => "PublicProof".to_string(),
+            InputType::PrivateLocal => "PrivateUrl".to_string(),
+            _ => "InvalidInputType".to_string(),
         }
     }
 }
 
-impl<'de> Deserialize<'de> for CliInputType {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        let s = String::deserialize(deserializer)?;
-        match s.as_str() {
-            "Public" => Ok(CliInputType(InputType::PublicData)),
+impl FromStr for CliInputType {
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "PublicData" => Ok(CliInputType(InputType::PublicData)),
             "PublicAccountData" => Ok(CliInputType(InputType::PublicAccountData)),
             "PublicUrl" => Ok(CliInputType(InputType::PublicUrl)),
             "Private" => Ok(CliInputType(InputType::Private)),
             "InputSet" => Ok(CliInputType(InputType::InputSet)),
             "PublicProof" => Ok(CliInputType(InputType::PublicProof)),
-            "PrivateLocal" => Ok(CliInputType(InputType::PrivateLocal)),
-            _ => Err(serde::de::Error::custom(format!(
-                "Invalid input type: {}",
-                s
-            ))),
+            "PrivateUrl" => Ok(CliInputType(InputType::PrivateLocal)),
+            _ => Err(anyhow::anyhow!("Invalid input type")),
         }
     }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ExecutionRequestFile {
     pub image_id: Option<String>,
     pub execution_config: ExecutionConfig,
     pub execution_id: Option<String>,
     pub tip: Option<u64>,
-    pub max_block_height: Option<u64>,
+    pub expiry: Option<u64>,
     pub inputs: Option<Vec<CliInput>>,
-    pub callback_config: Option<CallbackConfig>,
+    pub callback_config: Option<CliCallbackConfig>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct CliCallbackConfig {
+    #[serde(with = "bonsol_sdk::instructions::serde_helpers::optpubkey")]
+    pub program_id: Option<Pubkey>,
+    pub instruction_prefix: Option<Vec<u8>>,
+    pub extra_accounts: Option<Vec<CliAccountMeta>>,
+}
+
+impl Into<CallbackConfig> for CliCallbackConfig {
+    fn into(self) -> CallbackConfig {
+        CallbackConfig {
+            program_id: self.program_id.unwrap_or_default(),
+            instruction_prefix: self.instruction_prefix.unwrap_or_default(),
+            extra_accounts: self
+                .extra_accounts
+                .map(|v| v.into_iter().map(|a| a.into()).collect())
+                .unwrap_or_default(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct CliAccountMeta {
+    #[serde(default, with = "bonsol_sdk::instructions::serde_helpers::pubkey")]
+    pub pubkey: Pubkey,
+    pub is_signer: bool,
+    pub is_writable: bool,
+}
+
+impl Into<AccountMeta> for CliAccountMeta {
+    fn into(self) -> AccountMeta {
+        AccountMeta {
+            pubkey: self.pubkey,
+            is_signer: self.is_signer,
+            is_writable: self.is_writable,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct InputFile {
     pub inputs: Vec<CliInput>,
 }
 
-pub fn execute_get_inputs(inputs_file: Option<String>, stdin: Option<String>) -> Result<Vec<CliInput>> {
+pub fn execute_get_inputs(
+    inputs_file: Option<String>,
+    stdin: Option<String>,
+) -> Result<Vec<CliInput>> {
     if let Some(std) = stdin {
         let parsed = serde_json::from_str::<InputFile>(&std)
             .map_err(|e| anyhow::anyhow!("Error parsing stdin: {:?}", e))?;
@@ -140,11 +181,19 @@ pub fn proof_get_inputs(
 pub fn execute_transform_cli_inputs(inputs: Vec<CliInput>) -> Result<Vec<InputT>> {
     let mut res = vec![];
     for input in inputs.into_iter() {
-        let input_type = serde_json::from_str::<CliInputType>(&input.input_type)?.0;
+        let input_type = CliInputType::from_str(&input.input_type)?.0;
         match input_type {
             InputType::PublicData => {
-                let data = general_purpose::STANDARD.decode(&input.data)?;
-                res.push(InputT::public(data));
+                if is_valid_base64(&input.data) {
+                    let data = general_purpose::STANDARD.decode(&input.data)?;
+                    res.push(InputT::public(data));
+                }
+                if let Some(n) = is_valid_number(&input.data) {
+                    let data = n.into_bytes();
+                    res.push(InputT::public(data));
+                }
+
+                res.push(InputT::public(input.data.into_bytes()));
             }
             _ => res.push(InputT::new(input_type, Some(input.data.into_bytes()))),
         }
@@ -165,6 +214,36 @@ fn is_valid_base64(s: &str) -> bool {
         return false;
     }
     general_purpose::STANDARD.decode(s).is_ok()
+}
+
+pub enum NumberType {
+    Float(f64),
+    Unsigned(u64),
+    Integer(i64),
+    // TODO: add BigInt
+}
+
+impl NumberType {
+    fn into_bytes(&self) -> Vec<u8> {
+        match self {
+            NumberType::Float(f) => f.to_le_bytes().to_vec(),
+            NumberType::Unsigned(u) => u.to_le_bytes().to_vec(),
+            NumberType::Integer(i) => i.to_le_bytes().to_vec(),
+        }
+    }
+}
+
+fn is_valid_number(s: &str) -> Option<NumberType> {
+    if let Ok(num) = s.parse::<f64>() {
+        return Some(NumberType::Float(num));
+    }
+    if let Ok(num) = s.parse::<u64>() {
+        return Some(NumberType::Unsigned(num));
+    }
+    if let Ok(num) = s.parse::<i64>() {
+        return Some(NumberType::Integer(num));
+    }
+    None
 }
 
 fn parse_entry(index: u8, s: &str) -> Result<ProgramInput> {
@@ -199,7 +278,7 @@ fn parse_entry(index: u8, s: &str) -> Result<ProgramInput> {
             input_type: ProgramInputType::Private,
         }));
     }
-    
+
     return Ok(ProgramInput::Resolved(ResolvedInput {
         index: index,
         data: s.as_bytes().to_vec(),
@@ -250,4 +329,13 @@ fn proof_parse_stdin(input: &str) -> Result<Vec<ProgramInput>> {
         entries.push(parse_entry(entries.len() as u8, &current_entry)?);
     }
     Ok(entries)
+}
+
+pub fn rand_id(chars: usize) -> String {
+    let mut rng = rand::thread_rng();
+    (&mut rng)
+        .sample_iter(Alphanumeric)
+        .take(chars)
+        .map(char::from)
+        .collect()
 }

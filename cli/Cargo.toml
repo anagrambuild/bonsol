@@ -12,6 +12,7 @@ mac = ["risc0-zkvm/metal"]
 linux = ["risc0-zkvm/cuda"]
 
 [dependencies]
+rand = "0.8.5"
 clap = { version = "4.4.2", features = ["derive"] }
 solana-sdk = { workspace = true }
 solana-rpc-client = { workspace = true }

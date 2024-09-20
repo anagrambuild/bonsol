@@ -16,6 +16,7 @@ A note on pulling data from the solana blockchain or urls. Work is in process to
 Private inputs are inputs that are passed in the execution request. There is only one type of private input.
 
 * `PrivateUrl` - A url that the prover will pull data from and use as a private input. This is a complicated one and caveats apply. Once a prover node has claimed the execution request, it must sign a request to the private input server to get the private input. The private input server will return the private input to the prover node. The input is no longer globally private so use this in scenarios where its okay if the prover node can see the input. We reccomend looking at Proof Composition through the `PublicProof` input type as an alternative to this.
+* `PrivateLocal` - Only used when running local proofs.
 
 ## Input Sets
 

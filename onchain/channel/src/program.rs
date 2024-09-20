@@ -1,13 +1,6 @@
-use crate::actions::*;
-use crate::error::ChannelError;
-use bonsol_channel_interface::bonsol_schema::{
-    parse_ix_data,
-    ChannelInstructionIxType
-};
-use solana_program::account_info::AccountInfo;
-use solana_program::entrypoint::ProgramResult;
-use solana_program::pubkey::Pubkey;
-
+use crate::{actions::*, error::ChannelError};
+use bonsol_channel_interface::bonsol_schema::{parse_ix_data, ChannelInstructionIxType};
+use solana_program::{account_info::AccountInfo, entrypoint::ProgramResult, pubkey::Pubkey};
 
 #[inline]
 pub fn program<'a>(
@@ -24,7 +17,7 @@ pub fn program<'a>(
             process_deploy_v1(accounts, ix)?;
         }
         ChannelInstructionIxType::ExecuteV1 => {
-            process_execute_v1(accounts, ix)?; 
+            process_execute_v1(accounts, ix)?;
         }
         ChannelInstructionIxType::StatusV1 => {
             process_status_v1(accounts, ix)?;

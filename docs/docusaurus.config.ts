@@ -5,7 +5,7 @@ import { themes } from 'prism-react-renderer';
 
 const config: Config = {
   title: 'Bonsol',
-  tagline: 'Zk plubing on solana',
+  tagline: 'Everything Possible on Solana',
   favicon: 'img/favicon.ico',
 
   // Set the production url of your site here

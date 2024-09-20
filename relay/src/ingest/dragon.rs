@@ -2,16 +2,18 @@ use std::{collections::HashMap, time::Duration};
 
 use crate::types::BonsolInstruction;
 
-use super::Ingester;
-use super::TxChannel;
-use anyhow::Result;
-use futures::stream::StreamExt;
-use solana_sdk::message::VersionedMessage;
-use solana_sdk::pubkey::Pubkey;
-use yellowstone_grpc_client::GeyserGrpcClient;
-use yellowstone_grpc_proto::convert_from::create_tx_with_meta;
-use yellowstone_grpc_proto::prelude::{
-    subscribe_update::UpdateOneof, SubscribeRequest, SubscribeRequestFilterTransactions,
+use {
+    super::{Ingester, TxChannel},
+    anyhow::Result,
+    futures::stream::StreamExt,
+    solana_sdk::{message::VersionedMessage, pubkey::Pubkey},
+    yellowstone_grpc_client::GeyserGrpcClient,
+    yellowstone_grpc_proto::{
+        convert_from::create_tx_with_meta,
+        prelude::{
+            subscribe_update::UpdateOneof, SubscribeRequest, SubscribeRequestFilterTransactions,
+        },
+    },
 };
 pub struct GrpcIngester {
     url: String,
@@ -76,7 +78,6 @@ impl Ingester for GrpcIngester {
                                     let meta = soltxn.get_status_meta();
                                     //unwrap so we can consume
                                     if let VersionedMessage::V0(msg) = txndata.message {
-
                                         let bonsolixs = msg
                                             .instructions
                                             .into_iter()

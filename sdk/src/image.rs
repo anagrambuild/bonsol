@@ -1,12 +1,10 @@
 use std::path::PathBuf;
 
-use {
-    anyhow::Result,
-    bytes::Bytes,
-    risc0_binfmt::{MemoryImage, Program},
-    risc0_zkvm::{GUEST_MAX_MEM, PAGE_SIZE},
-    tokio::fs::read,
-};
+use anyhow::Result;
+use bytes::Bytes;
+use risc0_binfmt::{MemoryImage, Program};
+use risc0_zkvm::{GUEST_MAX_MEM, PAGE_SIZE};
+use tokio::fs::read;
 
 pub struct Image {
     pub id: String,

@@ -1,6 +1,8 @@
 use bonsol_channel_utils::{deployment_address, execution_address};
 use bonsol_schema::{
-    Account, ChannelInstruction, ChannelInstructionArgs, ChannelInstructionIxType, DeployV1, DeployV1Args, ExecutionRequestV1, ExecutionRequestV1Args, Input as FBBInput, InputBuilder, InputT, InputType, ProgramInputType
+    Account, ChannelInstruction, ChannelInstructionArgs, ChannelInstructionIxType, DeployV1,
+    DeployV1Args, ExecutionRequestV1, ExecutionRequestV1Args, InputBuilder, InputT, InputType,
+    ProgramInputType,
 };
 use flatbuffers::{FlatBufferBuilder, WIPOffset};
 
@@ -70,10 +72,103 @@ pub fn deploy_v1(
 // todo hold attributes for scheme and versions selection
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 pub struct ExecutionConfig {
     pub verify_input_hash: bool,
+    #[cfg_attr(feature = "serde", serde(default, with = "serde_helpers::b64_bytes"))]
     pub input_hash: Option<Vec<u8>>,
     pub forward_output: bool,
+}
+
+#[cfg(feature = "serde")]
+pub mod serde_helpers {
+    pub mod pubkey {
+        use std::str::FromStr;
+
+        use serde::{self, Deserialize, Deserializer, Serializer};
+        use solana_sdk::pubkey::Pubkey;
+
+        pub fn serialize<S>(value: &Pubkey, serializer: S) -> Result<S::Ok, S::Error>
+        where
+            S: Serializer,
+        {
+            serializer.serialize_str(&value.to_string())
+        }
+
+        pub fn deserialize<'de, D>(deserializer: D) -> Result<Pubkey, D::Error>
+        where
+            D: Deserializer<'de>,
+        {
+            let s = String::deserialize(deserializer)?;
+            Pubkey::from_str(&s).map_err(serde::de::Error::custom)
+        }
+    }
+
+    pub mod optpubkey {
+        use std::str::FromStr;
+
+        use serde::{self, Deserialize, Deserializer, Serializer};
+        use solana_sdk::pubkey::Pubkey;
+
+        pub fn serialize<S>(value: &Option<Pubkey>, serializer: S) -> Result<S::Ok, S::Error>
+        where
+            S: Serializer,
+        {
+            match value {
+                Some(v) => serializer.serialize_str(&v.to_string()),
+                None => serializer.serialize_none(),
+            }
+        }
+
+        pub fn deserialize<'de, D>(deserializer: D) -> Result<Option<Pubkey>, D::Error>
+        where
+            D: Deserializer<'de>,
+        {
+            let s = String::deserialize(deserializer)?;
+            Pubkey::from_str(&s)
+                .map_err(serde::de::Error::custom)
+                .map(Some)
+        }
+    }
+
+    pub mod b64_bytes {
+        use base64::engine::general_purpose;
+        use base64::Engine as _;
+        use serde::{self, Deserialize, Deserializer, Serializer};
+
+        pub fn serialize<S>(value: &Option<Vec<u8>>, serializer: S) -> Result<S::Ok, S::Error>
+        where
+            S: Serializer,
+        {
+            match value {
+                Some(v) => serializer.serialize_str(&general_purpose::STANDARD.encode(v)),
+                None => serializer.serialize_none(),
+            }
+        }
+
+        pub fn deserialize<'de, D>(deserializer: D) -> Result<Option<Vec<u8>>, D::Error>
+        where
+            D: Deserializer<'de>,
+        {
+            #[derive(Deserialize)]
+            #[serde(untagged)]
+            enum InputHash {
+                Base64(String),
+                Bytes(Vec<u8>),
+            }
+
+            match Option::<InputHash>::deserialize(deserializer)? {
+                Some(InputHash::Base64(v)) => {
+                    let bytes = general_purpose::STANDARD.decode(v).map_err(|e| {
+                        serde::de::Error::custom(format!("Error decoding base64 input: {:?}", e))
+                    })?;
+                    Ok(Some(bytes))
+                }
+                Some(InputHash::Bytes(v)) => Ok(Some(v)),
+                None => Ok(None),
+            }
+        }
+    }
 }
 
 impl ExecutionConfig {
@@ -97,12 +192,13 @@ impl Default for ExecutionConfig {
 
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 pub struct CallbackConfig {
+    #[cfg_attr(feature = "serde", serde(default, with = "serde_helpers::pubkey"))]
     pub program_id: Pubkey,
     pub instruction_prefix: Vec<u8>,
     pub extra_accounts: Vec<AccountMeta>,
 }
-
 
 pub fn execute_v1(
     signer: &Pubkey,
@@ -148,7 +244,7 @@ pub fn execute_v1(
         AccountMeta::new_readonly(system_program::id(), false),
     ];
     let inputlen = inputs.len();
-    fbb.start_vector::<WIPOffset<FBBInput>>(inputlen);
+    let mut inputs_vec = Vec::with_capacity(inputlen);
     for input in inputs {
         match input.input_type {
             InputType::InputSet => {
@@ -159,10 +255,9 @@ pub fn execute_v1(
                 let data_off = fbb.create_vector(&[(accounts.len() - 1) as u8]);
                 let mut ibb = InputBuilder::new(&mut fbb);
                 ibb.add_input_type(InputType::InputSet);
-                // add the index of the account
                 ibb.add_data(data_off);
                 let input_set = ibb.finish();
-                fbb.push(input_set);
+                inputs_vec.push(input_set);
             }
             _ => {
                 let data = input.data.ok_or(ClientError::InvalidInput)?;
@@ -171,11 +266,11 @@ pub fn execute_v1(
                 ibb.add_data(data_off);
                 ibb.add_input_type(input.input_type);
                 let input = ibb.finish();
-                fbb.push(input);
+                inputs_vec.push(input);
             }
         }
     }
-    let fb_inputs = fbb.end_vector(inputlen);
+    let fb_inputs = fbb.create_vector(&inputs_vec);
     let image_id = fbb.create_string(image_id);
     let execution_id = fbb.create_string(execution_id);
 

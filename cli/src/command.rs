@@ -36,10 +36,17 @@ pub struct ShadowDriveUpload {
     pub alternate_keypair: Option<String>, // for testing on devnet but deploying to shadow drive
 }
 
+#[derive(Debug, Clone, Args)]
+pub struct UrlUploadDestination {
+    #[arg(long)]
+    pub url: String,
+}
+
 #[derive(Debug, Clone, ValueEnum)]
 pub enum DeployType {
     S3,
     ShadowDrive,
+    Url,
 }
 
 #[derive(Subcommand, Debug)]
@@ -53,6 +60,8 @@ pub enum Commands {
         s3_upload: S3UploadDestination,
         #[clap(flatten)]
         shadow_drive_upload: ShadowDriveUpload,
+        #[clap(flatten)]
+        url_upload: UrlUploadDestination,
         #[arg(short = 'y', long)]
         auto_confirm: bool,
     },
@@ -87,16 +96,16 @@ pub enum Commands {
         #[arg(short = 'p', long)]
         program_id: Option<String>,
         #[arg(short = 'i')]
-        input_file: Option<String>, 
+        input_file: Option<String>,
         #[arg(short = 'e', long)]
         execution_id: String,
         #[arg(short = 'o')]
-        output_location: Option<String>
+        output_location: Option<String>,
     },
     Init {
         #[arg(short = 'd', long)]
         dir: Option<String>,
         #[arg(short = 'n', long)]
         project_name: String,
-    }
+    },
 }

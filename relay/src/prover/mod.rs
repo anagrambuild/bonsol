@@ -1,54 +1,51 @@
 mod utils;
-use crate::{
-    callback::{RpcTransactionSender, TransactionSender},
-    config::ProverNodeConfig,
-    prover::utils::async_to_json,
-};
-use crate::{observe::*, MissingImageStrategy};
-use std::{env::consts::ARCH, io::Cursor, path::Path};
 use {
-    bonsol_schema::{ClaimV1, DeployV1, ExecutionRequestV1, InputType, ProgramInputType},
+    crate::{
+        callback::{RpcTransactionSender, TransactionSender},
+        config::ProverNodeConfig,
+        observe::*,
+        prover::utils::async_to_json,
+        MissingImageStrategy,
+    },
+    bonsol_schema::{ClaimV1, DeployV1, ExecutionRequestV1, ProgramInputType},
     dashmap::DashMap,
-};
-use {
     reqwest::Url,
     risc0_binfmt::MemoryImage,
     risc0_zkvm::{ExitCode, Journal, SuccinctReceipt},
-    serde::{Deserialize, Serialize},
-};
-use {
     solana_sdk::{pubkey::Pubkey, signature::Signature},
     std::{
         convert::TryInto,
+        env::consts::ARCH,
         fs,
-        str::from_utf8,
+        io::Cursor,
+        path::Path,
         sync::Arc,
         time::{Duration, SystemTime, UNIX_EPOCH},
     },
 };
 
-use bonsol_schema::root_as_deploy_v1;
-use bonsol_sdk::{
-    image::Image,
-    input_resolver::{InputResolver, ProgramInput},
-    util::get_body_max_size,
-    prover::{new_risc0_exec_env, get_risc0_prover},
-};
-use risc0_groth16::{ProofJson, Seal};
-use risc0_zkvm::{sha::Digest, InnerReceipt, MaybePruned, Receipt, ReceiptClaim};
-use tempfile::tempdir;
-use tokio::{fs::File, io::AsyncReadExt, process::Command, task::JoinSet};
-use tracing::{error, info};
 use {
     crate::types::{BonsolInstruction, ProgramExec},
     anyhow::Result,
-    bonsol_schema::{parse_ix_data, ChannelInstructionIxType},
-    risc0_zkvm::{
-        get_prover_server, recursion::identity_p254, sha::Digestible, ExecutorEnv, ExecutorImpl,
-        ProverOpts, VerifierContext,
+    bonsol_schema::{parse_ix_data, root_as_deploy_v1, ChannelInstructionIxType},
+    bonsol_sdk::{
+        image::Image,
+        input_resolver::{InputResolver, ProgramInput},
+        prover::{get_risc0_prover, new_risc0_exec_env},
+        util::get_body_max_size,
     },
+    risc0_groth16::{ProofJson, Seal},
+    risc0_zkvm::{
+        recursion::identity_p254,
+        sha::{Digest, Digestible},
+        InnerReceipt, MaybePruned, ReceiptClaim, VerifierContext,
+    },
+    tempfile::tempdir,
     thiserror::Error,
-    tokio::{sync::mpsc::UnboundedSender, task::JoinHandle},
+    tokio::{
+        fs::File, io::AsyncReadExt, process::Command, sync::mpsc::UnboundedSender, task::JoinHandle,
+    },
+    tracing::{error, info},
 };
 
 #[derive(Debug, Error)]
@@ -297,7 +294,7 @@ pub async fn handle_claim<'a>(
     accounts: &[Pubkey], // need to create cannonical parsing of accounts per instruction type for my flatbuffer model or use shank
 ) -> Result<()> {
     info!("Received claim event");
-    let claimer = accounts[2];
+    let claimer = accounts[3];
     let execution_id = claim.execution_id().ok_or(Risc0RunnerError::InvalidData)?;
     if &claimer != self_identity {
         let attempt = in_flight_proofs.remove(execution_id);
@@ -473,7 +470,7 @@ async fn handle_execution_request<'a>(
             }, execution_id => eid, stage => "public");
             input_staging_area.insert(eid.clone(), program_inputs);
             let sig = transaction_sender
-                .claim(&eid, accounts[2], accounts[1], computable_by)
+                .claim(&eid, accounts[1], accounts[2], computable_by)
                 .await
                 .map_err(|e| Risc0RunnerError::TransactionError(e.to_string()));
             match sig {

@@ -1,17 +1,11 @@
-use crate::assertions::*;
-use crate::error::ChannelError;
-use crate::utilities::*;
+use crate::{assertions::*, error::ChannelError, utilities::*};
 
 use bonsol_channel_interface::{
-    bonsol_channel_utils::deployment_address_seeds,
-    bonsol_channel_utils::img_id_hash,
-    bonsol_schema::ChannelInstruction,
-    bonsol_schema::DeployV1,
+    bonsol_channel_utils::{deployment_address_seeds, img_id_hash},
+    bonsol_schema::{ChannelInstruction, DeployV1},
 };
 
-use solana_program::account_info::AccountInfo;
-use solana_program::system_program;
-use solana_program::msg;
+use solana_program::{account_info::AccountInfo, msg, system_program};
 
 pub struct DeployAccounts<'a, 'b> {
     pub deployer: &'a AccountInfo<'a>,
@@ -52,12 +46,12 @@ impl<'a, 'b> DeployAccounts<'a, 'b> {
                 ChannelError::InvalidDeployerAccount,
             )?;
             check_writeable(da.deployment, ChannelError::InvalidDeploymentAccount)?;
+            ensure_0(da.deployment, ChannelError::DeploymentAlreadyExists)?;
             check_owner(
                 da.deployment,
                 &system_program::ID,
-                ChannelError::InvalidDeploymentAccount,
+                ChannelError::DeploymentAlreadyExists,
             )?;
-            ensure_0(da.deployment, ChannelError::InvalidDeploymentAccount)?;
             check_key_match(
                 da.system_program,
                 &system_program::ID,

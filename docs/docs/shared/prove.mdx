@@ -4,7 +4,7 @@ Local proving is a key feature of Bonsol. This allows you to prove computations 
 You can do this with the cli, using the `bonsol prove` command. In this scenario you will need to be proving against a deployed program.
 
 ```bash 
-bonsol prove -f local.json  
+bonsol prove -f local.json  -e <execution_id> -m <manifest_path> | -i <image_id>
 ```
 
 Similar to the `bonsol execute` command, the cli takes a json file as an argument.
@@ -20,6 +20,10 @@ Here is an example of a valid local proving payload json file.
     }
   ]
 }
+```
+You can also pipe the inputs in like so
+```bash
+echo '"{"attestation":"test"}" "nottest"'  |  bonsol prove -e <execution_id> -m images/simple/manifest.json
 ```
 
 Only private local inputs are supported

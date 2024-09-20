@@ -18,6 +18,7 @@ solana-sdk = { workspace = true, optional = true }
 thiserror = { workspace = true }
 arrayref = "0.3.6"
 paste = "1.0"
+base64 = "0.21.2"
 serde = { version = "1.0.197", optional = true }
 bytemuck = { version = "1.15.0", features = ["derive"] }
 

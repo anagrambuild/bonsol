@@ -1,22 +1,23 @@
-use crate::assertions::*;
-use crate::error::ChannelError;
-use crate::proof_handling::output_digest;
-use crate::proof_handling::prepare_inputs;
-use crate::proof_handling::verify_risc0;
-use crate::utilities::*;
+use crate::{
+    assertions::*,
+    error::ChannelError,
+    proof_handling::{output_digest, prepare_inputs, verify_risc0},
+    utilities::*,
+};
 use bonsol_channel_interface::{
     bonsol_channel_utils::execution_address_seeds,
     bonsol_schema::{root_as_execution_request_v1, ChannelInstruction, ExitCode, StatusV1},
 };
-use solana_program::account_info::AccountInfo;
-use solana_program::clock::Clock;
-use solana_program::instruction::AccountMeta;
-use solana_program::instruction::Instruction;
-use solana_program::msg;
-use solana_program::program::invoke_signed;
-use solana_program::program_error::ProgramError;
-use solana_program::program_memory::sol_memcmp;
-use solana_program::sysvar::Sysvar;
+use solana_program::{
+    account_info::AccountInfo,
+    clock::Clock,
+    instruction::{AccountMeta, Instruction},
+    msg,
+    program::invoke_signed,
+    program_error::ProgramError,
+    program_memory::sol_memcmp,
+    sysvar::Sysvar,
+};
 
 struct StatusAccounts<'a, 'b> {
     pub requester: &'a AccountInfo<'a>,
