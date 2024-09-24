@@ -23,7 +23,17 @@ docker build -f setup.dockerfile -o relay .
 ```
 You will have a director called snark with the binaries in it. You need to copy these binaries to the node and remember the path to the snark directory.
 ```bash
-scp -r snark/* <node ip>:/opt/bonsol/
+# on the node
+sudo mkdir -p /opt/bonsol/stark
+sudo chown -R ubuntu /opt/bonsol/stark
+sudo mkdir -p /opt/bonsol/keys
+sudo chown -R ubuntu /opt/bonsol/keys
+```
+
+```bash
+# on your local computer
+
+scp -i <your_ssh_key> -r stark/* <node_user>@<node ip>:/opt/bonsol/stark
 ```
 You will put the path in the `stark_compression_tools_path` in the config file.
 

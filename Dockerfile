@@ -1,5 +1,5 @@
 # syntax = docker/dockerfile:1.2
-ARG RUST_VERSION=1.79.0 
+ARG RUST_VERSION=1.80.0
 FROM rust:${RUST_VERSION} as chef
 RUN cargo install cargo-chef
 
