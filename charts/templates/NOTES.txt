@@ -1,0 +1,3 @@
+Bonsol is now running
+
+For documentation consult https://bonsol.sh

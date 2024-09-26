@@ -1,0 +1,223 @@
+## @section Global parameters
+## Global parameters defining Solana keypair location and the actual keypair
+
+## @param signer.path file path where Solana key will be mounted in the container
+## @param signer.keypair user's Solana key pair
+
+signer:
+  path: /opt/bonsol/keys/signer.json
+  keypair: ""
+
+## @param rpc.url URL of Solana RPC service 
+## @param rpc.token token granting access to RPC service
+##
+
+rpc:
+  url: ""
+  token: ""
+  schema: https
+
+
+## @section Provernode parameters
+## Provernode node parameters defining configuration of prover node container
+
+provernode:
+
+## @param provernode.nameOverride string to partially override provernode.fullname template (will maintain the release name)
+##
+  nameOverride:
+
+## @param provernode.fullnameOverride string to fully override provernode.fullname template
+##
+  fullnameOverride:
+
+## @param provernode.image.repository bonsol container image registry
+## @param provernode.image.tag provernode image tage
+## @param provernode.image.pullPolicy provernode image pull policy
+## @param provernode.image.imagePullSecrets provernode image pull secrets
+## Image tag used if for an image that uses only CPU. If you want to utilize
+## GPU, use tag 9f7c66133ba22eb07895885c1ffea8b7606e73c1f413922e0b392f671dc66f67
+## instead. You also need to define gpu request/limit in resource section in
+## order to run the pod on Kubernetes node with GPU.
+##
+  image:
+    repository: ghcr.io/anagrambuild/bonsol-relay@sha256
+    tag: a44f47818cbbc0bafcd27ae46226fdb2271662c3a070df6a1a84d5cc6b031a6d
+    pullPolicy: "IfNotPresent" 
+    imagePullSecrets: []
+
+## @param provernode.replicaCount Desired number of prover node replicas
+##
+  replicaCount: 1
+
+## @param provernode.podAnnotations annotations to add to pod object
+##
+  podAnnotations: {}
+
+## @param provernode.podLabels labels to add to pod object
+##
+  podLabels: {}
+
+## @param provernode.podSecurityContext podSecurityContext to add to pod object
+##
+  podSecurityContext: {}
+
+## @param provernode.volumes a list of volumes to be added to the pod
+##
+  volumes: []
+
+## @param provernode.volumeMounts a list of volume mounts to be added to the pod
+##
+  volumeMounts: []
+
+## @param provernode.nodeSelector node labels for pod assignment
+## Ref: https://kubernetes.io/docs/user-guide/node-selection/
+##
+  nodeSelector: {}
+
+## @param provernode.tolerations tolerations for pod assignment
+## Ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+##
+  tolerations: {}
+
+## @param provernode.affinity affinity for pod assignment
+## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+##
+  affinity: {}
+
+## Container resource requests and limits
+## ref: https://kubernetes.io/docs/user-guide/compute-resources/
+## We usually recommend not to specify default resources and to leave this as a conscious
+## choice for the user. This also increases chances charts run on environments with little
+## resources, such as Minikube. If you do want to specify resources, uncomment the following
+## lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+## @param provernode.resources the resources limits and/or requests for the container
+## Define limits with gpu in order to run the container on GPU node. Make sure that you are using 
+## container image with CUDA support to utilize GPU.
+##   limits:
+##     nvidia.com/gpu: 1
+##
+  resources: {}
+
+## @param provernode.env an map to be converted as environment variables for the container
+## Environment variable map should be defined as each key is the variable name and corresponding
+## key value is the value of the environment variable
+##
+  env: {}
+
+## @param provernode.config.filename an absolute path for prover node config file inside the container
+## @param provernode.config.values config file content
+##
+  config:
+    filename: /opt/bonsol/Node.toml
+    values: |
+      risc0_image_folder = "/opt/bonsol/risc0_images"
+      max_input_size_mb = 10
+      image_download_timeout_secs = 60
+      input_download_timeout_secs = 60
+      maximum_concurrent_proofs = 1
+      max_image_size_mb = 4
+      image_compression_ttl_hours = 24
+      env = "dev"
+
+      [transaction_sender_config]
+        Rpc = { rpc_url = "{{ .Values.rpc.url }}/{{ .Values.rpc.token }}" }
+      [signer_config]
+        KeypairFile = { path = "{{ .Values.signer.path }}" }
+      [ingester_config]
+        GrpcSubscription = { grpc_url = "{{ .Values.rpc.url }}", token = "{{ .Values.rpc.token }}", connection_timeout_secs = 10, timeout_secs = 10 }
+
+      [metrics_config]
+        Prometheus = {}
+
+## @section Tester parameters
+## Tester parameters defining configuration of tester container
+
+tester:
+
+## @param tester.enabled whether tester should be deployed or not
+##
+  enabled: true
+
+## @param tester.nameOverride string to partially override tester.fullname template (will maintain the release name)
+##
+  nameOverride:
+
+## @param tester.fullnameOverride string to fully override tester.fullname template
+##
+  fullnameOverride:
+
+## @param tester.image.repository bonsol container image registry
+## @param tester.image.tag tester image tage
+## @param tester.image.pullPolicy tester image pull policy
+## @param tester.image.imagePullSecrets tester image pull secrets
+## Image tag used if for an image that uses only CPU. If you want to utilize
+## GPU, use tag 9f7c66133ba22eb07895885c1ffea8b7606e73c1f413922e0b392f671dc66f67
+## instead. You also need to define gpu request/limit in resource section in
+## order to run the pod on Kubernetes node with GPU.
+##
+  image:
+    repository: docker.io/zerocomputing/bonsol-tester
+    tag: 0.2.0
+    pullPolicy: "IfNotPresent" 
+    imagePullSecrets: []
+
+## @param tester.replicaCount Desired number of prover node replicas
+##
+  replicaCount: 1
+
+## @param tester.podAnnotations annotations to add to pod object
+##
+  podAnnotations: {}
+
+## @param tester.podLabels labels to add to pod object
+##
+  podLabels: {}
+
+## @param tester.podSecurityContext podSecurityContext to add to pod object
+##
+  podSecurityContext: {}
+
+## @param tester.volumes a list of volumes to be added to the pod
+##
+  volumes: []
+
+## @param tester.volumeMounts a list of volume mounts to be added to the pod
+##
+  volumeMounts: []
+
+## @param tester.nodeSelector node labels for pod assignment
+## Ref: https://kubernetes.io/docs/user-guide/node-selection/
+##
+  nodeSelector: {}
+
+## @param tester.tolerations tolerations for pod assignment
+## Ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+##
+  tolerations: {}
+
+## @param tester.affinity affinity for pod assignment
+## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+##
+  affinity: {}
+
+## Container resource requests and limits
+## ref: https://kubernetes.io/docs/user-guide/compute-resources/
+## We usually recommend not to specify default resources and to leave this as a conscious
+## choice for the user. This also increases chances charts run on environments with little
+## resources, such as Minikube. If you do want to specify resources, uncomment the following
+## lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+## @param tester.resources the resources limits and/or requests for the container
+## Define limits with gpu in order to run the container on GPU node. Make sure that you are using 
+## container image with CUDA support to utilize GPU.
+##   limits:
+##     nvidia.com/gpu: 1
+##
+  resources: {}
+
+## @param tester.env [object] an map to be converted as environment variables for the container
+## Environment variable map should be defined as each key is the variable name and corresponding
+## key value is the value of the environment variable
+##
+  env: {}
+
