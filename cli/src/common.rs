@@ -8,6 +8,7 @@ use clap::{Args, ValueEnum};
 use rand::distributions::Alphanumeric;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
+use solana_rpc_client::nonblocking::rpc_client;
 use solana_sdk::instruction::AccountMeta;
 use solana_sdk::pubkey::Pubkey;
 use std::fs::File;
@@ -143,6 +144,18 @@ impl Into<AccountMeta> for CliAccountMeta {
 #[serde(rename_all = "camelCase")]
 pub struct InputFile {
     pub inputs: Vec<CliInput>,
+}
+
+pub async fn sol_check(rpc_client: String, pubkey: Pubkey) -> bool {
+    let rpc_client = rpc_client::RpcClient::new(rpc_client);
+    if let Ok(account) = rpc_client.get_account(&pubkey).await {
+        if account.lamports > 0 {
+            return true;
+        } else {
+            return false;
+        }
+    }
+     false
 }
 
 pub fn execute_get_inputs(

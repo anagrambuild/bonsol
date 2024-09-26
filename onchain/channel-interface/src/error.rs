@@ -24,11 +24,12 @@ pub enum ClientError {
     InvalidClaimAccount,
     #[error("InvalidCallbackImageId")]
     InvalidCallbackImageId,
+    #[error("Execution Request Reused")]
+    ExecutionRequestReused,
 }
 
 impl Into<ProgramError> for ClientError {
     fn into(self) -> ProgramError {
-        msg!(&self.to_string());
         ProgramError::Custom(self as u32)
     }
 }

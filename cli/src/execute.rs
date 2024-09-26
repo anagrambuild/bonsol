@@ -91,6 +91,7 @@ pub async fn execute(
     stdin: Option<String>,
     wait: bool,
 ) -> Result<()> {
+    let indicator = ProgressBar::new_spinner();
     let erstr =
         execution_request_file.ok_or(anyhow::anyhow!("Execution request file not provided"))?;
     let erfile = File::open(erstr)?;
@@ -114,14 +115,16 @@ pub async fn execute(
         .or(execution_request_file.expiry)
         .ok_or(anyhow::anyhow!("Expiry not provided"))?;
     let callback_config = execution_request_file.callback_config;
+    println!("callbakc accoutns {:?}", callback_config);
     let mut execution_config = execution_request_file.execution_config;
     let signer = keypair.pubkey();
     let transformed_inputs = execute_transform_cli_inputs(inputs)?;
     let hash_inputs = execution_config.verify_input_hash
         // cannot auto hash private inputs since you need the claim from the prover to get the private inputs
-        // is requester knows them they can send the hash in the request
+        // if requester knows them they can send the hash in the request
         && transformed_inputs.iter().all(|i| i.input_type != InputType::Private);
     if hash_inputs {
+        indicator.set_message("Getting/Hashing inputs");
         let rpc_client = Arc::new(RpcClient::new(rpc_url.clone()));
         let input_resolver =
             DefaultInputResolver::new(Arc::new(reqwest::Client::new()), rpc_client);
@@ -141,6 +144,7 @@ pub async fn execute(
     }
     let current_block = sdk.get_block_height().await?;
     let expiry = expiry + current_block;
+    indicator.set_message("Building transaction");
     let ixs = sdk
         .execute_v1(
             &signer,
@@ -153,7 +157,9 @@ pub async fn execute(
             callback_config.map(|c| c.into()),
         )
         .await?;
+    indicator.finish_with_message("Sending transaction");
     sdk.send_txn_standard(&keypair, ixs).await?;
+    indicator.finish_with_message("Waiting for execution");
     if wait {
         execution_waiter(sdk, keypair.pubkey(), execution_id, expiry, timeout).await?;
     }

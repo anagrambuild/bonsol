@@ -5,7 +5,6 @@ use solana_program::account_info::AccountInfo;
 use solana_program::program_error::ProgramError;
 use solana_program::program_memory::sol_memcmp;
 use solana_program::pubkey::Pubkey;
-
 /// This is the callback handler for the bonsol program, use this to properly validate an incoming callback from bonsol
 /// Ensure you strip the instruction prefix from the data before passing it to this function and that the Execution Id
 /// matches the one in the execution request account
@@ -18,7 +17,11 @@ pub fn handle_callback<'a>(
     let er_info = accounts
         .get(0)
         .ok_or::<ProgramError>(ClientError::InvalidCallbackInstructionAccounts.into())?;
+    
     if sol_memcmp(er_info.key.as_ref(), &execution_account.as_ref(), 32) != 0 {
+        return Err(ClientError::InvalidCallbackInstructionAccounts.into());
+    }
+    if sol_memcmp(er_info.owner.as_ref(), &bonsol_channel_utils::ID.as_ref(), 32) != 0 {
         return Err(ClientError::InvalidCallbackInstructionAccounts.into());
     }
     if !er_info.is_signer {
@@ -26,7 +29,7 @@ pub fn handle_callback<'a>(
     }
     let er_data = &er_info.try_borrow_data()?;
     if er_data.len() < 2 {
-        return Err(ClientError::InvalidCallbackInstructionAccounts.into());
+        return Err(ClientError::ExecutionRequestReused.into());
     }
     // Ensure this is a valid execution request data
     let er =

@@ -12,10 +12,12 @@ use atty::Stream;
 use bonsol_sdk::BonsolClient;
 use clap::Parser;
 use command::{BonsolCli, Commands};
+use common::sol_check;
 use solana_cli_config::{Config, CONFIG_FILE};
 use solana_sdk::signature::read_keypair_file;
 use std::io::{self, Read};
 use std::path::Path;
+use solana_sdk::signer::Signer;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -41,6 +43,7 @@ async fn main() -> anyhow::Result<()> {
             anyhow::bail!("Please provide a keypair and rpc or a solana config file");
         }
     };
+    
     let keypair = read_keypair_file(Path::new(&kpp));
     if keypair.is_err() {
         anyhow::bail!("Invalid keypair");
@@ -58,7 +61,9 @@ async fn main() -> anyhow::Result<()> {
     } else {
         None
     };
-
+    if !sol_check(rpc.clone(), keypair.pubkey()).await {
+        anyhow::bail!("Your account needs to have some SOL to pay for the transactions");
+    }
     let sdk = BonsolClient::new(rpc.clone());
     match command {
         Commands::Build { zk_program_path } => match build::build(&keypair, zk_program_path) {
@@ -106,10 +111,10 @@ async fn main() -> anyhow::Result<()> {
                 execution_request_file,
                 program_id,
                 execution_id,
-                expiry,
+                timeout,
                 input_file,
                 tip,
-                timeout,
+                expiry,
                 stdin,
                 wait,
             )

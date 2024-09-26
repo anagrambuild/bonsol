@@ -1,4 +1,6 @@
 mod utils;
+use solana_sdk::instruction::AccountMeta;
+
 use {
     crate::{
         callback::{RpcTransactionSender, TransactionSender},
@@ -82,6 +84,7 @@ pub struct InflightProof {
     pub requester: Pubkey,
     pub forward_output: bool,
     pub program_callback: Option<ProgramExec>,
+    pub additional_accounts: Vec<AccountMeta>,
 }
 
 type InflightProofs = Arc<DashMap<String, InflightProof>>;
@@ -93,19 +96,6 @@ type LoadedImageMapRef<'a> = &'a DashMap<String, Image>;
 type InputStagingArea = Arc<DashMap<String, Vec<ProgramInput>>>;
 type InputStagingAreaRef<'a> = &'a DashMap<String, Vec<ProgramInput>>;
 
-#[derive(Debug, Clone)]
-pub struct UnresolvedInput {
-    pub index: u8,
-    pub url: Url,
-    pub input_type: ProgramInputType,
-}
-
-#[derive(Debug, Clone)]
-pub struct ResolvedInput {
-    pub index: u8,
-    pub data: Vec<u8>,
-    pub input_type: ProgramInputType,
-}
 pub struct Risc0Runner {
     config: Arc<ProverNodeConfig>,
     loaded_images: LoadedImageMap,
@@ -353,34 +343,44 @@ pub async fn handle_claim<'a>(
                     })
                 })
                 .await?;
-
-                if let Ok((journal, assumptions_digest, reciept)) = result {
-                    let compressed_receipt =
-                        risc0_compress_proof(config.stark_compression_tools_path.as_str(), reciept)
-                            .await
-                            .map_err(|e| {
-                                info!("Error compressing proof: {:?}", e);
-                                Risc0RunnerError::ProofCompressionError
-                            })?;
-
-                    let (input_digest, committed_outputs) = journal.bytes.split_at(32);
-                    let sig = transaction_sender
-                        .submit_proof(
-                            &eid,
-                            claim.requester,
-                            claim.program_callback,
-                            &compressed_receipt.proof,
-                            &compressed_receipt.execution_digest,
-                            input_digest,
-                            assumptions_digest.as_bytes(),
-                            committed_outputs,
-                            compressed_receipt.exit_code_system,
-                            compressed_receipt.exit_code_user,
+                match result {
+                    Ok((journal, assumptions_digest, reciept)) => {
+                        let compressed_receipt = risc0_compress_proof(
+                            config.stark_compression_tools_path.as_str(),
+                            reciept,
                         )
                         .await
-                        .map_err(|e| Risc0RunnerError::TransactionError(e.to_string()))?;
-                    info!("Proof submitted: {:?}", sig);
-                }
+                        .map_err(|e| {
+                            info!("Error compressing proof: {:?}", e);
+                            Risc0RunnerError::ProofCompressionError
+                        })?;
+
+                        let (input_digest, committed_outputs) = journal.bytes.split_at(32);
+                        let sig = transaction_sender
+                            .submit_proof(
+                                &eid,
+                                claim.requester,
+                                claim.program_callback,
+                                &compressed_receipt.proof,
+                                &compressed_receipt.execution_digest,
+                                input_digest,
+                                assumptions_digest.as_bytes(),
+                                committed_outputs,
+                                claim.additional_accounts,
+                                compressed_receipt.exit_code_system,
+                                compressed_receipt.exit_code_user,
+                            )
+                            .await
+                            .map_err(|e| {
+                                error!("Error submitting proof: {:?}", e);
+                                Risc0RunnerError::TransactionError(e.to_string())
+                            })?;
+                        info!("Proof submitted: {:?}", sig);
+                    }
+                    Err(e) => {
+                        info!("Error generating proof: {:?}", e);
+                    }
+                };
                 in_flight_proofs.remove(&eid);
             } else {
                 info!("Image not loaded, fatal error aborting execution");
@@ -501,6 +501,20 @@ async fn handle_execution_request<'a>(
                             requester: accounts[0],
                             program_callback: callback,
                             forward_output: exec.forward_output(),
+                            additional_accounts: exec
+                                .callback_extra_accounts()
+                                .unwrap_or_default()
+                                .into_iter()
+                                .map(|a| {
+                                    let (pkbytes, writable) = a.0.split_at(32);
+                                    let pubkey = Pubkey::try_from(pkbytes).unwrap_or_default();
+                                    AccountMeta {
+                                        pubkey,
+                                        is_writable: writable[0] == 1,
+                                        is_signer: false,
+                                    }
+                                })
+                                .collect(),
                         },
                     );
                     emit_event!(MetricEvents::ClaimAttempt, execution_id => eid);
@@ -569,19 +583,21 @@ fn risc0_prove(
     memory_image: MemoryImage,
     sorted_inputs: Vec<ProgramInput>,
 ) -> Result<(Journal, Digest, SuccinctReceipt<ReceiptClaim>)> {
+    let image_id = memory_image.compute_id().to_string();
     let mut exec = new_risc0_exec_env(memory_image, sorted_inputs)?;
     let session = exec.run()?;
     // Obtain the default prover.
     let prover = get_risc0_prover()?;
     let ctx = VerifierContext::default();
     let info = emit_event_with_duration!(MetricEvents::ProofGeneration,{
+        
         prover.prove_session(&ctx, &session)
     }, system => "risc0")?;
-    emit_histogram!(MetricEvents::ProofSegments, info.stats.segments as f64, system => "risc0");
-    emit_histogram!(MetricEvents::ProofCycles, info.stats.total_cycles as f64, system => "risc0", cycle_type => "total");
-    emit_histogram!(MetricEvents::ProofCycles, info.stats.user_cycles as f64, system => "risc0", cycle_type => "user");
+    emit_histogram!(MetricEvents::ProofSegments, info.stats.segments as f64, system => "risc0", image_id => &image_id);
+    emit_histogram!(MetricEvents::ProofCycles, info.stats.total_cycles as f64, system => "risc0", cycle_type => "total", image_id => &image_id);
+    emit_histogram!(MetricEvents::ProofCycles, info.stats.user_cycles as f64, system => "risc0", cycle_type => "user", image_id => &image_id);
     if let InnerReceipt::Composite(cr) = &info.receipt.inner {
-        let sr = emit_event_with_duration!(MetricEvents::ProofConversion,{ prover.composite_to_succinct(&cr)}, system => "risc0")?;
+        let sr = emit_event_with_duration!(MetricEvents::ProofConversion,{ prover.composite_to_succinct(&cr) }, system => "risc0")?;
         let ident_receipt = identity_p254(&sr)?;
         if let MaybePruned::Value(rc) = sr.claim {
             if let MaybePruned::Value(Some(op)) = rc.output {

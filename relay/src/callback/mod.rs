@@ -60,6 +60,7 @@ pub trait TransactionSender {
         input_digest: &[u8],
         assumption_digest: &[u8],
         committed_outputs: &[u8],
+        additional_accounts: Vec<AccountMeta>,
         exit_code_system: u32,
         exit_code_user: u32,
     ) -> Result<Signature>;
@@ -208,6 +209,7 @@ impl TransactionSender for RpcTransactionSender {
         input_digest: &[u8],
         assumption_digest: &[u8],
         committed_outputs: &[u8],
+        additional_accounts: Vec<AccountMeta>,
         exit_code_system: u32,
         exit_code_user: u32,
     ) -> Result<Signature> {
@@ -217,8 +219,8 @@ impl TransactionSender for RpcTransactionSender {
             None => (self.bonsol_program, vec![]),
             Some(pe) => {
                 let prog = pe.program_id;
-                //todo: call simulation on program to get other accounts
-                (prog, vec![])
+                //todo: add read interface simulation on program to get other accounts
+                (prog, additional_accounts)
             }
         };
 

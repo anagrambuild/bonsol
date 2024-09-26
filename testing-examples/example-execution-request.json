@@ -21,7 +21,7 @@
     "instructionPrefix": [1],
     "extraAccounts": [
       {
-        "pubkey": "BoNsHRcyLLNdtnoDf8hiCNZpyehMC4FDMxs6NTxFi3ew",
+        "pubkey": "exay1T7QqsJPNcwzMiWubR6vZnqrgM16jZRraHgqBGG",
         "isSigner": false,
         "isWritable": false
       }

@@ -103,6 +103,7 @@ pub fn process_status_v1<'a>(
             st.exit_code_user(),
         )?;
         let verified = verify_risc0(proof, &inputs)?;
+        let tip = er.tip();
         if verified {
             let callback_program_set =
                 sol_memcmp(sa.callback_program.key.as_ref(), crate::ID.as_ref(), 32) != 0;
@@ -124,7 +125,7 @@ pub fn process_status_v1<'a>(
                 let mut ainfos = vec![sa.exec.clone(), sa.callback_program.clone()];
                 ainfos.extend(sa.extra_accounts.iter().cloned());
                 // ER is the signer, it is reuired to save the execution id in the calling program
-                let mut accounts = vec![AccountMeta::new(*sa.exec.key, true)];
+                let mut accounts = vec![AccountMeta::new_readonly(*sa.exec.key, true)];
                 if let Some(extra_accounts) = er.callback_extra_accounts() {
                     if extra_accounts.len() != sa.extra_accounts.len() {
                         return Err(ChannelError::InvalidCallbackExtraAccounts.into());
@@ -142,6 +143,7 @@ pub fn process_status_v1<'a>(
                             accounts.push(AccountMeta::new(*a.key, false));
                         } else {
                             if stored_a.writable() {
+                                //maybe relax this for devs?
                                 return Err(ChannelError::InvalidCallbackExtraAccounts.into());
                             }
                             accounts.push(AccountMeta::new_readonly(*a.key, false));
@@ -159,6 +161,7 @@ pub fn process_status_v1<'a>(
                 };
                 let callback_ix =
                     Instruction::new_with_bytes(*sa.callback_program.key, &payload, accounts);
+                drop(er_ref);
                 let res = invoke_signed(&callback_ix, &ainfos, &[&seeds]);
                 match res {
                     Ok(_) => {}
@@ -167,8 +170,7 @@ pub fn process_status_v1<'a>(
                     }
                 }
             }
-            let tip = er.tip();
-            drop(er_ref);
+            // add curve reduction here
             payout_tip(sa.exec, sa.prover, tip)?;
             cleanup_execution_account(sa.exec, sa.requester, ExitCode::Success as u8)?;
         } else {

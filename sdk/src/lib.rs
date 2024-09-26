@@ -197,7 +197,7 @@ impl BonsolClient {
         signer: impl Signer,
         instructions: Vec<Instruction>,
     ) -> Result<()> {
-        self.send_txn(signer, instructions, true, 1, 5).await
+        self.send_txn(signer, instructions, false, 1, 5).await
     }
 
     pub async fn send_txn(
@@ -219,7 +219,7 @@ impl BonsolClient {
                 .send_transaction_with_config(
                     &tx,
                     RpcSendTransactionConfig {
-                        skip_preflight: true,
+                        skip_preflight,
                         max_retries: Some(0),
                         ..Default::default()
                     },
