@@ -1,0 +1,90 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "bonsol-provernode.fullname" . }}
+  labels:
+    {{- include "bonsol-provernode.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.provernode.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "bonsol-provernode.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/secrets.yaml") . | sha256sum }}
+      {{- with .Values.provernode.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "bonsol-provernode.labels" . | nindent 8 }}
+        {{- with .Values.provernode.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.provernode.image.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml (default (dict) .Values.provernode.podSecurityContext) | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml (default (dict) .Values.provernode.securityContext) | nindent 12 }}
+          image: "{{ .Values.provernode.image.repository }}:{{ .Values.provernode.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ default "IfNotPresent" .Values.provernode.image.pullPolicy }}
+          command:
+          - /usr/opt/bonsol/relay
+          - -f
+          - {{ .Values.provernode.config.filename }}
+          {{- if and (hasKey .Values.provernode "env") (.Values.provernode.env) }}
+          env:
+          {{- range $k,$v := .Values.provernode.env }}
+          - name: {{ $k }}
+            value: {{ $v | quote }}
+          {{- end }}
+          {{- end }}
+          ports:  
+          - containerPort: 9000
+          resources:
+            {{- toYaml (default (dict) .Values.provernode.resources) | nindent 12 }}
+
+          volumeMounts:
+            - name: key # only works with keypair signer for now
+              mountPath: {{ .Values.signer.path }}
+              subPath: {{ base .Values.signer.path }}
+            - name: images
+              mountPath: /opt/bonsol/risc0_images 
+            - name: config
+              mountPath: {{ .Values.provernode.config.filename }}
+              subPath: {{ base .Values.provernode.config.filename }}
+            {{- with .Values.provernode.volumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+      volumes:
+        - name: config
+          secret:
+            secretName: {{ include "bonsol-provernode.fullname" . }}
+        - name: images
+          hostPath:
+            path: /opt/bonsol/risc0_images/
+            type: DirectoryOrCreate
+        - name: key
+          secret:
+            secretName: {{ include "bonsol-provernode.fullname" . }}
+        {{- with .Values.provernode.volumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.provernode.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.provernode.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.provernode.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

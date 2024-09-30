@@ -16,7 +16,7 @@ Stage 1: Dawn (current stage)
         * Prover Supply Integrations
 * Community Building
 
-## Local Development
+# Local Development
 
 ### Prequisites:
 docker

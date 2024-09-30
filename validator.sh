@@ -1,4 +1,5 @@
 #!/bin/zsh
+export COPYFILE_DISABLE=1
 cargo --version
 cargo build-sbf && solana-test-validator \
    --limit-ledger-size 0 \
