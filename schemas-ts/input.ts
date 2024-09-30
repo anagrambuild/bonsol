@@ -5,7 +5,7 @@ import * as flatbuffers from 'flatbuffers';
 import { InputType } from './input-type.js';
 
 
-export class Input {
+export class Input implements flatbuffers.IUnpackableObject<InputT> {
   bb: flatbuffers.ByteBuffer|null = null;
   bb_pos = 0;
   __init(i:number, bb:flatbuffers.ByteBuffer):Input {
@@ -88,5 +88,35 @@ static createInput(builder:flatbuffers.Builder, inputType:InputType, dataOffset:
   Input.addInputType(builder, inputType);
   Input.addData(builder, dataOffset);
   return Input.endInput(builder);
+}
+
+unpack(): InputT {
+  return new InputT(
+    this.inputType(),
+    this.bb!.createScalarList<number>(this.data.bind(this), this.dataLength())
+  );
+}
+
+
+unpackTo(_o: InputT): void {
+  _o.inputType = this.inputType();
+  _o.data = this.bb!.createScalarList<number>(this.data.bind(this), this.dataLength());
+}
+}
+
+export class InputT implements flatbuffers.IGeneratedObject {
+constructor(
+  public inputType: InputType = InputType.PublicData,
+  public data: (number)[] = []
+){}
+
+
+pack(builder:flatbuffers.Builder): flatbuffers.Offset {
+  const data = Input.createDataVector(builder, this.data);
+
+  return Input.createInput(builder,
+    this.inputType,
+    data
+  );
 }
 }

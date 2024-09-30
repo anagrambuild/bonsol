@@ -1,7 +1,8 @@
-use solana_program::account_info::AccountInfo;
-use solana_program::program_memory;
-use solana_program::pubkey::{Pubkey, PUBKEY_BYTES};
-use solana_program::msg;
+use solana_program::{
+    account_info::AccountInfo,
+    program_memory,
+    pubkey::{Pubkey, PUBKEY_BYTES},
+};
 
 use crate::error::ChannelError;
 

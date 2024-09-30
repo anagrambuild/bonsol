@@ -3,12 +3,14 @@ use {
         providers::{Format, Toml},
         Figment,
     },
-    serde::Deserialize,
+    serde::Deserialize, std::path::Path
 };
 
 #[derive(Debug, Deserialize, Clone)]
 pub enum IngesterConfig {
-    RpcBlockSubscription { wss_rpc_url: String },
+    RpcBlockSubscription {
+        wss_rpc_url: String,
+    },
     GrpcSubscription {
         grpc_url: String,
         connection_timeout_secs: u32,
@@ -78,7 +80,7 @@ pub struct ProverNodeConfig {
 
 #[derive(Debug, Deserialize, Clone)]
 pub enum MetricsConfig {
-    Prometheus { },
+    Prometheus {},
     None,
 }
 
@@ -87,7 +89,7 @@ fn default_metrics_config() -> MetricsConfig {
 }
 
 fn default_stark_compression_tools_path() -> String {
-    "./stark ".to_string()
+    std::env::current_dir().unwrap_or(Path::new("./").into()).join("stark").to_string_lossy().to_string()
 }
 
 fn default_bonsol_program() -> String {

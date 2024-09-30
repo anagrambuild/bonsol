@@ -1,11 +1,13 @@
-use std::{fs::{self, File}, path::Path, process::Command, time::Duration};
+use std::fs::{self, File};
+use std::path::Path;
+use std::process::Command;
+use std::time::Duration;
 
 use crate::common::*;
 use anyhow::Result;
 use indicatif::ProgressBar;
 use risc0_zkvm::compute_image_id;
 use solana_sdk::signer::Signer;
-
 
 pub fn build(keypair: &impl Signer, zk_program_path: String) -> Result<()> {
     let bar = ProgressBar::new_spinner();
@@ -14,7 +16,9 @@ pub fn build(keypair: &impl Signer, zk_program_path: String) -> Result<()> {
     // ensure cargo risc0 is installed and has the plugin
     if !cargo_has_plugin("risczero") || !cargo_has_plugin("binstall") || !has_executable("docker") {
         bar.finish_and_clear();
-        return Err(anyhow::anyhow!("Please install cargo-risczero and cargo-binstall and docker"));
+        return Err(anyhow::anyhow!(
+            "Please install cargo-risczero and cargo-binstall and docker"
+        ));
     }
 
     let build_result = build_maifest(&image_path, &keypair);

@@ -73,6 +73,10 @@ pub enum ChannelError {
     InvalidDeploymentAccountPDA,
     #[error("Invalid Callback Extra Accounts")]
     InvalidCallbackExtraAccounts,
+    #[error("Invalid Input Type")]
+    InvalidInputType,
+    #[error("Deployment Already Exists")]
+    DeploymentAlreadyExists,
 }
 
 impl From<ChannelError> for ProgramError {

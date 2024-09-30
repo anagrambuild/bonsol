@@ -24,7 +24,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ExecutionRequestV1 = void 0;
+exports.ExecutionRequestV1T = exports.ExecutionRequestV1 = void 0;
 const flatbuffers = __importStar(require("flatbuffers"));
 const account_js_1 = require("./account.js");
 const input_js_1 = require("./input.js");
@@ -257,5 +257,47 @@ class ExecutionRequestV1 {
         ExecutionRequestV1.addCallbackExtraAccounts(builder, callbackExtraAccountsOffset);
         return ExecutionRequestV1.endExecutionRequestV1(builder);
     }
+    unpack() {
+        return new ExecutionRequestV1T(this.tip(), this.executionId(), this.imageId(), this.bb.createScalarList(this.callbackProgramId.bind(this), this.callbackProgramIdLength()), this.bb.createScalarList(this.callbackInstructionPrefix.bind(this), this.callbackInstructionPrefixLength()), this.forwardOutput(), this.verifyInputHash(), this.bb.createObjList(this.input.bind(this), this.inputLength()), this.bb.createScalarList(this.inputDigest.bind(this), this.inputDigestLength()), this.maxBlockHeight(), this.bb.createObjList(this.callbackExtraAccounts.bind(this), this.callbackExtraAccountsLength()));
+    }
+    unpackTo(_o) {
+        _o.tip = this.tip();
+        _o.executionId = this.executionId();
+        _o.imageId = this.imageId();
+        _o.callbackProgramId = this.bb.createScalarList(this.callbackProgramId.bind(this), this.callbackProgramIdLength());
+        _o.callbackInstructionPrefix = this.bb.createScalarList(this.callbackInstructionPrefix.bind(this), this.callbackInstructionPrefixLength());
+        _o.forwardOutput = this.forwardOutput();
+        _o.verifyInputHash = this.verifyInputHash();
+        _o.input = this.bb.createObjList(this.input.bind(this), this.inputLength());
+        _o.inputDigest = this.bb.createScalarList(this.inputDigest.bind(this), this.inputDigestLength());
+        _o.maxBlockHeight = this.maxBlockHeight();
+        _o.callbackExtraAccounts = this.bb.createObjList(this.callbackExtraAccounts.bind(this), this.callbackExtraAccountsLength());
+    }
 }
 exports.ExecutionRequestV1 = ExecutionRequestV1;
+class ExecutionRequestV1T {
+    constructor(tip = BigInt('0'), executionId = null, imageId = null, callbackProgramId = [], callbackInstructionPrefix = [], forwardOutput = false, verifyInputHash = true, input = [], inputDigest = [], maxBlockHeight = BigInt('0'), callbackExtraAccounts = []) {
+        this.tip = tip;
+        this.executionId = executionId;
+        this.imageId = imageId;
+        this.callbackProgramId = callbackProgramId;
+        this.callbackInstructionPrefix = callbackInstructionPrefix;
+        this.forwardOutput = forwardOutput;
+        this.verifyInputHash = verifyInputHash;
+        this.input = input;
+        this.inputDigest = inputDigest;
+        this.maxBlockHeight = maxBlockHeight;
+        this.callbackExtraAccounts = callbackExtraAccounts;
+    }
+    pack(builder) {
+        const executionId = (this.executionId !== null ? builder.createString(this.executionId) : 0);
+        const imageId = (this.imageId !== null ? builder.createString(this.imageId) : 0);
+        const callbackProgramId = ExecutionRequestV1.createCallbackProgramIdVector(builder, this.callbackProgramId);
+        const callbackInstructionPrefix = ExecutionRequestV1.createCallbackInstructionPrefixVector(builder, this.callbackInstructionPrefix);
+        const input = ExecutionRequestV1.createInputVector(builder, builder.createObjectOffsetList(this.input));
+        const inputDigest = ExecutionRequestV1.createInputDigestVector(builder, this.inputDigest);
+        const callbackExtraAccounts = builder.createStructOffsetList(this.callbackExtraAccounts, ExecutionRequestV1.startCallbackExtraAccountsVector);
+        return ExecutionRequestV1.createExecutionRequestV1(builder, this.tip, executionId, imageId, callbackProgramId, callbackInstructionPrefix, this.forwardOutput, this.verifyInputHash, input, inputDigest, this.maxBlockHeight, callbackExtraAccounts);
+    }
+}
+exports.ExecutionRequestV1T = ExecutionRequestV1T;

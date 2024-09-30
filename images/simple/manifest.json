@@ -1,11 +1,11 @@
 {
   "name": "simple",
   "binaryPath": "images/simple/target/riscv-guest/riscv32im-risc0-zkvm-elf/docker/simple/simple",
-  "imageId": "20b9db715f989e3f57842787badafae101ce0b16202491bac1a3aebf573da0ba",
+  "imageId": "7cb4887749266c099ad1793e8a7d486a27ff1426d614ec0cc9ff50e686d17699",
   "inputOrder": [
     "Public",
     "Private"
   ],
-  "signature": "3mdQ6RUV5Bw9f1oUJhfif4GqVQpE8Tn7UfKTPLAs5yfseFMaR9NVZWXP7SXeybddccz7Dy3CbYDvNL8WqLnoGAjk",
-  "size": 266608
+  "signature": "5z41JDNieKmC7kDmEqbNK1YcUe34HNaXrXhZ59bH6CMPQZyv7pHJ6FDq2BysvHF5v3R25TQjK4qGq5SiduJbnBg8",
+  "size": 293364
 }

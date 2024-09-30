@@ -1,6 +1,6 @@
 import * as flatbuffers from 'flatbuffers';
 import { InputType } from './input-type.js';
-export declare class Input {
+export declare class Input implements flatbuffers.IUnpackableObject<InputT> {
     bb: flatbuffers.ByteBuffer | null;
     bb_pos: number;
     __init(i: number, bb: flatbuffers.ByteBuffer): Input;
@@ -18,4 +18,12 @@ export declare class Input {
     static startDataVector(builder: flatbuffers.Builder, numElems: number): void;
     static endInput(builder: flatbuffers.Builder): flatbuffers.Offset;
     static createInput(builder: flatbuffers.Builder, inputType: InputType, dataOffset: flatbuffers.Offset): flatbuffers.Offset;
+    unpack(): InputT;
+    unpackTo(_o: InputT): void;
+}
+export declare class InputT implements flatbuffers.IGeneratedObject {
+    inputType: InputType;
+    data: (number)[];
+    constructor(inputType?: InputType, data?: (number)[]);
+    pack(builder: flatbuffers.Builder): flatbuffers.Offset;
 }

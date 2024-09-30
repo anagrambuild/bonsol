@@ -4,6 +4,7 @@ members = [
   "onchain/channel",
   "onchain/channel-utils", 
   "onchain/channel-interface",
+  "onchain/example-callback-program",
   "relay",
   "schemas-rust",
   "cli",

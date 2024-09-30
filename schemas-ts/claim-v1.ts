@@ -4,7 +4,7 @@ import * as flatbuffers from 'flatbuffers';
 
 
 
-export class ClaimV1 {
+export class ClaimV1 implements flatbuffers.IUnpackableObject<ClaimV1T> {
   bb: flatbuffers.ByteBuffer|null = null;
   bb_pos = 0;
   __init(i:number, bb:flatbuffers.ByteBuffer):ClaimV1 {
@@ -75,5 +75,35 @@ static createClaimV1(builder:flatbuffers.Builder, executionIdOffset:flatbuffers.
   ClaimV1.addExecutionId(builder, executionIdOffset);
   ClaimV1.addBlockCommitment(builder, blockCommitment);
   return ClaimV1.endClaimV1(builder);
+}
+
+unpack(): ClaimV1T {
+  return new ClaimV1T(
+    this.executionId(),
+    this.blockCommitment()
+  );
+}
+
+
+unpackTo(_o: ClaimV1T): void {
+  _o.executionId = this.executionId();
+  _o.blockCommitment = this.blockCommitment();
+}
+}
+
+export class ClaimV1T implements flatbuffers.IGeneratedObject {
+constructor(
+  public executionId: string|Uint8Array|null = null,
+  public blockCommitment: bigint = BigInt('0')
+){}
+
+
+pack(builder:flatbuffers.Builder): flatbuffers.Offset {
+  const executionId = (this.executionId !== null ? builder.createString(this.executionId!) : 0);
+
+  return ClaimV1.createClaimV1(builder,
+    executionId,
+    this.blockCommitment
+  );
 }
 }

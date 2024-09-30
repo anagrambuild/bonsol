@@ -13,11 +13,11 @@ Here is an example of a valid execution request json file.
   "imageId": "20b9db715f989e3f57842787badafae101ce0b16202491bac1a3aebf573da0ba",
   "executionId": "9878798-987987-987987-987987",
   "tip": 100,
-  "maxBlockHeight": 100, // can also override with --expires-from-now flag
+  "maxBlockHeight": 100,
   "inputs": [
     {
       "inputType": "Public",
-      "data": "0x1234567890"
+      "data": "<base64 encoded data>"
     }
   ],
   "callbackConfig": {
@@ -33,11 +33,17 @@ Here is an example of a valid execution request json file.
   "executionConfig": {
     "verifyInputHash": true,
     "forwardOutput": true,
-    "inputHash": "0x1234567890" //sha256 hash of the input data if ommited the hash will be calculated
+    "inputHash": "<hex encoded sha256 hash of the input data>" //sha256 hash of the input data if ommited the hash will be calculated
   }
 }
 ```
-The json schema for the execution request is hosted [here](https://github.com/anagrambuild/bonsol/blob/main/schemas/execution_request_v1.schema.json).
+Many of the fields can be overriden with cli flags, the only required fields in the execution request json are 
+* "imageId"
+* "executionConfig"
+And the only way to set a callback config is through the json file.
+
+For example you can keep the execution file lightweight by using the cli flags. And make a input fule for changing inputs or even pipe the json into the command.
+Also if you omit the execution id the cli will generate a random one for you.
 
 #### Waiting 
 If you pass the `--wait` flag to the cli, the cli will wait for the execution to be completed and then return the result.
@@ -61,5 +67,4 @@ Error: Execution 9878798-987987-987987-987987 expired
 When everything is successful, the cli will return the result of the execution.
 ```bash 
 Execution 9878798-987987-987987-987987 completed successfully
-Callback: Program 1234567890 invoked successfully
 ```

@@ -1,5 +1,5 @@
 # syntax = docker/dockerfile:1.2
-ARG RUST_VERSION=1.77.0 
+ARG RUST_VERSION=1.80.0
 FROM rust:${RUST_VERSION} as chef
 RUN cargo install cargo-chef
 
@@ -9,8 +9,12 @@ COPY . .
 RUN cargo chef prepare --bin relay --recipe-path recipe.json
 
 FROM chef as builder
-ARG FLAVOR=standard  
-RUN apt-get update && apt-get install -y --no-install-recommends \
+ARG FLAVOR=standard
+
+RUN apt-get clean && \
+    rm -rf /var/lib/apt/lists/* && \
+    apt-get update --fix-missing && \
+    apt-get install -y --no-install-recommends \
     pkg-config \
     libssl-dev \
     software-properties-common \

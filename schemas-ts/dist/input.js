@@ -24,7 +24,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Input = void 0;
+exports.InputT = exports.Input = void 0;
 const flatbuffers = __importStar(require("flatbuffers"));
 const input_type_js_1 = require("./input-type.js");
 class Input {
@@ -97,5 +97,23 @@ class Input {
         Input.addData(builder, dataOffset);
         return Input.endInput(builder);
     }
+    unpack() {
+        return new InputT(this.inputType(), this.bb.createScalarList(this.data.bind(this), this.dataLength()));
+    }
+    unpackTo(_o) {
+        _o.inputType = this.inputType();
+        _o.data = this.bb.createScalarList(this.data.bind(this), this.dataLength());
+    }
 }
 exports.Input = Input;
+class InputT {
+    constructor(inputType = input_type_js_1.InputType.PublicData, data = []) {
+        this.inputType = inputType;
+        this.data = data;
+    }
+    pack(builder) {
+        const data = Input.createDataVector(builder, this.data);
+        return Input.createInput(builder, this.inputType, data);
+    }
+}
+exports.InputT = InputT;

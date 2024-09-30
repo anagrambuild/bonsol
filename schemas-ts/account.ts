@@ -2,7 +2,9 @@
 
 import * as flatbuffers from 'flatbuffers';
 
-export class Account {
+
+
+export class Account implements flatbuffers.IUnpackableObject<AccountT> {
   bb: flatbuffers.ByteBuffer|null = null;
   bb_pos = 0;
   __init(i:number, bb:flatbuffers.ByteBuffer):Account {
@@ -40,4 +42,32 @@ static createAccount(builder:flatbuffers.Builder, writable: boolean, pubkey: num
   return builder.offset();
 }
 
+
+unpack(): AccountT {
+  return new AccountT(
+    this.writable(),
+    this.bb!.createScalarList<number>(this.pubkey.bind(this), 32)
+  );
+}
+
+
+unpackTo(_o: AccountT): void {
+  _o.writable = this.writable();
+  _o.pubkey = this.bb!.createScalarList<number>(this.pubkey.bind(this), 32);
+}
+}
+
+export class AccountT implements flatbuffers.IGeneratedObject {
+constructor(
+  public writable: boolean = false,
+  public pubkey: (number)[] = []
+){}
+
+
+pack(builder:flatbuffers.Builder): flatbuffers.Offset {
+  return Account.createAccount(builder,
+    this.writable,
+    this.pubkey
+  );
+}
 }

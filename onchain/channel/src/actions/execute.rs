@@ -1,15 +1,13 @@
-use crate::assertions::*;
-use crate::error::ChannelError;
-use crate::utilities::*;
-use bonsol_channel_utils::execution_address_seeds;
-use bonsol_schema::root_as_deploy_v1;
-use bonsol_schema::root_as_input_set;
-use bonsol_schema::ChannelInstruction;
-use bonsol_schema::ExecutionRequestV1;
-use bonsol_schema::InputType;
-use solana_program::account_info::AccountInfo;
-use solana_program::system_program;
-use solana_program::bpf_loader_upgradeable;
+use crate::{assertions::*, error::ChannelError, utilities::*};
+
+use bonsol_channel_interface::{
+    bonsol_channel_utils::execution_address_seeds,
+    bonsol_schema::{
+        root_as_deploy_v1, root_as_input_set, ChannelInstruction, ExecutionRequestV1, InputType,
+    },
+};
+
+use solana_program::{account_info::AccountInfo, bpf_loader_upgradeable, system_program};
 
 pub struct ExecuteAccounts<'a, 'b> {
     pub requester: &'a AccountInfo<'a>,
@@ -63,6 +61,13 @@ impl<'a, 'b> ExecuteAccounts<'a, 'b> {
                 .map_err(|_| ChannelError::InvalidDeploymentAccount)?;
 
             let inputs = data.input().ok_or(ChannelError::InvalidInputs)?;
+            let invalid_input_type_count = inputs
+                .iter()
+                .filter(|i| i.input_type() == InputType::PrivateLocal)
+                .count();
+            if invalid_input_type_count > 0 {
+                return Err(ChannelError::InvalidInputType.into());
+            }
             // this should never be less than 1
             let required_input_size = deploy.inputs().map(|x| x.len()).unwrap_or(1);
             let mut num_sets = 0;
