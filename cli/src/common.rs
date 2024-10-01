@@ -155,7 +155,7 @@ pub async fn sol_check(rpc_client: String, pubkey: Pubkey) -> bool {
             return false;
         }
     }
-     false
+    false
 }
 
 pub fn execute_get_inputs(

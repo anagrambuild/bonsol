@@ -31,7 +31,7 @@ solana-pubsub-client = "=1.18.22"
 solana-transaction-status = "=1.18.22"
 solana-cli-config = "=1.18.22"
 yellowstone-grpc-client = "=1.15.4"
-yellowstone-grpc-proto ="=1.14.2"
+yellowstone-grpc-proto = "=1.14.2"
 risc0-zkvm = { git = "https://github.com/anagrambuild/risc0", branch = "v1.0.1-bonsai-fix", features = [
   "prove",
 ], default-features = false }

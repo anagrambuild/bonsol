@@ -18,11 +18,16 @@ pub fn handle_callback<'a>(
     let er_info = accounts
         .get(0)
         .ok_or::<ProgramError>(ClientError::InvalidCallbackInstructionAccounts.into())?;
-    
+
     if sol_memcmp(er_info.key.as_ref(), &execution_account.as_ref(), 32) != 0 {
         return Err(ClientError::InvalidCallbackInstructionAccounts.into());
     }
-    if sol_memcmp(er_info.owner.as_ref(), &bonsol_channel_utils::ID.as_ref(), 32) != 0 {
+    if sol_memcmp(
+        er_info.owner.as_ref(),
+        &bonsol_channel_utils::ID.as_ref(),
+        32,
+    ) != 0
+    {
         return Err(ClientError::InvalidCallbackInstructionAccounts.into());
     }
     if !er_info.is_signer {

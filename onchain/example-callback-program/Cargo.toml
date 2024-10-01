@@ -11,12 +11,14 @@ edition = "2021"
 test-sbf = []
 
 [dependencies]
-solana-program = {workspace = true}
-bonsol-channel-interface = { path = "../channel-interface", features = ["on-chain"], default-features = false}
+bonsol-channel-interface = { path = "../channel-interface", features = [
+  "on-chain",
+], default-features = false }
+solana-program = { workspace = true }
 
 [dev-dependencies]
-solana-program-test = {workspace = true}
-solana-sdk = {workspace = true}
+solana-program-test = { workspace = true }
+solana-sdk = { workspace = true }
 anyhow = { workspace = true }
 tokio-test = { workspace = true }
 

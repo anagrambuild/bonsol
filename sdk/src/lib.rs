@@ -248,12 +248,11 @@ impl BonsolClient {
                 tokio::time::sleep(Duration::from_millis(500)).await;
             };
 
-            
             match status {
                 Some(Ok(())) => {
                     return Ok(());
                 }
-                Some(Err(e)) => { 
+                Some(Err(e)) => {
                     return Err(anyhow::anyhow!("Transaction Falure Cannot Recover {:?}", e));
                 }
                 None => {

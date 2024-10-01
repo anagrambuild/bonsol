@@ -6,7 +6,7 @@ use tera::{Context, Tera};
 pub fn init_project(project_name: &str, dir: Option<String>) -> Result<()> {
     let pwd = std::env::current_dir()?;
     let project_path = if let Some(dir) = dir {
-        let dir =Path::new(&dir);
+        let dir = Path::new(&dir);
         if dir.is_relative() {
             pwd.join(dir).to_path_buf()
         } else {

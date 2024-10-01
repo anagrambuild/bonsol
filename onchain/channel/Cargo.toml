@@ -20,14 +20,16 @@ test-sbf = []
 [dependencies]
 ark-bn254 = "0.4.0"
 ark-serialize = "0.4.0"
-solana-program = { workspace = true }
+bonsol-channel-interface = { path = "../channel-interface", features = [
+  "on-chain",
+], default-features = false }
 flatbuffers = { workspace = true }
-thiserror = { workspace = true }
 groth16-solana = { version = "0.0.2" }
 hex = "0.4.2"
 hex-literal = "0.4.1"
 num-bigint = "0.4.4"
-bonsol-channel-interface = { path = "../channel-interface", features = ["on-chain"], default-features = false }
+solana-program = { workspace = true }
+thiserror = { workspace = true }
 
 [dev-dependencies]
 solana-program-test = { workspace = true }

@@ -3,7 +3,8 @@ use {
         providers::{Format, Toml},
         Figment,
     },
-    serde::Deserialize, std::path::Path
+    serde::Deserialize,
+    std::path::Path,
 };
 
 #[derive(Debug, Deserialize, Clone)]
@@ -89,7 +90,11 @@ fn default_metrics_config() -> MetricsConfig {
 }
 
 fn default_stark_compression_tools_path() -> String {
-    std::env::current_dir().unwrap_or(Path::new("./").into()).join("stark").to_string_lossy().to_string()
+    std::env::current_dir()
+        .unwrap_or(Path::new("./").into())
+        .join("stark")
+        .to_string_lossy()
+        .to_string()
 }
 
 fn default_bonsol_program() -> String {

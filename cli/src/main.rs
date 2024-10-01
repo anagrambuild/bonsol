@@ -15,9 +15,9 @@ use command::{BonsolCli, Commands};
 use common::sol_check;
 use solana_cli_config::{Config, CONFIG_FILE};
 use solana_sdk::signature::read_keypair_file;
+use solana_sdk::signer::Signer;
 use std::io::{self, Read};
 use std::path::Path;
-use solana_sdk::signer::Signer;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -43,7 +43,7 @@ async fn main() -> anyhow::Result<()> {
             anyhow::bail!("Please provide a keypair and rpc or a solana config file");
         }
     };
-    
+
     let keypair = read_keypair_file(Path::new(&kpp));
     if keypair.is_err() {
         anyhow::bail!("Invalid keypair");

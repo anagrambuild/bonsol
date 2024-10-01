@@ -143,6 +143,6 @@ async fn main() -> Result<()> {
         },
     }
     info!("Exited");
-    
+
     Ok(())
 }
