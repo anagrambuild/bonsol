@@ -1,8 +1,8 @@
 mod build;
 mod deploy;
 // mod execute;
-pub mod common;
 pub mod command;
+pub mod common;
 use clap::Parser;
 use command::{BonsolCli, Commands};
 use solana_cli_config::{Config, CONFIG_FILE};
@@ -37,16 +37,14 @@ async fn main() -> anyhow::Result<()> {
     let keypair = keypair.unwrap();
     let command = cli.command;
     match command {
-        Commands::Build { zk_program_path } => {
-           match build::build(&keypair, zk_program_path) {
-                Err(e) => {
-                    anyhow::bail!(e);
-                }
-                Ok(_) => {
-                    println!("Build complete");
-                }
+        Commands::Build { zk_program_path } => match build::build(&keypair, zk_program_path) {
+            Err(e) => {
+                anyhow::bail!(e);
             }
-        }
+            Ok(_) => {
+                println!("Build complete");
+            }
+        },
         Commands::Deploy {
             manifest_path,
             s3_upload,
@@ -54,9 +52,18 @@ async fn main() -> anyhow::Result<()> {
             auto_confirm,
             deploy_type,
         } => {
-            deploy::deploy(rpc, &keypair, manifest_path, s3_upload, shadow_drive_upload, auto_confirm, deploy_type).await?;
-        },
-       _ => {
+            deploy::deploy(
+                rpc,
+                &keypair,
+                manifest_path,
+                s3_upload,
+                shadow_drive_upload,
+                auto_confirm,
+                deploy_type,
+            )
+            .await?;
+        }
+        _ => {
             println!("Invalid command");
             return Ok(());
         }

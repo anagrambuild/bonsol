@@ -152,7 +152,8 @@ pub fn process_status_v1<'a>(
                     [
                         er.callback_instruction_prefix().unwrap().bytes(),
                         st.committed_outputs().unwrap().bytes(),
-                    ].concat()
+                    ]
+                    .concat()
                 } else {
                     er.callback_instruction_prefix().unwrap().bytes().to_vec()
                 };

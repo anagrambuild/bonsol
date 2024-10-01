@@ -41,8 +41,8 @@ use tokio::{fs::File, io::AsyncReadExt, process::Command, task::JoinSet};
 use tracing::{error, info};
 use {
     crate::types::{BonsolInstruction, ProgramExec},
-    bonsol_schema::{parse_ix_data, ChannelInstructionIxType},
     anyhow::Result,
+    bonsol_schema::{parse_ix_data, ChannelInstructionIxType},
     risc0_zkvm::{
         get_prover_server, recursion::identity_p254, sha::Digestible, ExecutorEnv, ExecutorImpl,
         ProverOpts, VerifierContext,
@@ -320,7 +320,9 @@ pub async fn handle_claim<'a>(
                 let start = SystemTime::now();
                 let since_the_epoch = start.duration_since(UNIX_EPOCH)?.as_secs();
                 image.last_used = since_the_epoch;
-                let mut inputs = input_staging_area.get_mut(execution_id).ok_or(Risc0RunnerError::InvalidData)?;
+                let mut inputs = input_staging_area
+                    .get_mut(execution_id)
+                    .ok_or(Risc0RunnerError::InvalidData)?;
                 let unresolved_count = inputs
                     .iter()
                     .filter(|i| match i {
@@ -328,10 +330,10 @@ pub async fn handle_claim<'a>(
                         _ => false,
                     })
                     .count();
-                
+
                 if unresolved_count > 0 {
                     info!("{} outstanding inputs", unresolved_count);
-              
+
                     emit_event_with_duration!(MetricEvents::InputDownload, {
                         input_resolver.resolve_private_inputs(execution_id, &mut inputs, Arc::new(transaction_sender)).await?;
                     }, execution_id => execution_id, stage => "private");
@@ -340,7 +342,9 @@ pub async fn handle_claim<'a>(
                 }
                 drop(inputs);
                 // drain the inputs and own them here, this is a bit of a hack but it works
-                let (eid, inputs) = input_staging_area.remove(execution_id).ok_or(Risc0RunnerError::InvalidData)?;
+                let (eid, inputs) = input_staging_area
+                    .remove(execution_id)
+                    .ok_or(Risc0RunnerError::InvalidData)?;
                 let mem_image = image.get_memory_image()?;
                 let result: Result<
                     (Journal, Digest, SuccinctReceipt<ReceiptClaim>),

@@ -9,8 +9,8 @@ use crate::{
     command::{DeployType, S3UploadDestination, ShadowDriveUpload},
     common::ZkProgramManifest,
 };
-use bonsol_sdk::{BonsolClient, ProgramInputType};
 use anyhow::Result;
+use bonsol_sdk::{BonsolClient, ProgramInputType};
 use byte_unit::{Byte, ByteUnit};
 use indicatif::ProgressBar;
 use object_store::{aws::AmazonS3Builder, ObjectStore};
@@ -105,48 +105,59 @@ pub async fn deploy(
             let shadow_drive = ShadowDriveClient::new(signer, &rpc_url);
             let alt_client = if let Some(alt_keypair) = shadow_drive_upload.alternate_keypair {
                 Some(ShadowDriveClient::new(
-                    read_keypair_file(Path::new(&alt_keypair)).map_err(|e| anyhow::anyhow!("Invalid keypair file: {:?}", e))?,
+                    read_keypair_file(Path::new(&alt_keypair))
+                        .map_err(|e| anyhow::anyhow!("Invalid keypair file: {:?}", e))?,
                     &rpc_url,
                 ))
             } else {
                 None
             };
             let sa = if storage_account == "create" {
-                let name = shadow_drive_upload.storage_account_name.unwrap_or(manifest.name.clone());
-                let min = std::cmp::max(((loaded_binary.len() as u64)/1024/1024)*2, 1);
+                let name = shadow_drive_upload
+                    .storage_account_name
+                    .unwrap_or(manifest.name.clone());
+                let min = std::cmp::max(((loaded_binary.len() as u64) / 1024 / 1024) * 2, 1);
                 let size = shadow_drive_upload.storage_account_size_mb.unwrap_or(min);
                 let res = if let Some(alt_client) = &alt_client {
-                    alt_client.create_storage_account(
-                        &name,
-                        Byte::from_unit(size as f64, ByteUnit::MB).map_err(|e| anyhow::anyhow!("Invalid size: {:?}", e))?,
-                        shadow_drive_sdk::StorageAccountVersion::V2,
-                    ).await
-                    .map_err(|e| anyhow::anyhow!("Error creating storage account: {:?}", e))?
+                    alt_client
+                        .create_storage_account(
+                            &name,
+                            Byte::from_unit(size as f64, ByteUnit::MB)
+                                .map_err(|e| anyhow::anyhow!("Invalid size: {:?}", e))?,
+                            shadow_drive_sdk::StorageAccountVersion::V2,
+                        )
+                        .await
+                        .map_err(|e| anyhow::anyhow!("Error creating storage account: {:?}", e))?
                 } else {
-
-                    println!("Creating storage account with {}MB under the name {} with {}", size,&name, signer.pubkey());
-
-                    shadow_drive.create_storage_account(
+                    println!(
+                        "Creating storage account with {}MB under the name {} with {}",
+                        size,
                         &name,
-                        Byte::from_unit(size as f64, ByteUnit::MB).map_err(|e| anyhow::anyhow!("Invalid size: {:?}", e))?,
-                        shadow_drive_sdk::StorageAccountVersion::V2,
-                    ).await
-                    .map_err(|e| anyhow::anyhow!("Error creating storage account: {:?}", e))?
+                        signer.pubkey()
+                    );
+
+                    shadow_drive
+                        .create_storage_account(
+                            &name,
+                            Byte::from_unit(size as f64, ByteUnit::MB)
+                                .map_err(|e| anyhow::anyhow!("Invalid size: {:?}", e))?,
+                            shadow_drive_sdk::StorageAccountVersion::V2,
+                        )
+                        .await
+                        .map_err(|e| anyhow::anyhow!("Error creating storage account: {:?}", e))?
                 };
-                res.shdw_bucket.ok_or(anyhow::anyhow!("Invalid storage account"))?
+                res.shdw_bucket
+                    .ok_or(anyhow::anyhow!("Invalid storage account"))?
             } else {
                 storage_account.to_string()
             };
-            
+
             let name = format!("{}-{}", manifest.name, manifest.image_id);
             let resp = if let Some(alt_client) = alt_client {
                 alt_client
                     .store_files(
                         &Pubkey::from_str(&sa)?,
-                        vec![ShadowFile::bytes(
-                            name,
-                            loaded_binary,
-                        )],
+                        vec![ShadowFile::bytes(name, loaded_binary)],
                     )
                     .await
                     .map_err(|e| anyhow::anyhow!("Error uploading to shadow drive: {:?}", e))?
@@ -154,10 +165,7 @@ pub async fn deploy(
                 shadow_drive
                     .store_files(
                         &Pubkey::from_str(&sa)?,
-                        vec![ShadowFile::bytes(
-                            name,
-                            loaded_binary,
-                        )],
+                        vec![ShadowFile::bytes(name, loaded_binary)],
                     )
                     .await
                     .map_err(|e| anyhow::anyhow!("Error uploading to shadow drive: {:?}", e))?
@@ -229,4 +237,3 @@ pub async fn deploy(
         }
     };
 }
-

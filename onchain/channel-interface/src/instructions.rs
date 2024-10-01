@@ -1,11 +1,10 @@
 use bonsol_channel_utils::{deployment_address, execution_address};
 use bonsol_schema::{
-    ChannelInstruction, ChannelInstructionArgs, ChannelInstructionIxType, DeployV1, DeployV1Args,
-    ExecutionRequestV1, ExecutionRequestV1Args, Input as FBBInput, InputBuilder,
-    InputType, ProgramInputType, Account,
+    Account, ChannelInstruction, ChannelInstructionArgs, ChannelInstructionIxType, DeployV1,
+    DeployV1Args, ExecutionRequestV1, ExecutionRequestV1Args, Input as FBBInput, InputBuilder,
+    InputType, ProgramInputType,
 };
 use flatbuffers::{FlatBufferBuilder, WIPOffset};
-
 
 use crate::error::ClientError;
 
@@ -17,13 +16,9 @@ use {
 
 #[cfg(not(feature = "on-chain"))]
 use {
-    solana_sdk::instruction::AccountMeta, solana_sdk::instruction::Instruction, solana_sdk::pubkey::Pubkey,
-    solana_sdk::system_program,
+    solana_sdk::instruction::AccountMeta, solana_sdk::instruction::Instruction,
+    solana_sdk::pubkey::Pubkey, solana_sdk::system_program,
 };
-
-
-
-
 
 pub fn deploy_v1(
     signer: &Pubkey,
@@ -164,21 +159,26 @@ pub fn execute_v1(
     let (deployment_account, _) = deployment_address(image_id);
     let mut fbb = FlatBufferBuilder::new();
     let mut callback_pubkey = None; // aviod clone
-    let (callback_program_id, callback_instruction_prefix, extra_accounts) = if let Some(cb) = callback {
-        callback_pubkey = Some(cb.program_id);
-        let cb_program_id = fbb.create_vector(cb.program_id.as_ref());
-        let cb_instruction_prefix = fbb.create_vector(cb.instruction_prefix.as_slice());
-        let ealen = cb.extra_accounts.len();
-        fbb.start_vector::<WIPOffset<Account>>(ealen);
-        for ea in cb.extra_accounts {
-            let pkbytes = arrayref::array_ref!(ea.pubkey.as_ref(), 0, 32);
-            let eab = Account::new(ea.is_writable, pkbytes);
-            fbb.push(eab);
-        }
-        (Some(cb_program_id), Some(cb_instruction_prefix), Some(fbb.end_vector(ealen)))
-    } else {
-        (None, None, None)
-    };
+    let (callback_program_id, callback_instruction_prefix, extra_accounts) =
+        if let Some(cb) = callback {
+            callback_pubkey = Some(cb.program_id);
+            let cb_program_id = fbb.create_vector(cb.program_id.as_ref());
+            let cb_instruction_prefix = fbb.create_vector(cb.instruction_prefix.as_slice());
+            let ealen = cb.extra_accounts.len();
+            fbb.start_vector::<WIPOffset<Account>>(ealen);
+            for ea in cb.extra_accounts {
+                let pkbytes = arrayref::array_ref!(ea.pubkey.as_ref(), 0, 32);
+                let eab = Account::new(ea.is_writable, pkbytes);
+                fbb.push(eab);
+            }
+            (
+                Some(cb_program_id),
+                Some(cb_instruction_prefix),
+                Some(fbb.end_vector(ealen)),
+            )
+        } else {
+            (None, None, None)
+        };
     let mut accounts = vec![
         AccountMeta::new(signer.to_owned(), true),
         AccountMeta::new(signer.to_owned(), true),
@@ -216,7 +216,7 @@ pub fn execute_v1(
     let fb_inputs = fbb.end_vector(inputlen);
     let image_id = fbb.create_string(image_id);
     let execution_id = fbb.create_string(execution_id);
-   
+
     let input_digest = if let Some(ih) = config.input_hash {
         Some(fbb.create_vector(ih.as_slice()))
     } else {

@@ -1,11 +1,11 @@
-mod execute;
-mod deploy;
 mod claim;
-mod status;
+mod deploy;
+mod execute;
 mod input_set;
+mod status;
 
-pub use execute::*;
-pub use deploy::*;
 pub use claim::*;
-pub use status::*;
+pub use deploy::*;
+pub use execute::*;
 pub use input_set::*;
+pub use status::*;

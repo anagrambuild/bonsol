@@ -7,10 +7,10 @@ use {
         instruction::{AccountMeta, Instruction},
         msg,
         program_error::ProgramError,
+        program_memory::sol_memcmp,
         pubkey::Pubkey,
         system_program,
-        program_memory::sol_memcmp
-    }
+    },
 };
 
 /// This is the callback handler for the bonsol program, use this to properly validate an incoming callback from bonsol
@@ -19,7 +19,7 @@ use {
 pub fn handle_callback<'a>(
     execution_account: Pubkey,
     accounts: &[AccountInfo],
-    stripped_data: &'a[u8],
+    stripped_data: &'a [u8],
 ) -> Result<&'a [u8], ProgramError> {
     let er_info = accounts
         .get(0)
@@ -39,13 +39,12 @@ pub fn handle_callback<'a>(
     Ok(stripped_data)
 }
 
-
 pub fn handle_callback_id<'a>(
     execution_id: &str,
     request_account: &Pubkey,
     accounts: &'a [AccountInfo<'a>],
     data: &'a [u8],
 ) -> Result<&'a [u8], ProgramError> {
-  let (execution_account, _) = execution_address(request_account, execution_id.as_bytes());
-  handle_callback(execution_account, accounts, data)
+    let (execution_account, _) = execution_address(request_account, execution_id.as_bytes());
+    handle_callback(execution_account, accounts, data)
 }

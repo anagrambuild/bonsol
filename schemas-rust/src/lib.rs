@@ -3,9 +3,9 @@ pub mod claim_v1_generated;
 pub mod deploy_v1_generated;
 pub mod execution_request_v1_generated;
 pub mod input_set_generated;
+pub mod input_set_op_v1_generated;
 pub mod input_type_generated;
 pub mod status_v1_generated;
-pub mod input_set_op_v1_generated;  
 use error::ChannelSchemaError;
 pub mod error;
 pub use {

@@ -1,2 +1,3 @@
-imports_granularity = "One"
+# This is a nightly only feature
+# imports_granularity = "One"
 reorder_imports = true

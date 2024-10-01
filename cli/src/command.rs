@@ -34,9 +34,8 @@ pub struct ShadowDriveUpload {
     #[arg(long)]
     pub storage_account_name: Option<String>,
     #[arg(long)]
-    pub alternate_keypair: Option<String>, // for testing on devnet but deploying to shadow drive 
+    pub alternate_keypair: Option<String>, // for testing on devnet but deploying to shadow drive
 }
-
 
 #[derive(Debug, Clone, ValueEnum)]
 pub enum DeployType {

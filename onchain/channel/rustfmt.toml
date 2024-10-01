@@ -1,2 +1,3 @@
-imports_granularity = "Module"
+# This is a nightly only feature
+# imports_granularity = "Module"
 reorder_imports = true

@@ -14,7 +14,7 @@ cargo install bonsol-cli --git https://github.com/anagrambuild/bonsol
 * `-k` or `--keypair` : The path to the keypair file
 * `-u` or `--rpc-url` : The url to the solana rpc
 
-If you dont provide a keypair or rpc url or a config, the cli will use  the default solana config file located in `~/.config/solana/`
+If you dont provide a keypair or rpc url or a config, the cli will use the default solana config file located in `~/.config/solana/`
 example:
 ```
 bonsol -k ./keypair.json -u http://localhost:8899 ...
@@ -36,7 +36,7 @@ The output of the build command is a manifest.json file which is placed in the r
  [package.metadata.zkprogram]
  input_order = [...]
  ```
- The input_order is an array of strings that are the names of the inputs to the program. The optionsa are `Public`, `Private`.
+ The input_order is an array of strings that are the names of the inputs to the program. The options are `Public`, `Private`.
  For each input you expect in the program you must add an entry to the input_order array. This is used in deloyment to configure the order of the inputs.
 
 ### Deploy

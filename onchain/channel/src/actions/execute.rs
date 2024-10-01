@@ -8,8 +8,8 @@ use bonsol_schema::ChannelInstruction;
 use bonsol_schema::ExecutionRequestV1;
 use bonsol_schema::InputType;
 use solana_program::account_info::AccountInfo;
-use solana_program::system_program;
 use solana_program::bpf_loader_upgradeable;
+use solana_program::system_program;
 
 pub struct ExecuteAccounts<'a, 'b> {
     pub requester: &'a AccountInfo<'a>,

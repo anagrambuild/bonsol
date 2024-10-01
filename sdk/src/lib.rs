@@ -1,5 +1,5 @@
 pub mod util;
-use instructions::{CallbackConfig, Input, ExecutionConfig};
+use instructions::{CallbackConfig, ExecutionConfig, Input};
 use serde::{Deserialize, Serialize, Serializer};
 use {
     anyhow::Result,

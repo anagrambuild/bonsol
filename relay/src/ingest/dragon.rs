@@ -76,7 +76,6 @@ impl Ingester for GrpcIngester {
                                     let meta = soltxn.get_status_meta();
                                     //unwrap so we can consume
                                     if let VersionedMessage::V0(msg) = txndata.message {
-
                                         let bonsolixs = msg
                                             .instructions
                                             .into_iter()

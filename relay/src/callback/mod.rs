@@ -1,11 +1,14 @@
 use std::sync::Arc;
 
-use bonsol_channel_utils::deployment_address;
 use async_trait::async_trait;
+use bonsol_channel_utils::deployment_address;
 use dashmap::DashMap;
 use itertools::Itertools;
 use solana_sdk::{
-    account::Account, message::{v0, VersionedMessage}, signer::SignerError, transaction::VersionedTransaction
+    account::Account,
+    message::{v0, VersionedMessage},
+    signer::SignerError,
+    transaction::VersionedTransaction,
 };
 use solana_transaction_status::TransactionStatus;
 use tokio::task::JoinHandle;
@@ -28,7 +31,7 @@ use {
         instruction::{AccountMeta, Instruction},
         pubkey::Pubkey,
         signature::Keypair,
-        signer::Signer
+        signer::Signer,
     },
     tracing::{error, info},
 };
@@ -85,13 +88,16 @@ impl Signer for RpcTransactionSender {
     fn sign_message(&self, message: &[u8]) -> Signature {
         self.signer.sign_message(message)
     }
-    
-    fn try_sign_message(&self, message: &[u8]) -> std::result::Result<Signature, solana_sdk::signer::SignerError> {
+
+    fn try_sign_message(
+        &self,
+        message: &[u8],
+    ) -> std::result::Result<Signature, solana_sdk::signer::SignerError> {
         self.signer.try_sign_message(message)
     }
-    
+
     fn is_interactive(&self) -> bool {
-        false 
+        false
     }
 }
 
@@ -322,8 +328,7 @@ impl TransactionSender for RpcTransactionSender {
 
     async fn get_deployment_account(&self, image_id: &str) -> Result<Account> {
         let (deployment_account, _) = deployment_address(image_id);
-        self
-            .rpc_client
+        self.rpc_client
             .get_account(&deployment_account)
             .await
             .map_err(|e| anyhow::anyhow!("Failed to get account: {:?}", e))

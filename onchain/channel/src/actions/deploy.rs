@@ -6,8 +6,8 @@ use bonsol_channel_utils::img_id_hash;
 use bonsol_schema::ChannelInstruction;
 use bonsol_schema::DeployV1;
 use solana_program::account_info::AccountInfo;
-use solana_program::system_program;
 use solana_program::msg;
+use solana_program::system_program;
 
 pub struct DeployAccounts<'a, 'b> {
     pub deployer: &'a AccountInfo<'a>,

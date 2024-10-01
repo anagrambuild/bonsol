@@ -1,6 +1,6 @@
-pub use tracing::{info, instrument};
 pub use metrics::{counter, gauge, histogram, Unit};
 pub use std::time::Instant;
+pub use tracing::{info, instrument};
 
 #[derive(strum_macros::Display)]
 pub enum MetricEvents {
@@ -23,7 +23,7 @@ pub enum MetricEvents {
     ProofCycles,
     ProofSegments,
     BonsolStartup,
-    SignaturesInFlight
+    SignaturesInFlight,
 }
 
 macro_rules! emit_event {
@@ -53,7 +53,7 @@ macro_rules! emit_event_with_duration {
 macro_rules! emit_counter {
     ($event:expr, $value:expr, $($field_name:expr => $field_value:expr)*) => {
       info!(event = $event.to_string(), $($field_name = $field_value),*, "{} = {}", $event, $value);
-      let c = counter!("counters", "counter" => $event.to_string()); 
+      let c = counter!("counters", "counter" => $event.to_string());
       c.increment($value);
     };
 }
@@ -61,7 +61,7 @@ macro_rules! emit_counter {
 macro_rules! emit_gauge {
     ($event:expr, $value:expr, $($field_name:ident => $field_value:expr),*) => {
         info!(event = $event.to_string(), $($field_name = $field_value),*, "{} = {}", $event, $value);
-        let g = gauge!("gauges", "gauge" => $event.to_string()); 
+        let g = gauge!("gauges", "gauge" => $event.to_string());
         g.set($value);
     };
 }

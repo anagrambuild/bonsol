@@ -103,7 +103,8 @@ pub fn prepare_inputs(
         &4u16.to_le_bytes(),
     ])
     .to_bytes();
-    let (c0,c1) = split_digest(&mut CONTROL_ROOT.clone()).map_err(|_| ChannelError::InvalidFieldElement)?;
+    let (c0, c1) =
+        split_digest(&mut CONTROL_ROOT.clone()).map_err(|_| ChannelError::InvalidFieldElement)?;
     let (half1_bytes, half2_bytes) =
         split_digest(&mut digest).map_err(|_| ChannelError::InvalidFieldElement)?;
     let inputs = [
@@ -117,15 +118,13 @@ pub fn prepare_inputs(
     Ok(inputs)
 }
 
-pub fn split_digest(d: &mut [u8]) -> Result<([u8;32], [u8;32]), ChannelError> {
+pub fn split_digest(d: &mut [u8]) -> Result<([u8; 32], [u8; 32]), ChannelError> {
     d.reverse();
     let (a, b) = d.split_at(16);
     let af = to_fixed_array(a.to_vec());
     let bf = to_fixed_array(b.to_vec());
     Ok((bf, af))
 }
-
-
 
 fn to_fixed_array(input: Vec<u8>) -> [u8; 32] {
     let mut fixed_array = [0u8; 32];
