@@ -61,11 +61,17 @@
             inherit (workspace) src;
             strictDeps = true;
 
+            nativeBuildInputs = with pkgs; [
+              pkg-config
+            ];
+
             buildInputs = with pkgs; [
+              openssl.dev
               (r0vm.overrideAttrs {
                 version = "1.0.1";
               })
               solana-cli
+              self.packages.${system}.cargo-risczero
             ];
           };
 
@@ -224,8 +230,6 @@
               nil # nix lsp
               nixpkgs-fmt # nix formatter
               # pkgs.cargo-hakari
-            ] ++ [
-              self.packages.${system}.cargo-risczero
             ];
           };
 
