@@ -1,6 +1,133 @@
+[sources]
+allow-git = ["https://github.com/anagrambuild/risc0"]
+
 [bans]
 multiple-versions = 'allow'
 
 [licenses]
 private = { ignore = true }
-allow = ["Apache-2.0", "BSD-3-Clause", "MIT", "Unicode-DFS-2016"]
+allow = [
+  "0BSD",
+  "Apache-2.0",
+  "BSD-2-Clause",
+  "BSD-3-Clause",
+  "BSL-1.0",
+  "GPL-3.0",
+  "ISC",
+  "LGPL-3.0",
+  "MIT",
+  "MPL-2.0",
+  "OpenSSL",
+  "Unicode-DFS-2016",
+]
+
+# Copied from https://github.com/EmbarkStudios/cargo-deny/blob/6344cc566621410a0865632b4ef0e82a20408676/deny.toml#L63
+[[licenses.clarify]]
+crate = "ring"
+# SPDX considers OpenSSL to encompass both the OpenSSL and SSLeay licenses
+# https://spdx.org/licenses/OpenSSL.html
+# ISC - Both BoringSSL and ring use this for their new files
+# MIT - "Files in third_party/ have their own licenses, as described therein. The MIT
+# license, for third_party/fiat, which, unlike other third_party directories, is
+# compiled into non-test libraries, is included below."
+# OpenSSL - Obviously
+expression = "ISC AND MIT AND OpenSSL"
+license-files = [{ path = "LICENSE", hash = 0xbd0eed23 }]
+
+[advisories]
+version = 2
+ignore = [
+  # Needs triage:
+  # Removing the following objects will cause `cargo deny check` to fail, which will give more information
+  # on the vulnerability and how to potentially solve it. Ideally, this list would be as small as possible.
+
+  # SECURITY:
+  { id = "RUSTSEC-2024-0376", reason = """
+    Unable to update dependency of dependency: `tonic`. The vulnerability may have been handled upstream,
+    but this would require us to bump the version of `yellowstone-grpc-client` and possibly other dependencies.
+
+    Cause:    Remotely exploitable Denial of Service in Tonic
+    Solution: Upgrade to >=0.12.3
+  """ },
+  { id = "RUSTSEC-2024-0358", reason = """
+    Unable to update dependency of dependency: `object_store`. The vulnerability may have been handled upstream,
+    but this would require us to bump the versions of some `bonsol-cli` dependencies.
+
+    Cause:    Apache Arrow Rust Object Store: AWS WebIdentityToken exposure in log files
+    Solution: Upgrade to >=0.10.2
+  """ },
+  { id = "RUSTSEC-2022-0093", reason = """
+    Unable to update dependency of dependency: `ed25519-dalek`. The vulnerability may have been handled upstream,
+    but this would require us to bump the version of `solana-sdk` and possibly other dependencies.
+
+    Cause:    Double Public Key Signing Function Oracle Attack on `ed25519-dalek`
+    Solution: Upgrade to >=2
+  """ },
+  { id = "RUSTSEC-2024-0344", reason = """
+    Unable to update dependency of dependency: `curve25519-dalek`. The vulnerability may have been handled upstream,
+    but this would require us to bump the version of `solana-sdk` and possibly other dependencies.
+
+    Cause:    Timing variability in `curve25519-dalek`'s `Scalar29::sub`/`Scalar52::sub`
+    Solution: Upgrade to >=4.1.3
+  """ },
+
+  # UNSOUND:
+  { id = "RUSTSEC-2023-0042", reason = """
+    Unable to update dependency of dependency: `ouroboros`. The vulnerability may have been handled upstream,
+    but this would require us to bump the version of `solana-accounts-db` and possibly other dependencies.
+
+    Cause:    Ouroboros is Unsound
+    Solution: Upgrade to >=0.16.0
+  """ },
+  { id = "RUSTSEC-2023-0033", reason = """
+    Unable to update dependency of dependency: `borsh`. The vulnerability may have been handled upstream,
+    but this would require us to bump the version of `shadow-drive-sdk` and possibly other dependencies.
+
+    Cause:    Parsing borsh messages with ZST which are not-copy/clone is unsound
+    Solution: Upgrade to >=1.0.0-alpha.1 OR ^0.10.4
+  """ },
+  { id = "RUSTSEC-2021-0145", reason = """
+    Unable to update dependency of dependency: `atty`.
+    A Pull Request with a fix has been provided over a year ago but the maintainer seems to be unreachable.
+
+    The `atty` maintainer recommends `std::io::IsTerminal` as the replacement and has given official notice
+    that the crate is no longer being developed. See RUSTSEC-2024-0375 below.
+
+    Cause:    Potential unaligned read
+    Solution: No safe upgrade is available!
+  """ },
+
+  # UNMAINTAINED:
+  { id = "RUSTSEC-2024-0370", reason = """
+    Unmaintained dependency of dependency: `proc-macro-error`. The vulnerability may have been handled upstream,
+    but this would require us to bump the version of `solana-runtime` and possibly other dependencies.
+
+    Cause:    proc-macro-error is unmaintained
+    Solution: No safe upgrade is available!
+  """ },
+  { id = "RUSTSEC-2020-0077", reason = """
+    The `relay` crate relies on `memmap` which is unmaintained, there are alternatives that
+    could be used in its place, such as `memmap2`.
+
+    Cause:    memmap is unmaintained
+    Solution: No safe upgrade is available!
+  """ },
+  { id = "RUSTSEC-2024-0375", reason = """
+    Unmaintained dependency of dependency: `atty`.
+
+    The `atty` maintainer recommends `std::io::IsTerminal` as the replacement and has given official notice
+    that the crate is no longer being developed.
+
+    Cause:    `atty` is unmaintained
+    Solution: No safe upgrade is available!
+  """ },
+  { id = "RUSTSEC-2021-0139", reason = """
+    Unmaintained dependency of dependency: `ansi_term`.
+
+    The maintainer has advised that this crate is deprecated and will not receive any maintenance. 
+    The crate does not seem to have much dependencies and may or may not be ok to use as-is.
+
+    Cause:    `ansi_term` is unmaintained
+    Solution: No safe upgrade is available!
+  """ },
+]
