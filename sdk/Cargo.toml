@@ -8,6 +8,9 @@ publish = false     # Exclude local crates from licensing checks
 anyhow = "1.0.86"
 tokio = "1.36.0"
 serde = { version = "1.0.197" }
+solana-sdk = { workspace = true }
+solana-rpc-client = { workspace = true}
+solana-rpc-client-api = { workspace = true }
 serde_json = "1.0.104"
 bytes = "1.5.0"
 num-traits = "0.2.16"

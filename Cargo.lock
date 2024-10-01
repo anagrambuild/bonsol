@@ -1264,6 +1264,9 @@ dependencies = [
  "risc0-zkvm",
  "serde",
  "serde_json",
+ "solana-rpc-client",
+ "solana-rpc-client-api",
+ "solana-sdk",
  "tokio",
 ]
 
@@ -9101,8 +9104,9 @@ dependencies = [
 
 [[package]]
 name = "yellowstone-grpc-client"
-version = "1.15.0+solana.1.18.22"
-source = "git+https://github.com/rpcpool/yellowstone-grpc?tag=v1.15.0+solana.1.18.22#ab40cdc6a8251d0242e13d61716cf8fa386cad90"
+version = "1.15.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b7945d9c2fee7b5bb2da9d472223f693c68448f56183b25cc80b746e9562a81c"
 dependencies = [
  "bytes",
  "futures",
@@ -9114,8 +9118,9 @@ dependencies = [
 
 [[package]]
 name = "yellowstone-grpc-proto"
-version = "1.14.0+solana.1.18.22"
-source = "git+https://github.com/rpcpool/yellowstone-grpc?tag=v1.15.0+solana.1.18.22#ab40cdc6a8251d0242e13d61716cf8fa386cad90"
+version = "1.14.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4646f98268c421e97e6242b2f3a513b7e886a8fa368d48be015c65c4b6d58de8"
 dependencies = [
  "anyhow",
  "bincode",
