@@ -10,6 +10,9 @@ edition = "2021"
 [dependencies]
 flatbuffers = { workspace = true }
 thiserror = { workspace = true }
+num-traits = "0.2.15"
+num-derive = "0.3.3"
+bytemuck = "1.7.2"
 
 [lints]
 workspace = true

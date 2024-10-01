@@ -24,7 +24,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.DeployV1 = void 0;
+exports.DeployV1T = exports.DeployV1 = void 0;
 const flatbuffers = __importStar(require("flatbuffers"));
 class DeployV1 {
     constructor() {
@@ -152,5 +152,35 @@ class DeployV1 {
         DeployV1.addInputs(builder, inputsOffset);
         return DeployV1.endDeployV1(builder);
     }
+    unpack() {
+        return new DeployV1T(this.bb.createScalarList(this.owner.bind(this), this.ownerLength()), this.imageId(), this.programName(), this.url(), this.size(), this.bb.createScalarList(this.inputs.bind(this), this.inputsLength()));
+    }
+    unpackTo(_o) {
+        _o.owner = this.bb.createScalarList(this.owner.bind(this), this.ownerLength());
+        _o.imageId = this.imageId();
+        _o.programName = this.programName();
+        _o.url = this.url();
+        _o.size = this.size();
+        _o.inputs = this.bb.createScalarList(this.inputs.bind(this), this.inputsLength());
+    }
 }
 exports.DeployV1 = DeployV1;
+class DeployV1T {
+    constructor(owner = [], imageId = null, programName = null, url = null, size = BigInt('0'), inputs = []) {
+        this.owner = owner;
+        this.imageId = imageId;
+        this.programName = programName;
+        this.url = url;
+        this.size = size;
+        this.inputs = inputs;
+    }
+    pack(builder) {
+        const owner = DeployV1.createOwnerVector(builder, this.owner);
+        const imageId = (this.imageId !== null ? builder.createString(this.imageId) : 0);
+        const programName = (this.programName !== null ? builder.createString(this.programName) : 0);
+        const url = (this.url !== null ? builder.createString(this.url) : 0);
+        const inputs = DeployV1.createInputsVector(builder, this.inputs);
+        return DeployV1.createDeployV1(builder, owner, imageId, programName, url, this.size, inputs);
+    }
+}
+exports.DeployV1T = DeployV1T;

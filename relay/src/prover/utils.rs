@@ -1,14 +1,16 @@
-use anyhow::{Context, Result};
-use iop::*;
-use num_bigint::BigUint;
-use num_traits::Num;
-use risc0_core::field::baby_bear::BabyBearElem;
-use risc0_zkp::core::{
-    digest::{Digest, DIGEST_WORDS},
-    hash::poseidon_254::digest_to_fr,
+use {
+    anyhow::{Context, Result},
+    iop::*,
+    num_bigint::BigUint,
+    num_traits::Num,
+    risc0_core::field::baby_bear::BabyBearElem,
+    risc0_zkp::core::{
+        digest::{Digest, DIGEST_WORDS},
+        hash::poseidon_254::digest_to_fr,
+    },
+    std::io::Write,
+    tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt},
 };
-use std::io::Write;
-use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt};
 
 pub async fn async_to_json<
     R: AsyncRead + std::marker::Unpin,

@@ -8,7 +8,7 @@ pub mod config;
 mod prover;
 use {
     anyhow::Result,
-    bonsol_sdk::input_resolver::DeafultInputResolver,
+    bonsol_sdk::input_resolver::DefaultInputResolver,
     callback::{RpcTransactionSender, TransactionSender},
     config::*,
     ingest::{GrpcIngester, Ingester, RpcIngester},
@@ -112,7 +112,7 @@ async fn main() -> Result<()> {
         _ => return Err(CliError::InvalidRpcUrl.into()),
     };
     transaction_sender.start();
-    let input_resolver = DeafultInputResolver::new(
+    let input_resolver = DefaultInputResolver::new(
         Arc::new(reqwest::Client::new()),
         Arc::new(solana_rpc_client),
     );
@@ -143,5 +143,6 @@ async fn main() -> Result<()> {
         },
     }
     info!("Exited");
+    
     Ok(())
 }

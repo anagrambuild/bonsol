@@ -16,9 +16,18 @@ A note on pulling data from the solana blockchain or urls. Work is in process to
 Private inputs are inputs that are passed in the execution request. There is only one type of private input.
 
 * `PrivateUrl` - A url that the prover will pull data from and use as a private input. This is a complicated one and caveats apply. Once a prover node has claimed the execution request, it must sign a request to the private input server to get the private input. The private input server will return the private input to the prover node. The input is no longer globally private so use this in scenarios where its okay if the prover node can see the input. We reccomend looking at Proof Composition through the `PublicProof` input type as an alternative to this.
+* `PrivateLocal` - Only used when running local proofs.
 
 ## Input Sets
 
 Input sets are used to pass multiple inputs to the prover. This is like a preconfigured set of inputs that a developer has made to simplify the process of passing inputs to the prover. It also can help with complex applications where immutability of most of the inputs is desired. For seasoned solana devs think of this as being like and account lookup table.
+
+## Public Proof Inputs
+Proof inputs are actually urls to a location on the internet that the prover will pull the data from. The data will be a risc0 reciept. They are too big to fit in a single solana transaction so it usually takes many many transactions to post them to solana. This is why we treat them as url inputs. They must be deliniated from public url inputs so that the prover can add them to the risc0 zkvm in a special way. The bonsol cli has a method to allow you to locally prove something and get the output as a json payload. While json is less efficient than a binary format, it is easier to reason about by more developers. The json file will be hundreds of kilobytes in size and will contain the reciept which is the proof(seail) and the output of the execution.
+
+:::info
+Public proof inputs will not be added to the input hash of the execution request. This may change in the future, but for now we must use other techniques to ensure the prover properly handled the proof input and sent the correct proof in. 
+:::
+
 
 

@@ -1,5 +1,4 @@
-use crate::error::ChannelError;
-use crate::verifying_key::VERIFYINGKEY;
+use crate::{error::ChannelError, verifying_key::VERIFYINGKEY};
 use ark_serialize::{CanonicalDeserialize, CanonicalSerialize, Compress, Validate};
 use groth16_solana::groth16::Groth16Verifier;
 use hex_literal::hex;

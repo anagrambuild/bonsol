@@ -5,7 +5,7 @@ import * as flatbuffers from 'flatbuffers';
 import { ProgramInputType } from './program-input-type.js';
 
 
-export class DeployV1 {
+export class DeployV1 implements flatbuffers.IUnpackableObject<DeployV1T> {
   bb: flatbuffers.ByteBuffer|null = null;
   bb_pos = 0;
   __init(i:number, bb:flatbuffers.ByteBuffer):DeployV1 {
@@ -164,5 +164,55 @@ static createDeployV1(builder:flatbuffers.Builder, ownerOffset:flatbuffers.Offse
   DeployV1.addSize(builder, size);
   DeployV1.addInputs(builder, inputsOffset);
   return DeployV1.endDeployV1(builder);
+}
+
+unpack(): DeployV1T {
+  return new DeployV1T(
+    this.bb!.createScalarList<number>(this.owner.bind(this), this.ownerLength()),
+    this.imageId(),
+    this.programName(),
+    this.url(),
+    this.size(),
+    this.bb!.createScalarList<ProgramInputType>(this.inputs.bind(this), this.inputsLength())
+  );
+}
+
+
+unpackTo(_o: DeployV1T): void {
+  _o.owner = this.bb!.createScalarList<number>(this.owner.bind(this), this.ownerLength());
+  _o.imageId = this.imageId();
+  _o.programName = this.programName();
+  _o.url = this.url();
+  _o.size = this.size();
+  _o.inputs = this.bb!.createScalarList<ProgramInputType>(this.inputs.bind(this), this.inputsLength());
+}
+}
+
+export class DeployV1T implements flatbuffers.IGeneratedObject {
+constructor(
+  public owner: (number)[] = [],
+  public imageId: string|Uint8Array|null = null,
+  public programName: string|Uint8Array|null = null,
+  public url: string|Uint8Array|null = null,
+  public size: bigint = BigInt('0'),
+  public inputs: (ProgramInputType)[] = []
+){}
+
+
+pack(builder:flatbuffers.Builder): flatbuffers.Offset {
+  const owner = DeployV1.createOwnerVector(builder, this.owner);
+  const imageId = (this.imageId !== null ? builder.createString(this.imageId!) : 0);
+  const programName = (this.programName !== null ? builder.createString(this.programName!) : 0);
+  const url = (this.url !== null ? builder.createString(this.url!) : 0);
+  const inputs = DeployV1.createInputsVector(builder, this.inputs);
+
+  return DeployV1.createDeployV1(builder,
+    owner,
+    imageId,
+    programName,
+    url,
+    this.size,
+    inputs
+  );
 }
 }

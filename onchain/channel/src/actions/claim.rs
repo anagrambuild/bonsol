@@ -1,20 +1,18 @@
-use bonsol_channel_utils::execution_claim_address_seeds;
-use bonsol_schema::root_as_execution_request_v1;
-use bonsol_schema::{ChannelInstruction, ClaimV1};
-use bytemuck::{Pod, Zeroable};
-use solana_program::account_info::AccountInfo;
-use solana_program::program_error::ProgramError;
-use solana_program::program_memory::sol_memcpy;
-use solana_program::pubkey::Pubkey;
-use solana_program::system_program;
-use solana_program::sysvar::Sysvar;
+use bonsol_channel_interface::{
+    bonsol_channel_utils::{execution_address_seeds, execution_claim_address_seeds},
+    bonsol_schema::{root_as_execution_request_v1, ChannelInstruction, ClaimV1},
+    claim_state::ClaimStateV1,
+};
 
-use crate::assertions::*;
-use crate::error::ChannelError;
-use crate::utilities::*;
+use solana_program::{
+    account_info::AccountInfo, msg, program_error::ProgramError, system_program, sysvar::Sysvar,
+};
+
+use crate::{assertions::*, error::ChannelError, utilities::*};
 
 pub struct ClaimAccounts<'a, 'b> {
     pub exec: &'a AccountInfo<'a>,
+    pub requester: &'a AccountInfo<'a>,
     pub exec_claim: &'a AccountInfo<'a>,
     pub claimer: &'a AccountInfo<'a>,
     pub payer: &'a AccountInfo<'a>,
@@ -23,56 +21,40 @@ pub struct ClaimAccounts<'a, 'b> {
     pub block_commitment: u64,
     pub existing_claim: bool,
     pub stake: u64,
-}
-
-#[repr(C)]
-#[derive(Pod, Copy, Clone, Zeroable)]
-pub struct Claim {
-    pub claimer: [u8; 32],
-    pub claimed_at: u64,
-    pub block_commitment: u64,
-}
-
-impl Claim {
-    pub fn load_claim<'a>(ca_data: &'a mut [u8]) -> Result<&'a Self, ChannelError> {
-        bytemuck::try_from_bytes::<Claim>(ca_data).map_err(|_| ChannelError::InvalidClaimAccount)
-    }
-
-    pub fn from_claim_ix(claimer: &Pubkey, slot: u64, block_commitment: u64) -> Self {
-        Claim {
-            claimer: claimer.to_bytes(),
-            claimed_at: slot,
-            block_commitment,
-        }
-    }
-
-    pub fn save_claim(claim: &Claim, ca: &AccountInfo) {
-        let claim_data = bytemuck::bytes_of(claim);
-        sol_memcpy(&mut ca.data.borrow_mut(), &claim_data, claim_data.len());
-    }
+    pub expired: bool,
 }
 
 impl<'a, 'b> ClaimAccounts<'a, 'b> {
     fn from_instruction(
         accounts: &'a [AccountInfo<'a>],
         data: &'b ClaimV1<'b>,
+        current_block: u64,
     ) -> Result<Self, ChannelError> {
         if let Some(executionid) = data.execution_id() {
             let mut ca = ClaimAccounts {
                 exec: &accounts[0],
-                exec_claim: &accounts[1],
-                claimer: &accounts[2],
-                payer: &accounts[3],
-                system_program: &accounts[4],
+                requester: &accounts[1],
+                exec_claim: &accounts[2],
+                claimer: &accounts[3],
+                payer: &accounts[4],
+                system_program: &accounts[5],
                 execution_id: executionid,
                 block_commitment: data.block_commitment(),
                 existing_claim: false,
                 stake: 0,
+                expired: false,
             };
             check_writable_signer(ca.payer, ChannelError::InvalidPayerAccount)?;
             check_writable_signer(ca.claimer, ChannelError::InvalidClaimerAccount)?;
             check_writeable(ca.exec_claim, ChannelError::InvalidClaimAccount)?;
+            check_writeable(ca.exec, ChannelError::InvalidExecutionAccount)?;
             check_owner(ca.exec, &crate::ID, ChannelError::InvalidExecutionAccount)?;
+            let exec_seeds = execution_address_seeds(ca.requester.key, executionid.as_bytes());
+            check_pda(
+                &exec_seeds,
+                ca.exec.key,
+                ChannelError::InvalidExecutionAccount,
+            )?;
             let exec_data = ca
                 .exec
                 .try_borrow_data()
@@ -89,8 +71,12 @@ impl<'a, 'b> ClaimAccounts<'a, 'b> {
             if ca.claimer.lamports() < tip {
                 return Err(ChannelError::InsufficientStake.into());
             }
+            if execution_request.max_block_height() < current_block {
+                ca.expired = true;
+            }
+            // make this more dynamic
             ca.stake = tip / 2;
-            let mut exec_claim_seeds = execution_claim_address_seeds(executionid.as_bytes());
+            let mut exec_claim_seeds = execution_claim_address_seeds(ca.exec.key.as_ref());
             let bump = [check_pda(
                 &exec_claim_seeds,
                 ca.exec_claim.key,
@@ -101,7 +87,7 @@ impl<'a, 'b> ClaimAccounts<'a, 'b> {
                 create_program_account(
                     ca.exec_claim,
                     &exec_claim_seeds,
-                    std::mem::size_of::<Claim>() as u64,
+                    std::mem::size_of::<ClaimStateV1>() as u64,
                     ca.payer,
                     ca.system_program,
                     None,
@@ -126,25 +112,32 @@ pub fn process_claim_v1<'a>(
         return Err(ChannelError::InvalidInstruction.into());
     }
     let cl = cl.unwrap();
-    let ca = ClaimAccounts::from_instruction(accounts, &cl)?;
     let current_block = solana_program::clock::Clock::get()?.slot;
-
+    let ca = ClaimAccounts::from_instruction(accounts, &cl, current_block)?;
+    if ca.expired {
+        cleanup_execution_account(ca.exec, ca.claimer, ChannelError::ExecutionExpired as u8)?;
+        msg!("Execution expired");
+        return Ok(());
+    }
     if ca.existing_claim {
         let mut data = ca.exec_claim.try_borrow_mut_data()?;
-        let current_claim = Claim::load_claim(*data)?;
+        let current_claim =
+            ClaimStateV1::load_claim(*data).map_err(|_| ChannelError::InvalidClaimAccount)?;
         transfer_owned(ca.exec_claim, ca.claimer, ca.stake)?;
         if current_block > current_claim.block_commitment {
-            let claim = Claim::from_claim_ix(&ca.claimer.key, current_block, ca.block_commitment);
+            let claim =
+                ClaimStateV1::from_claim_ix(&ca.claimer.key, current_block, ca.block_commitment);
             drop(data);
-            Claim::save_claim(&claim, ca.exec_claim);
+            ClaimStateV1::save_claim(&claim, ca.exec_claim);
             transfer_unowned(ca.claimer, ca.exec_claim, ca.stake)
         } else {
             Err(ChannelError::ActiveClaimExists.into())
         }
     } else {
-        let claim = Claim::from_claim_ix(&ca.claimer.key, current_block, ca.block_commitment);
+        let claim =
+            ClaimStateV1::from_claim_ix(&ca.claimer.key, current_block, ca.block_commitment);
         transfer_unowned(ca.claimer, ca.exec_claim, ca.stake)?;
-        Claim::save_claim(&claim, ca.exec_claim);
+        ClaimStateV1::save_claim(&claim, ca.exec_claim);
         Ok(())
     }
 }

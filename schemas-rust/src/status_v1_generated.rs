@@ -2,11 +2,7 @@
 
 // @generated
 
-use core::cmp::Ordering;
-use core::mem;
-
 extern crate flatbuffers;
-use self::flatbuffers::{EndianScalar, Follow};
 
 #[deprecated(
     since = "2.0.0",
@@ -177,6 +173,29 @@ impl<'a> StatusV1<'a> {
         builder.finish()
     }
 
+    pub fn unpack(&self) -> StatusV1T {
+        let execution_id = self.execution_id().map(|x| x.to_string());
+        let status = self.status();
+        let proof = self.proof().map(|x| x.into_iter().collect());
+        let execution_digest = self.execution_digest().map(|x| x.into_iter().collect());
+        let input_digest = self.input_digest().map(|x| x.into_iter().collect());
+        let committed_outputs = self.committed_outputs().map(|x| x.into_iter().collect());
+        let assumption_digest = self.assumption_digest().map(|x| x.into_iter().collect());
+        let exit_code_system = self.exit_code_system();
+        let exit_code_user = self.exit_code_user();
+        StatusV1T {
+            execution_id,
+            status,
+            proof,
+            execution_digest,
+            input_digest,
+            committed_outputs,
+            assumption_digest,
+            exit_code_system,
+            exit_code_user,
+        }
+    }
+
     #[inline]
     pub fn execution_id(&self) -> Option<&'a str> {
         // Safety:
@@ -293,7 +312,6 @@ impl flatbuffers::Verifiable for StatusV1<'_> {
         v: &mut flatbuffers::Verifier,
         pos: usize,
     ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
-        use self::flatbuffers::Verifiable;
         v.visit_table(pos)?
             .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
                 "execution_id",
@@ -456,6 +474,73 @@ impl core::fmt::Debug for StatusV1<'_> {
         ds.field("exit_code_system", &self.exit_code_system());
         ds.field("exit_code_user", &self.exit_code_user());
         ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct StatusV1T {
+    pub execution_id: Option<String>,
+    pub status: StatusTypes,
+    pub proof: Option<Vec<u8>>,
+    pub execution_digest: Option<Vec<u8>>,
+    pub input_digest: Option<Vec<u8>>,
+    pub committed_outputs: Option<Vec<u8>>,
+    pub assumption_digest: Option<Vec<u8>>,
+    pub exit_code_system: u32,
+    pub exit_code_user: u32,
+}
+impl Default for StatusV1T {
+    fn default() -> Self {
+        Self {
+            execution_id: None,
+            status: StatusTypes::Unknown,
+            proof: None,
+            execution_digest: None,
+            input_digest: None,
+            committed_outputs: None,
+            assumption_digest: None,
+            exit_code_system: 0,
+            exit_code_user: 0,
+        }
+    }
+}
+impl StatusV1T {
+    pub fn pack<'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b>,
+    ) -> flatbuffers::WIPOffset<StatusV1<'b>> {
+        let execution_id = self.execution_id.as_ref().map(|x| _fbb.create_string(x));
+        let status = self.status;
+        let proof = self.proof.as_ref().map(|x| _fbb.create_vector(x));
+        let execution_digest = self
+            .execution_digest
+            .as_ref()
+            .map(|x| _fbb.create_vector(x));
+        let input_digest = self.input_digest.as_ref().map(|x| _fbb.create_vector(x));
+        let committed_outputs = self
+            .committed_outputs
+            .as_ref()
+            .map(|x| _fbb.create_vector(x));
+        let assumption_digest = self
+            .assumption_digest
+            .as_ref()
+            .map(|x| _fbb.create_vector(x));
+        let exit_code_system = self.exit_code_system;
+        let exit_code_user = self.exit_code_user;
+        StatusV1::create(
+            _fbb,
+            &StatusV1Args {
+                execution_id,
+                status,
+                proof,
+                execution_digest,
+                input_digest,
+                committed_outputs,
+                assumption_digest,
+                exit_code_system,
+                exit_code_user,
+            },
+        )
     }
 }
 #[inline]

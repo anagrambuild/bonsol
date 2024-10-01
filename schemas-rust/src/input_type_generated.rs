@@ -2,11 +2,7 @@
 
 // @generated
 
-use core::cmp::Ordering;
-use core::mem;
-
 extern crate flatbuffers;
-use self::flatbuffers::{EndianScalar, Follow};
 
 #[deprecated(
     since = "2.0.0",
@@ -120,13 +116,13 @@ pub const ENUM_MIN_INPUT_TYPE: u8 = 0;
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
-pub const ENUM_MAX_INPUT_TYPE: u8 = 7;
+pub const ENUM_MAX_INPUT_TYPE: u8 = 8;
 #[deprecated(
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_INPUT_TYPE: [InputType; 7] = [
+pub const ENUM_VALUES_INPUT_TYPE: [InputType; 8] = [
     InputType::Unknown,
     InputType::PublicData,
     InputType::PublicAccountData,
@@ -134,6 +130,7 @@ pub const ENUM_VALUES_INPUT_TYPE: [InputType; 7] = [
     InputType::Private,
     InputType::InputSet,
     InputType::PublicProof,
+    InputType::PrivateLocal,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -148,9 +145,10 @@ impl InputType {
     pub const Private: Self = Self(5);
     pub const InputSet: Self = Self(6);
     pub const PublicProof: Self = Self(7);
+    pub const PrivateLocal: Self = Self(8);
 
     pub const ENUM_MIN: u8 = 0;
-    pub const ENUM_MAX: u8 = 7;
+    pub const ENUM_MAX: u8 = 8;
     pub const ENUM_VALUES: &'static [Self] = &[
         Self::Unknown,
         Self::PublicData,
@@ -159,6 +157,7 @@ impl InputType {
         Self::Private,
         Self::InputSet,
         Self::PublicProof,
+        Self::PrivateLocal,
     ];
     /// Returns the variant's name or "" if unknown.
     pub fn variant_name(self) -> Option<&'static str> {
@@ -170,6 +169,7 @@ impl InputType {
             Self::Private => Some("Private"),
             Self::InputSet => Some("InputSet"),
             Self::PublicProof => Some("PublicProof"),
+            Self::PrivateLocal => Some("PrivateLocal"),
             _ => None,
         }
     }
@@ -264,6 +264,12 @@ impl<'a> Input<'a> {
         builder.finish()
     }
 
+    pub fn unpack(&self) -> InputT {
+        let input_type = self.input_type();
+        let data = self.data().map(|x| x.into_iter().collect());
+        InputT { input_type, data }
+    }
+
     #[inline]
     pub fn input_type(&self) -> InputType {
         // Safety:
@@ -296,7 +302,6 @@ impl flatbuffers::Verifiable for Input<'_> {
         v: &mut flatbuffers::Verifier,
         pos: usize,
     ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
-        use self::flatbuffers::Verifiable;
         v.visit_table(pos)?
             .visit_field::<InputType>("input_type", Self::VT_INPUT_TYPE, false)?
             .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, u8>>>(
@@ -358,5 +363,29 @@ impl core::fmt::Debug for Input<'_> {
         ds.field("input_type", &self.input_type());
         ds.field("data", &self.data());
         ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct InputT {
+    pub input_type: InputType,
+    pub data: Option<Vec<u8>>,
+}
+impl Default for InputT {
+    fn default() -> Self {
+        Self {
+            input_type: InputType::PublicData,
+            data: None,
+        }
+    }
+}
+impl InputT {
+    pub fn pack<'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b>,
+    ) -> flatbuffers::WIPOffset<Input<'b>> {
+        let input_type = self.input_type;
+        let data = self.data.as_ref().map(|x| _fbb.create_vector(x));
+        Input::create(_fbb, &InputArgs { input_type, data })
     }
 }

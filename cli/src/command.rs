@@ -1,5 +1,4 @@
 use clap::{command, Args, Parser, Subcommand, ValueEnum};
-
 #[derive(Parser, Debug)]
 #[command(version)]
 pub struct BonsolCli {
@@ -37,10 +36,17 @@ pub struct ShadowDriveUpload {
     pub alternate_keypair: Option<String>, // for testing on devnet but deploying to shadow drive
 }
 
+#[derive(Debug, Clone, Args)]
+pub struct UrlUploadDestination {
+    #[arg(long)]
+    pub url: String,
+}
+
 #[derive(Debug, Clone, ValueEnum)]
 pub enum DeployType {
     S3,
     ShadowDrive,
+    Url,
 }
 
 #[derive(Subcommand, Debug)]
@@ -54,6 +60,8 @@ pub enum Commands {
         s3_upload: S3UploadDestination,
         #[clap(flatten)]
         shadow_drive_upload: ShadowDriveUpload,
+        #[clap(flatten)]
+        url_upload: UrlUploadDestination,
         #[arg(short = 'y', long)]
         auto_confirm: bool,
     },
@@ -62,23 +70,42 @@ pub enum Commands {
         zk_program_path: String,
     },
     Execute {
+        #[arg(short = 'f', long)]
+        execution_request_file: Option<String>,
+        // overridable settings
         #[arg(short = 'p', long)]
-        program_id: String,
-        #[arg(short, long)]
-        inputs: Option<Vec<String>>,
-        #[arg(short, long)]
-        input_file: Option<String>,
-        #[arg(short, long)]
-        tip: Option<u64>,
-        #[arg(short, long)]
+        program_id: Option<String>,
+        #[arg(short = 'e', long)]
+        execution_id: Option<String>,
+        #[arg(short = 'x', long)]
         expiry: Option<u64>,
+        #[arg(short = 'm', long)]
+        tip: Option<u64>,
+        #[arg(short = 'i')]
+        input_file: Option<String>, // overrides inputs in execution request file
+        /// wait for execution to be proven
+        #[arg(short = 'w', long)]
+        wait: bool,
+        /// timeout in seconds
+        #[arg(short = 't', long)]
+        timeout: Option<u64>,
     },
     Prove {
         #[arg(short = 'm', long)]
         manifest_path: Option<String>,
-        #[arg(short, long)]
-        inputs: Option<Vec<String>>,
-        #[arg(short, long)]
+        #[arg(short = 'p', long)]
+        program_id: Option<String>,
+        #[arg(short = 'i')]
         input_file: Option<String>,
+        #[arg(short = 'e', long)]
+        execution_id: String,
+        #[arg(short = 'o')]
+        output_location: Option<String>,
+    },
+    Init {
+        #[arg(short = 'd', long)]
+        dir: Option<String>,
+        #[arg(short = 'n', long)]
+        project_name: String,
     },
 }

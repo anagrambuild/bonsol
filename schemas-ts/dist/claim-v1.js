@@ -24,7 +24,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ClaimV1 = void 0;
+exports.ClaimV1T = exports.ClaimV1 = void 0;
 const flatbuffers = __importStar(require("flatbuffers"));
 class ClaimV1 {
     constructor() {
@@ -84,5 +84,23 @@ class ClaimV1 {
         ClaimV1.addBlockCommitment(builder, blockCommitment);
         return ClaimV1.endClaimV1(builder);
     }
+    unpack() {
+        return new ClaimV1T(this.executionId(), this.blockCommitment());
+    }
+    unpackTo(_o) {
+        _o.executionId = this.executionId();
+        _o.blockCommitment = this.blockCommitment();
+    }
 }
 exports.ClaimV1 = ClaimV1;
+class ClaimV1T {
+    constructor(executionId = null, blockCommitment = BigInt('0')) {
+        this.executionId = executionId;
+        this.blockCommitment = blockCommitment;
+    }
+    pack(builder) {
+        const executionId = (this.executionId !== null ? builder.createString(this.executionId) : 0);
+        return ClaimV1.createClaimV1(builder, executionId, this.blockCommitment);
+    }
+}
+exports.ClaimV1T = ClaimV1T;

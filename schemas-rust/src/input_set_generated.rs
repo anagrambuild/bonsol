@@ -3,11 +3,8 @@
 // @generated
 
 use crate::input_type_generated::*;
-use core::cmp::Ordering;
-use core::mem;
 
 extern crate flatbuffers;
-use self::flatbuffers::{EndianScalar, Follow};
 
 pub enum InputSetOffset {}
 #[derive(Copy, Clone, PartialEq)]
@@ -45,6 +42,13 @@ impl<'a> InputSet<'a> {
         builder.finish()
     }
 
+    pub fn unpack(&self) -> InputSetT {
+        let inputs = self
+            .inputs()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        InputSetT { inputs }
+    }
+
     #[inline]
     pub fn inputs(
         &self,
@@ -66,7 +70,6 @@ impl flatbuffers::Verifiable for InputSet<'_> {
         v: &mut flatbuffers::Verifier,
         pos: usize,
     ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
-        use self::flatbuffers::Verifiable;
         v.visit_table(pos)?
             .visit_field::<flatbuffers::ForwardsUOffset<
                 flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<Input>>,
@@ -122,6 +125,28 @@ impl core::fmt::Debug for InputSet<'_> {
         let mut ds = f.debug_struct("InputSet");
         ds.field("inputs", &self.inputs());
         ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct InputSetT {
+    pub inputs: Option<Vec<InputT>>,
+}
+impl Default for InputSetT {
+    fn default() -> Self {
+        Self { inputs: None }
+    }
+}
+impl InputSetT {
+    pub fn pack<'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b>,
+    ) -> flatbuffers::WIPOffset<InputSet<'b>> {
+        let inputs = self.inputs.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        InputSet::create(_fbb, &InputSetArgs { inputs })
     }
 }
 #[inline]

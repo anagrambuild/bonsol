@@ -5,7 +5,7 @@ import * as flatbuffers from 'flatbuffers';
 import { ChannelInstructionIxType } from './channel-instruction-ix-type.js';
 
 
-export class ChannelInstruction {
+export class ChannelInstruction implements flatbuffers.IUnpackableObject<ChannelInstructionT> {
   bb: flatbuffers.ByteBuffer|null = null;
   bb_pos = 0;
   __init(i:number, bb:flatbuffers.ByteBuffer):ChannelInstruction {
@@ -224,5 +224,55 @@ static createChannelInstruction(builder:flatbuffers.Builder, ixType:ChannelInstr
   ChannelInstruction.addClaimV1(builder, claimV1Offset);
   ChannelInstruction.addInputSetV1(builder, inputSetV1Offset);
   return ChannelInstruction.endChannelInstruction(builder);
+}
+
+unpack(): ChannelInstructionT {
+  return new ChannelInstructionT(
+    this.ixType(),
+    this.bb!.createScalarList<number>(this.executeV1.bind(this), this.executeV1Length()),
+    this.bb!.createScalarList<number>(this.statusV1.bind(this), this.statusV1Length()),
+    this.bb!.createScalarList<number>(this.deployV1.bind(this), this.deployV1Length()),
+    this.bb!.createScalarList<number>(this.claimV1.bind(this), this.claimV1Length()),
+    this.bb!.createScalarList<number>(this.inputSetV1.bind(this), this.inputSetV1Length())
+  );
+}
+
+
+unpackTo(_o: ChannelInstructionT): void {
+  _o.ixType = this.ixType();
+  _o.executeV1 = this.bb!.createScalarList<number>(this.executeV1.bind(this), this.executeV1Length());
+  _o.statusV1 = this.bb!.createScalarList<number>(this.statusV1.bind(this), this.statusV1Length());
+  _o.deployV1 = this.bb!.createScalarList<number>(this.deployV1.bind(this), this.deployV1Length());
+  _o.claimV1 = this.bb!.createScalarList<number>(this.claimV1.bind(this), this.claimV1Length());
+  _o.inputSetV1 = this.bb!.createScalarList<number>(this.inputSetV1.bind(this), this.inputSetV1Length());
+}
+}
+
+export class ChannelInstructionT implements flatbuffers.IGeneratedObject {
+constructor(
+  public ixType: ChannelInstructionIxType = ChannelInstructionIxType.ExecuteV1,
+  public executeV1: (number)[] = [],
+  public statusV1: (number)[] = [],
+  public deployV1: (number)[] = [],
+  public claimV1: (number)[] = [],
+  public inputSetV1: (number)[] = []
+){}
+
+
+pack(builder:flatbuffers.Builder): flatbuffers.Offset {
+  const executeV1 = ChannelInstruction.createExecuteV1Vector(builder, this.executeV1);
+  const statusV1 = ChannelInstruction.createStatusV1Vector(builder, this.statusV1);
+  const deployV1 = ChannelInstruction.createDeployV1Vector(builder, this.deployV1);
+  const claimV1 = ChannelInstruction.createClaimV1Vector(builder, this.claimV1);
+  const inputSetV1 = ChannelInstruction.createInputSetV1Vector(builder, this.inputSetV1);
+
+  return ChannelInstruction.createChannelInstruction(builder,
+    this.ixType,
+    executeV1,
+    statusV1,
+    deployV1,
+    claimV1,
+    inputSetV1
+  );
 }
 }

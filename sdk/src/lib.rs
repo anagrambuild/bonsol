@@ -1,28 +1,43 @@
+pub mod image;
+pub mod prover;
 pub mod util;
-use instructions::{CallbackConfig, ExecutionConfig, Input};
-use serde::{Deserialize, Serialize, Serializer};
-use {
-    anyhow::Result,
-    solana_rpc_client::nonblocking::rpc_client::RpcClient,
-    solana_rpc_client_api::config::RpcSendTransactionConfig,
-    solana_sdk::{
-        account::Account,
-        commitment_config::CommitmentConfig,
-        compute_budget::ComputeBudgetInstruction,
-        instruction::Instruction,
-        message::{v0, VersionedMessage},
-        pubkey::Pubkey,
-        signer::Signer,
-        transaction::VersionedTransaction,
-    },
-};
 
-pub use bonsol_channel_interface::*;
+use std::time::Duration;
+
+use anyhow::Result;
+use bonsol_channel_interface::claim_state::ClaimStateHolder;
+use bonsol_schema::{root_as_deploy_v1, root_as_execution_request_v1};
+use bytes::Bytes;
+use futures_util::TryFutureExt;
+use instructions::{CallbackConfig, ExecutionConfig};
+use num_traits::FromPrimitive;
+use solana_rpc_client::nonblocking::rpc_client::RpcClient;
+use solana_rpc_client_api::config::RpcSendTransactionConfig;
+use solana_sdk::account::Account;
+use solana_sdk::commitment_config::CommitmentConfig;
+use solana_sdk::compute_budget::ComputeBudgetInstruction;
+use solana_sdk::instruction::Instruction;
+use solana_sdk::message::{v0, VersionedMessage};
+use solana_sdk::pubkey::Pubkey;
+use solana_sdk::signer::Signer;
+use solana_sdk::transaction::VersionedTransaction;
+
+pub use bonsol_channel_interface::{instructions, ID};
 pub use bonsol_channel_utils::*;
-pub use bonsol_schema::*;
+pub use bonsol_schema::{
+    ClaimV1T, DeployV1T, ExecutionRequestV1T, ExitCode, InputSetT, InputT, InputType,
+    ProgramInputType, StatusTypes,
+};
+pub use flatbuffers;
+use tokio::time::Instant;
 pub mod input_resolver;
 pub struct BonsolClient {
     rpc_client: RpcClient,
+}
+
+pub enum ExecutionAccountStatus {
+    Completed(ExitCode),
+    Pending(ExecutionRequestV1T),
 }
 
 impl BonsolClient {
@@ -32,8 +47,83 @@ impl BonsolClient {
         }
     }
 
+    pub async fn get_block_height(&self) -> Result<u64> {
+        self.rpc_client
+            .get_block_height()
+            .map_err(|_| anyhow::anyhow!("Failed to get block height"))
+            .await
+    }
+
     pub fn with_rpc_client(rpc_client: RpcClient) -> Self {
         BonsolClient { rpc_client }
+    }
+
+    pub async fn get_deployment_v1(&self, image_id: &str) -> Result<DeployV1T> {
+        let (deployment_account, _) = deployment_address(image_id);
+        let account = self
+            .rpc_client
+            .get_account_with_commitment(&deployment_account, CommitmentConfig::confirmed())
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to get account: {:?}", e))?
+            .value
+            .ok_or(anyhow::anyhow!("Invalid deployment account"))?;
+        let deployment = root_as_deploy_v1(&account.data)
+            .map_err(|_| anyhow::anyhow!("Invalid deployment account"))?;
+        Ok(deployment.unpack())
+    }
+
+    pub async fn get_execution_request_v1(
+        &self,
+        requester_pubkey: &Pubkey,
+        execution_id: &str,
+    ) -> Result<ExecutionAccountStatus> {
+        let (er, _) = execution_address(requester_pubkey, execution_id.as_bytes());
+        let account = self
+            .rpc_client
+            .get_account_with_commitment(&er, CommitmentConfig::confirmed())
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to get account: {:?}", e))?
+            .value
+            .ok_or(anyhow::anyhow!("Invalid execution request account"))?;
+        if account.data.len() == 1 {
+            let ec =
+                ExitCode::from_u8(account.data[0]).ok_or(anyhow::anyhow!("Invalid exit code"))?;
+            return Ok(ExecutionAccountStatus::Completed(ec));
+        }
+        let er = root_as_execution_request_v1(&account.data)
+            .map_err(|_| anyhow::anyhow!("Invalid execution request account"))?;
+        Ok(ExecutionAccountStatus::Pending(er.unpack()))
+    }
+
+    pub async fn get_claim_state_v1<'a>(
+        &self,
+        requester_pubkey: &Pubkey,
+        execution_id: &str,
+    ) -> Result<ClaimStateHolder> {
+        let (exad, _) = execution_address(requester_pubkey, execution_id.as_bytes());
+        let (eca, _) = execution_claim_address(exad.as_ref());
+        let account = self
+            .rpc_client
+            .get_account_with_commitment(&eca, CommitmentConfig::confirmed())
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to get account: {:?}", e))?
+            .value
+            .ok_or(anyhow::anyhow!("Invalid claim account"))?;
+        Ok(ClaimStateHolder::new(account.data))
+    }
+
+    pub async fn download_program(&self, image_id: &str) -> Result<Bytes> {
+        let deployment = self.get_deployment_v1(image_id).await?;
+        let url = deployment
+            .url
+            .ok_or(anyhow::anyhow!("Invalid deployment"))?;
+        let resp = reqwest::get(url)
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to download program: {:?}", e))?;
+        Ok(resp
+            .bytes()
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to download program: {:?}", e))?)
     }
 
     pub async fn get_deployment(&self, image_id: &str) -> Result<Option<Account>> {
@@ -81,7 +171,7 @@ impl BonsolClient {
         signer: &Pubkey,
         image_id: &str,
         execution_id: &str,
-        inputs: Vec<Input>,
+        inputs: Vec<InputT>,
         tip: u64,
         expiration: u64,
         config: ExecutionConfig,
@@ -103,10 +193,20 @@ impl BonsolClient {
         Ok(vec![compute, compute_price, instruction])
     }
 
+    pub async fn send_txn_standard(
+        &self,
+        signer: impl Signer,
+        instructions: Vec<Instruction>,
+    ) -> Result<()> {
+        self.send_txn(signer, instructions, false, 1, 5).await
+    }
+
     pub async fn send_txn(
         &self,
         signer: impl Signer,
         instructions: Vec<Instruction>,
+        skip_preflight: bool,
+        retry_timeout: u64,
         retry_count: usize,
     ) -> Result<()> {
         let mut rt = retry_count;
@@ -120,77 +220,49 @@ impl BonsolClient {
                 .send_transaction_with_config(
                     &tx,
                     RpcSendTransactionConfig {
-                        skip_preflight: true,
+                        skip_preflight,
                         max_retries: Some(0),
                         ..Default::default()
                     },
                 )
                 .await?;
-            let conf = self
-                .rpc_client
-                .confirm_transaction(&sig)
-                .await
-                .map_err(|e| anyhow::anyhow!("Failed to confirm transaction: {:?}", e));
-            match conf {
-                Ok(true) => {
+
+            let now = Instant::now();
+            let confirm_transaction_initial_timeout = Duration::from_secs(retry_timeout);
+            let (_, status) = loop {
+                let status = self
+                    .rpc_client
+                    .get_signature_status_with_commitment(&sig, CommitmentConfig::processed())
+                    .await?;
+                if status.is_none() {
+                    let blockhash_not_found = !self
+                        .rpc_client
+                        .is_blockhash_valid(&blockhash, CommitmentConfig::processed())
+                        .await?;
+                    if blockhash_not_found && now.elapsed() >= confirm_transaction_initial_timeout {
+                        break (sig, status);
+                    }
+                } else {
+                    break (sig, status);
+                }
+                tokio::time::sleep(Duration::from_millis(500)).await;
+            };
+
+            
+            match status {
+                Some(Ok(())) => {
                     return Ok(());
                 }
-                Ok(false) => {
-                    rt -= 1;
-                    if rt == 0 {
-                        return Err(anyhow::anyhow!(
-                            "Failed to confirm transaction: max retries exceeded"
-                        ));
-                    }
+                Some(Err(e)) => { 
+                    return Err(anyhow::anyhow!("Transaction Falure Cannot Recover {:?}", e));
                 }
-                Err(e) => {
+                None => {
                     rt -= 1;
                     if rt == 0 {
-                        return Err(anyhow::anyhow!("Failed to confirm transaction: {:?}", e));
+                        return Err(anyhow::anyhow!("Timeout: Failed to confirm transaction"));
                     }
                 }
             }
-            tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
-        }
-    }
-}
-
-pub struct SdkInputType(InputType);
-
-impl Serialize for SdkInputType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        match self.0 {
-            InputType::PublicData => serializer.serialize_str("Public"),
-            InputType::PublicAccountData => serializer.serialize_str("PublicAccountData"),
-            InputType::PublicUrl => serializer.serialize_str("PublicUrl"),
-            InputType::Private => serializer.serialize_str("Private"),
-            InputType::InputSet => serializer.serialize_str("InputSet"),
-            InputType::PublicProof => serializer.serialize_str("PublicProof"),
-            _ => Err(serde::ser::Error::custom("Invalid input type")),
-        }
-    }
-}
-
-impl<'de> Deserialize<'de> for SdkInputType {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        let s = String::deserialize(deserializer)?;
-        match s.as_str() {
-            "Public" => Ok(SdkInputType(InputType::PublicData)),
-            "PublicAccountData" => Ok(SdkInputType(InputType::PublicAccountData)),
-            "PublicUrl" => Ok(SdkInputType(InputType::PublicUrl)),
-            "Private" => Ok(SdkInputType(InputType::Private)),
-            "InputSet" => Ok(SdkInputType(InputType::InputSet)),
-            "PublicProof" => Ok(SdkInputType(InputType::PublicProof)),
-            _ => Err(serde::de::Error::custom(format!(
-                "Invalid input type: {}",
-                s
-            ))),
         }
     }
 }

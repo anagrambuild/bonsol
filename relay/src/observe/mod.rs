@@ -1,6 +1,8 @@
-pub use metrics::{counter, gauge, histogram, Unit};
-pub use std::time::Instant;
-pub use tracing::{info, instrument};
+pub use {
+    metrics::{counter, gauge, histogram, Unit},
+    std::time::Instant,
+    tracing::{info, instrument},
+};
 
 #[derive(strum_macros::Display)]
 pub enum MetricEvents {

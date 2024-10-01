@@ -2,11 +2,11 @@
 
 import * as flatbuffers from 'flatbuffers';
 
-import { Input } from './input.js';
+import { Input, InputT } from './input.js';
 import { InputSetOp } from './input-set-op.js';
 
 
-export class InputSetOpV1 {
+export class InputSetOpV1 implements flatbuffers.IUnpackableObject<InputSetOpV1T> {
   bb: flatbuffers.ByteBuffer|null = null;
   bb_pos = 0;
   __init(i:number, bb:flatbuffers.ByteBuffer):InputSetOpV1 {
@@ -104,5 +104,40 @@ static createInputSetOpV1(builder:flatbuffers.Builder, idOffset:flatbuffers.Offs
   InputSetOpV1.addOp(builder, op);
   InputSetOpV1.addInputs(builder, inputsOffset);
   return InputSetOpV1.endInputSetOpV1(builder);
+}
+
+unpack(): InputSetOpV1T {
+  return new InputSetOpV1T(
+    this.id(),
+    this.op(),
+    this.bb!.createObjList<Input, InputT>(this.inputs.bind(this), this.inputsLength())
+  );
+}
+
+
+unpackTo(_o: InputSetOpV1T): void {
+  _o.id = this.id();
+  _o.op = this.op();
+  _o.inputs = this.bb!.createObjList<Input, InputT>(this.inputs.bind(this), this.inputsLength());
+}
+}
+
+export class InputSetOpV1T implements flatbuffers.IGeneratedObject {
+constructor(
+  public id: string|Uint8Array|null = null,
+  public op: InputSetOp = InputSetOp.Create,
+  public inputs: (InputT)[] = []
+){}
+
+
+pack(builder:flatbuffers.Builder): flatbuffers.Offset {
+  const id = (this.id !== null ? builder.createString(this.id!) : 0);
+  const inputs = InputSetOpV1.createInputsVector(builder, builder.createObjectOffsetList(this.inputs));
+
+  return InputSetOpV1.createInputSetOpV1(builder,
+    id,
+    this.op,
+    inputs
+  );
 }
 }

@@ -24,7 +24,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ChannelInstruction = void 0;
+exports.ChannelInstructionT = exports.ChannelInstruction = void 0;
 const flatbuffers = __importStar(require("flatbuffers"));
 const channel_instruction_ix_type_js_1 = require("./channel-instruction-ix-type.js");
 class ChannelInstruction {
@@ -207,5 +207,35 @@ class ChannelInstruction {
         ChannelInstruction.addInputSetV1(builder, inputSetV1Offset);
         return ChannelInstruction.endChannelInstruction(builder);
     }
+    unpack() {
+        return new ChannelInstructionT(this.ixType(), this.bb.createScalarList(this.executeV1.bind(this), this.executeV1Length()), this.bb.createScalarList(this.statusV1.bind(this), this.statusV1Length()), this.bb.createScalarList(this.deployV1.bind(this), this.deployV1Length()), this.bb.createScalarList(this.claimV1.bind(this), this.claimV1Length()), this.bb.createScalarList(this.inputSetV1.bind(this), this.inputSetV1Length()));
+    }
+    unpackTo(_o) {
+        _o.ixType = this.ixType();
+        _o.executeV1 = this.bb.createScalarList(this.executeV1.bind(this), this.executeV1Length());
+        _o.statusV1 = this.bb.createScalarList(this.statusV1.bind(this), this.statusV1Length());
+        _o.deployV1 = this.bb.createScalarList(this.deployV1.bind(this), this.deployV1Length());
+        _o.claimV1 = this.bb.createScalarList(this.claimV1.bind(this), this.claimV1Length());
+        _o.inputSetV1 = this.bb.createScalarList(this.inputSetV1.bind(this), this.inputSetV1Length());
+    }
 }
 exports.ChannelInstruction = ChannelInstruction;
+class ChannelInstructionT {
+    constructor(ixType = channel_instruction_ix_type_js_1.ChannelInstructionIxType.ExecuteV1, executeV1 = [], statusV1 = [], deployV1 = [], claimV1 = [], inputSetV1 = []) {
+        this.ixType = ixType;
+        this.executeV1 = executeV1;
+        this.statusV1 = statusV1;
+        this.deployV1 = deployV1;
+        this.claimV1 = claimV1;
+        this.inputSetV1 = inputSetV1;
+    }
+    pack(builder) {
+        const executeV1 = ChannelInstruction.createExecuteV1Vector(builder, this.executeV1);
+        const statusV1 = ChannelInstruction.createStatusV1Vector(builder, this.statusV1);
+        const deployV1 = ChannelInstruction.createDeployV1Vector(builder, this.deployV1);
+        const claimV1 = ChannelInstruction.createClaimV1Vector(builder, this.claimV1);
+        const inputSetV1 = ChannelInstruction.createInputSetV1Vector(builder, this.inputSetV1);
+        return ChannelInstruction.createChannelInstruction(builder, this.ixType, executeV1, statusV1, deployV1, claimV1, inputSetV1);
+    }
+}
+exports.ChannelInstructionT = ChannelInstructionT;

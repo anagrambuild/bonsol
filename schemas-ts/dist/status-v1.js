@@ -24,7 +24,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.StatusV1 = void 0;
+exports.StatusV1T = exports.StatusV1 = void 0;
 const flatbuffers = __importStar(require("flatbuffers"));
 const status_types_js_1 = require("./status-types.js");
 class StatusV1 {
@@ -247,5 +247,42 @@ class StatusV1 {
         StatusV1.addExitCodeUser(builder, exitCodeUser);
         return StatusV1.endStatusV1(builder);
     }
+    unpack() {
+        return new StatusV1T(this.executionId(), this.status(), this.bb.createScalarList(this.proof.bind(this), this.proofLength()), this.bb.createScalarList(this.executionDigest.bind(this), this.executionDigestLength()), this.bb.createScalarList(this.inputDigest.bind(this), this.inputDigestLength()), this.bb.createScalarList(this.committedOutputs.bind(this), this.committedOutputsLength()), this.bb.createScalarList(this.assumptionDigest.bind(this), this.assumptionDigestLength()), this.exitCodeSystem(), this.exitCodeUser());
+    }
+    unpackTo(_o) {
+        _o.executionId = this.executionId();
+        _o.status = this.status();
+        _o.proof = this.bb.createScalarList(this.proof.bind(this), this.proofLength());
+        _o.executionDigest = this.bb.createScalarList(this.executionDigest.bind(this), this.executionDigestLength());
+        _o.inputDigest = this.bb.createScalarList(this.inputDigest.bind(this), this.inputDigestLength());
+        _o.committedOutputs = this.bb.createScalarList(this.committedOutputs.bind(this), this.committedOutputsLength());
+        _o.assumptionDigest = this.bb.createScalarList(this.assumptionDigest.bind(this), this.assumptionDigestLength());
+        _o.exitCodeSystem = this.exitCodeSystem();
+        _o.exitCodeUser = this.exitCodeUser();
+    }
 }
 exports.StatusV1 = StatusV1;
+class StatusV1T {
+    constructor(executionId = null, status = status_types_js_1.StatusTypes.Unknown, proof = [], executionDigest = [], inputDigest = [], committedOutputs = [], assumptionDigest = [], exitCodeSystem = 0, exitCodeUser = 0) {
+        this.executionId = executionId;
+        this.status = status;
+        this.proof = proof;
+        this.executionDigest = executionDigest;
+        this.inputDigest = inputDigest;
+        this.committedOutputs = committedOutputs;
+        this.assumptionDigest = assumptionDigest;
+        this.exitCodeSystem = exitCodeSystem;
+        this.exitCodeUser = exitCodeUser;
+    }
+    pack(builder) {
+        const executionId = (this.executionId !== null ? builder.createString(this.executionId) : 0);
+        const proof = StatusV1.createProofVector(builder, this.proof);
+        const executionDigest = StatusV1.createExecutionDigestVector(builder, this.executionDigest);
+        const inputDigest = StatusV1.createInputDigestVector(builder, this.inputDigest);
+        const committedOutputs = StatusV1.createCommittedOutputsVector(builder, this.committedOutputs);
+        const assumptionDigest = StatusV1.createAssumptionDigestVector(builder, this.assumptionDigest);
+        return StatusV1.createStatusV1(builder, executionId, this.status, proof, executionDigest, inputDigest, committedOutputs, assumptionDigest, this.exitCodeSystem, this.exitCodeUser);
+    }
+}
+exports.StatusV1T = StatusV1T;

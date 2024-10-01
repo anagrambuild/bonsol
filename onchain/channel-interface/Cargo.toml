@@ -6,7 +6,7 @@ publish = false                   # Exclude local crates from licensing checks
 
 [features]
 on-chain = ["solana-program", "bonsol-channel-utils/on-chain"]
-default = ["solana-sdk", "bonsol-channel-utils/default"]
+default = ["solana-sdk", "bonsol-channel-utils/default", "serde"]
 anchor = ["on-chain", "anchor-lang"]
 idl-build = ["anchor-lang/idl-build"]
 
@@ -21,6 +21,9 @@ sha3 = "0.10"
 solana-program = { workspace = true, optional = true }
 solana-sdk = { workspace = true, optional = true }
 thiserror = { workspace = true }
+base64 = "0.21.2"
+serde = { version = "1.0.197", optional = true }
+bytemuck = { version = "1.15.0", features = ["derive"] }
 
 [dependencies.anchor-lang]
 optional = true

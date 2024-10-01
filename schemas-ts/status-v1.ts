@@ -5,7 +5,7 @@ import * as flatbuffers from 'flatbuffers';
 import { StatusTypes } from './status-types.js';
 
 
-export class StatusV1 {
+export class StatusV1 implements flatbuffers.IUnpackableObject<StatusV1T> {
   bb: flatbuffers.ByteBuffer|null = null;
   bb_pos = 0;
   __init(i:number, bb:flatbuffers.ByteBuffer):StatusV1 {
@@ -278,5 +278,68 @@ static createStatusV1(builder:flatbuffers.Builder, executionIdOffset:flatbuffers
   StatusV1.addExitCodeSystem(builder, exitCodeSystem);
   StatusV1.addExitCodeUser(builder, exitCodeUser);
   return StatusV1.endStatusV1(builder);
+}
+
+unpack(): StatusV1T {
+  return new StatusV1T(
+    this.executionId(),
+    this.status(),
+    this.bb!.createScalarList<number>(this.proof.bind(this), this.proofLength()),
+    this.bb!.createScalarList<number>(this.executionDigest.bind(this), this.executionDigestLength()),
+    this.bb!.createScalarList<number>(this.inputDigest.bind(this), this.inputDigestLength()),
+    this.bb!.createScalarList<number>(this.committedOutputs.bind(this), this.committedOutputsLength()),
+    this.bb!.createScalarList<number>(this.assumptionDigest.bind(this), this.assumptionDigestLength()),
+    this.exitCodeSystem(),
+    this.exitCodeUser()
+  );
+}
+
+
+unpackTo(_o: StatusV1T): void {
+  _o.executionId = this.executionId();
+  _o.status = this.status();
+  _o.proof = this.bb!.createScalarList<number>(this.proof.bind(this), this.proofLength());
+  _o.executionDigest = this.bb!.createScalarList<number>(this.executionDigest.bind(this), this.executionDigestLength());
+  _o.inputDigest = this.bb!.createScalarList<number>(this.inputDigest.bind(this), this.inputDigestLength());
+  _o.committedOutputs = this.bb!.createScalarList<number>(this.committedOutputs.bind(this), this.committedOutputsLength());
+  _o.assumptionDigest = this.bb!.createScalarList<number>(this.assumptionDigest.bind(this), this.assumptionDigestLength());
+  _o.exitCodeSystem = this.exitCodeSystem();
+  _o.exitCodeUser = this.exitCodeUser();
+}
+}
+
+export class StatusV1T implements flatbuffers.IGeneratedObject {
+constructor(
+  public executionId: string|Uint8Array|null = null,
+  public status: StatusTypes = StatusTypes.Unknown,
+  public proof: (number)[] = [],
+  public executionDigest: (number)[] = [],
+  public inputDigest: (number)[] = [],
+  public committedOutputs: (number)[] = [],
+  public assumptionDigest: (number)[] = [],
+  public exitCodeSystem: number = 0,
+  public exitCodeUser: number = 0
+){}
+
+
+pack(builder:flatbuffers.Builder): flatbuffers.Offset {
+  const executionId = (this.executionId !== null ? builder.createString(this.executionId!) : 0);
+  const proof = StatusV1.createProofVector(builder, this.proof);
+  const executionDigest = StatusV1.createExecutionDigestVector(builder, this.executionDigest);
+  const inputDigest = StatusV1.createInputDigestVector(builder, this.inputDigest);
+  const committedOutputs = StatusV1.createCommittedOutputsVector(builder, this.committedOutputs);
+  const assumptionDigest = StatusV1.createAssumptionDigestVector(builder, this.assumptionDigest);
+
+  return StatusV1.createStatusV1(builder,
+    executionId,
+    this.status,
+    proof,
+    executionDigest,
+    inputDigest,
+    committedOutputs,
+    assumptionDigest,
+    this.exitCodeSystem,
+    this.exitCodeUser
+  );
 }
 }

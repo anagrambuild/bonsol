@@ -1,23 +1,23 @@
-use crate::assertions::*;
-use crate::error::ChannelError;
-use crate::proof_handling::output_digest;
-use crate::proof_handling::prepare_inputs;
-use crate::proof_handling::verify_risc0;
-use crate::utilities::*;
-use bonsol_channel_utils::execution_address_seeds;
-use bonsol_schema::root_as_execution_request_v1;
-use bonsol_schema::ChannelInstruction;
-use bonsol_schema::ExitCode;
-use bonsol_schema::StatusV1;
-use solana_program::account_info::AccountInfo;
-use solana_program::clock::Clock;
-use solana_program::instruction::AccountMeta;
-use solana_program::instruction::Instruction;
-use solana_program::msg;
-use solana_program::program::invoke_signed;
-use solana_program::program_error::ProgramError;
-use solana_program::program_memory::sol_memcmp;
-use solana_program::sysvar::Sysvar;
+use crate::{
+    assertions::*,
+    error::ChannelError,
+    proof_handling::{output_digest, prepare_inputs, verify_risc0},
+    utilities::*,
+};
+use bonsol_channel_interface::{
+    bonsol_channel_utils::execution_address_seeds,
+    bonsol_schema::{root_as_execution_request_v1, ChannelInstruction, ExitCode, StatusV1},
+};
+use solana_program::{
+    account_info::AccountInfo,
+    clock::Clock,
+    instruction::{AccountMeta, Instruction},
+    msg,
+    program::invoke_signed,
+    program_error::ProgramError,
+    program_memory::sol_memcmp,
+    sysvar::Sysvar,
+};
 
 struct StatusAccounts<'a, 'b> {
     pub requester: &'a AccountInfo<'a>,
@@ -103,6 +103,7 @@ pub fn process_status_v1<'a>(
             st.exit_code_user(),
         )?;
         let verified = verify_risc0(proof, &inputs)?;
+        let tip = er.tip();
         if verified {
             let callback_program_set =
                 sol_memcmp(sa.callback_program.key.as_ref(), crate::ID.as_ref(), 32) != 0;
@@ -124,7 +125,7 @@ pub fn process_status_v1<'a>(
                 let mut ainfos = vec![sa.exec.clone(), sa.callback_program.clone()];
                 ainfos.extend(sa.extra_accounts.iter().cloned());
                 // ER is the signer, it is reuired to save the execution id in the calling program
-                let mut accounts = vec![AccountMeta::new(*sa.exec.key, true)];
+                let mut accounts = vec![AccountMeta::new_readonly(*sa.exec.key, true)];
                 if let Some(extra_accounts) = er.callback_extra_accounts() {
                     if extra_accounts.len() != sa.extra_accounts.len() {
                         return Err(ChannelError::InvalidCallbackExtraAccounts.into());
@@ -142,6 +143,7 @@ pub fn process_status_v1<'a>(
                             accounts.push(AccountMeta::new(*a.key, false));
                         } else {
                             if stored_a.writable() {
+                                //maybe relax this for devs?
                                 return Err(ChannelError::InvalidCallbackExtraAccounts.into());
                             }
                             accounts.push(AccountMeta::new_readonly(*a.key, false));
@@ -159,6 +161,7 @@ pub fn process_status_v1<'a>(
                 };
                 let callback_ix =
                     Instruction::new_with_bytes(*sa.callback_program.key, &payload, accounts);
+                drop(er_ref);
                 let res = invoke_signed(&callback_ix, &ainfos, &[&seeds]);
                 match res {
                     Ok(_) => {}
@@ -167,8 +170,7 @@ pub fn process_status_v1<'a>(
                     }
                 }
             }
-            let tip = er.tip();
-            drop(er_ref);
+            // add curve reduction here
             payout_tip(sa.exec, sa.prover, tip)?;
             cleanup_execution_account(sa.exec, sa.requester, ExitCode::Success as u8)?;
         } else {

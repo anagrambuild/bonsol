@@ -1,20 +1,20 @@
-use std::{
-    env,
-    fs::{self, File},
-    path::Path,
-    str::FromStr,
-};
+use std::env;
+use std::fs::{self, File};
+use std::path::Path;
+use std::str::FromStr;
 
 use crate::{
-    command::{DeployType, S3UploadDestination, ShadowDriveUpload},
+    command::{DeployType, S3UploadDestination, ShadowDriveUpload, UrlUploadDestination},
     common::ZkProgramManifest,
 };
 use anyhow::Result;
 use bonsol_sdk::{BonsolClient, ProgramInputType};
 use byte_unit::{Byte, ByteUnit};
 use indicatif::ProgressBar;
-use object_store::{aws::AmazonS3Builder, ObjectStore};
-use shadow_drive_sdk::{models::ShadowFile, ShadowDriveClient};
+use object_store::aws::AmazonS3Builder;
+use object_store::ObjectStore;
+use shadow_drive_sdk::models::ShadowFile;
+use shadow_drive_sdk::ShadowDriveClient;
 use solana_rpc_client::nonblocking::rpc_client::RpcClient;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::read_keypair_file;
@@ -25,6 +25,7 @@ pub async fn deploy(
     manifest_path: String,
     s3_upload: S3UploadDestination,
     shadow_drive_upload: ShadowDriveUpload,
+    url_upload: UrlUploadDestination,
     auto_confirm: bool,
     deploy_type: Option<DeployType>,
 ) -> Result<()> {
@@ -39,7 +40,6 @@ pub async fn deploy(
         .map_err(|e| anyhow::anyhow!("Error parsing manifest file: {:?}", e))?;
     let loaded_binary = fs::read(&manifest.binary_path)
         .map_err(|e| anyhow::anyhow!("Error loading binary: {:?}", e))?;
-    println!("binary size {}", loaded_binary.len());
     let url: String = match deploy_type {
         Some(DeployType::S3) => {
             let bucket = s3_upload
@@ -174,6 +174,7 @@ pub async fn deploy(
             println!("Uploaded to shadow drive");
             Ok::<_, anyhow::Error>(resp.message)
         }
+        Some(DeployType::Url) => Ok(url_upload.url),
         _ => {
             bar.finish_and_clear();
             return Err(anyhow::anyhow!("Please provide an upload config"));
@@ -219,7 +220,7 @@ pub async fn deploy(
                         .collect(),
                 )
                 .await?;
-            match bonsol_client.send_txn(signer, deploy_txn, 5).await {
+            match bonsol_client.send_txn_standard(signer, deploy_txn).await {
                 Ok(_) => {
                     bar.finish_and_clear();
                     println!("{} deployed", image_id);

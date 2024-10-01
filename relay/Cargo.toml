@@ -8,6 +8,7 @@ publish = false   # Exclude local crates from licensing checks
 
 [features]
 cuda = ["risc0-zkvm/cuda"]
+metal = ["risc0-zkvm/metal"]
 
 [dependencies]
 anyhow = { version = "1.0.79" }

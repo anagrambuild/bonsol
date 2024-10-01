@@ -1,16 +1,18 @@
-use super::{Ingester, IngesterResult, TxChannel};
-use crate::{
-    ingest::{IngestError, IngestErrorType},
-    types::BonsolInstruction,
+use {
+    super::{Ingester, IngesterResult, TxChannel},
+    crate::{
+        ingest::{IngestError, IngestErrorType},
+        types::BonsolInstruction,
+    },
+    anyhow::Result,
+    solana_pubsub_client::nonblocking::pubsub_client::PubsubClient,
+    solana_rpc_client_api::config::{RpcBlockSubscribeConfig, RpcBlockSubscribeFilter},
+    solana_sdk::{bs58, commitment_config::CommitmentConfig, pubkey::Pubkey},
+    solana_transaction_status::{
+        EncodedTransactionWithStatusMeta, UiInnerInstructions, UiInstruction, UiTransactionEncoding,
+    },
+    tokio::{sync::mpsc::UnboundedSender, task::JoinHandle},
 };
-use anyhow::Result;
-use solana_pubsub_client::nonblocking::pubsub_client::PubsubClient;
-use solana_rpc_client_api::config::{RpcBlockSubscribeConfig, RpcBlockSubscribeFilter};
-use solana_sdk::{bs58, commitment_config::CommitmentConfig, pubkey::Pubkey};
-use solana_transaction_status::{
-    EncodedTransactionWithStatusMeta, UiInnerInstructions, UiInstruction, UiTransactionEncoding,
-};
-use tokio::{sync::mpsc::UnboundedSender, task::JoinHandle};
 
 use futures_util::StreamExt;
 

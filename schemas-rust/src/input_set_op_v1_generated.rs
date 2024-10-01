@@ -3,11 +3,8 @@
 // @generated
 
 use crate::input_type_generated::*;
-use core::cmp::Ordering;
-use core::mem;
 
 extern crate flatbuffers;
-use self::flatbuffers::{EndianScalar, Follow};
 
 #[deprecated(
     since = "2.0.0",
@@ -143,6 +140,15 @@ impl<'a> InputSetOpV1<'a> {
         builder.finish()
     }
 
+    pub fn unpack(&self) -> InputSetOpV1T {
+        let id = self.id().map(|x| x.to_string());
+        let op = self.op();
+        let inputs = self
+            .inputs()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        InputSetOpV1T { id, op, inputs }
+    }
+
     #[inline]
     pub fn id(&self) -> Option<&'a str> {
         // Safety:
@@ -185,7 +191,6 @@ impl flatbuffers::Verifiable for InputSetOpV1<'_> {
         v: &mut flatbuffers::Verifier,
         pos: usize,
     ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
-        use self::flatbuffers::Verifiable;
         v.visit_table(pos)?
             .visit_field::<flatbuffers::ForwardsUOffset<&str>>("id", Self::VT_ID, false)?
             .visit_field::<InputSetOp>("op", Self::VT_OP, false)?
@@ -261,6 +266,36 @@ impl core::fmt::Debug for InputSetOpV1<'_> {
         ds.field("op", &self.op());
         ds.field("inputs", &self.inputs());
         ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct InputSetOpV1T {
+    pub id: Option<String>,
+    pub op: InputSetOp,
+    pub inputs: Option<Vec<InputT>>,
+}
+impl Default for InputSetOpV1T {
+    fn default() -> Self {
+        Self {
+            id: None,
+            op: InputSetOp::Create,
+            inputs: None,
+        }
+    }
+}
+impl InputSetOpV1T {
+    pub fn pack<'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b>,
+    ) -> flatbuffers::WIPOffset<InputSetOpV1<'b>> {
+        let id = self.id.as_ref().map(|x| _fbb.create_string(x));
+        let op = self.op;
+        let inputs = self.inputs.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        InputSetOpV1::create(_fbb, &InputSetOpV1Args { id, op, inputs })
     }
 }
 #[inline]

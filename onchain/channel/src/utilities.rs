@@ -1,10 +1,11 @@
-use solana_program::account_info::AccountInfo;
-use solana_program::program::invoke;
-use solana_program::program::invoke_signed;
-use solana_program::program_error::ProgramError;
-use solana_program::program_memory::{sol_memcpy, sol_memset};
-use solana_program::rent::Rent;
-use solana_program::system_instruction;
+use solana_program::{
+    account_info::AccountInfo,
+    program::{invoke, invoke_signed},
+    program_error::ProgramError,
+    program_memory::{sol_memcpy, sol_memset},
+    rent::Rent,
+    system_instruction,
+};
 
 use crate::error::ChannelError;
 pub fn cleanup_execution_account(
