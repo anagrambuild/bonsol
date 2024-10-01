@@ -1,6 +1,8 @@
 .vscode
+.DS_Store
 relaykp.json
 target
+result*
 test-ledger
 relay/stark_verify
 node_modules

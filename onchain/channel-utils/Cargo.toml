@@ -8,7 +8,7 @@ license = "MIT"
 edition = "2021"
 
 [dependencies]
-solana-program = { workspace = true, optional = true}
+solana-program = { workspace = true, optional = true }
 solana-sdk = { workspace = true, optional = true }
 
 [features]

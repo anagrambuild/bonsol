@@ -1,15 +1,21 @@
+[workspace.metadata.crane]
+name = "bonsol"
+
 [workspace]
-members = [ 
+members = [
   "iop",
   "onchain/channel",
-  "onchain/channel-utils", 
+  "onchain/channel-utils",
   "onchain/channel-interface",
   "relay",
   "schemas-rust",
   "cli",
-  "sdk"
+  "sdk",
 ]
 resolver = "2"
+# Only necessary for nix cargo workspace artifacts to build without warnings.
+# The actual crate derivations build using their individual manifest version.
+package.version = "0.0.1"
 
 [workspace.dependencies]
 solana-sdk = "=1.18.16"
@@ -23,15 +29,17 @@ solana-rpc-client-api = "=1.18.16"
 solana-pubsub-client = "=1.18.16"
 solana-transaction-status = "=1.18.16"
 solana-cli-config = "=1.18.16"
-yellowstone-grpc-client = {git = "https://github.com/rpcpool/yellowstone-grpc", tag="v1.15.0+solana.1.18.16"}
-yellowstone-grpc-proto = {git = "https://github.com/rpcpool/yellowstone-grpc", tag="v1.15.0+solana.1.18.16" }
-risc0-zkvm = { git = "https://github.com/anagrambuild/risc0", branch = "v1.0.1-bonsai-fix", features = ["prove"], default-features = false }
-risc0-core = { git = "https://github.com/anagrambuild/risc0", branch = "v1.0.1-bonsai-fix"}
-risc0-zkp = { git = "https://github.com/anagrambuild/risc0", branch = "v1.0.1-bonsai-fix"}
-risc0-groth16 = { git = "https://github.com/anagrambuild/risc0",branch = "v1.0.1-bonsai-fix"}
-risc0-binfmt = { git = "https://github.com/anagrambuild/risc0", branch = "v1.0.1-bonsai-fix"}
-risc0-circuit-recursion = { git = "https://github.com/anagrambuild/risc0", branch = "v1.0.1-bonsai-fix"}
-risc0-sys = { git = "https:m//github.com/anagrambuild/risc0", branch = "v1.0.1-bonsai-fix"}
+yellowstone-grpc-client = { git = "https://github.com/rpcpool/yellowstone-grpc", tag = "v1.15.0+solana.1.18.16" }
+yellowstone-grpc-proto = { git = "https://github.com/rpcpool/yellowstone-grpc", tag = "v1.15.0+solana.1.18.16" }
+risc0-zkvm = { git = "https://github.com/anagrambuild/risc0", branch = "v1.0.1-bonsai-fix", features = [
+  "prove",
+], default-features = false }
+risc0-core = { git = "https://github.com/anagrambuild/risc0", branch = "v1.0.1-bonsai-fix" }
+risc0-zkp = { git = "https://github.com/anagrambuild/risc0", branch = "v1.0.1-bonsai-fix" }
+risc0-groth16 = { git = "https://github.com/anagrambuild/risc0", branch = "v1.0.1-bonsai-fix" }
+risc0-binfmt = { git = "https://github.com/anagrambuild/risc0", branch = "v1.0.1-bonsai-fix" }
+risc0-circuit-recursion = { git = "https://github.com/anagrambuild/risc0", branch = "v1.0.1-bonsai-fix" }
+risc0-sys = { git = "https:m//github.com/anagrambuild/risc0", branch = "v1.0.1-bonsai-fix" }
 tokio-test = "0.4.3"
 
 [workspace.lints.clippy]

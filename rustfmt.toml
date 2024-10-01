@@ -1,2 +1,2 @@
-imports_granularity="One"
+imports_granularity = "One"
 reorder_imports = true

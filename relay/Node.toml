@@ -7,6 +7,6 @@ max_image_size_mb = 4
 image_compression_ttl_hours = 24
 env = "dev"
 [transaction_sender_config]
-  Rpc = { rpc_url = "http://localhost:8899" }
+Rpc = { rpc_url = "http://localhost:8899" }
 [signer_config]
-  KeypairFile = { path = "../relaykp.json" }
+KeypairFile = { path = "../relaykp.json" }

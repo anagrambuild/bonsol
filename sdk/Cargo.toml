@@ -2,21 +2,20 @@
 name = "bonsol-sdk"
 version = "0.0.1"
 edition = "2021"
+publish = false     # Exclude local crates from licensing checks
 
 [dependencies]
-solana-sdk = { workspace = true }
-solana-rpc-client = { workspace = true}
-solana-rpc-client-api = { workspace = true }
-bonsol-schema = { path = "../schemas-rust" }
-bonsol-channel-utils = { path = "../onchain/channel-utils", features = ["default"] }
-bonsol-channel-interface = { path = "../onchain/channel-interface", features = ["default"] }
 anyhow = "1.0.86"
-flatbuffers = {workspace = true}
-tokio = "1.36.0"
-serde = { version = "1.0.197"}
-serde_json = "1.0.104"
-bytes = "1.5.0"
 async-trait = "0.1.80"
+bonsol-channel-interface = { path = "../onchain/channel-interface", features = [
+  "default",
+] }
+bonsol-channel-utils = { path = "../onchain/channel-utils", features = [
+  "default",
+] }
+bonsol-schema = { path = "../schemas-rust" }
+bytes = "1.5.0"
+flatbuffers = { workspace = true }
 futures-util = "0.3.30"
 reqwest = { version = "0.11.26", features = [
   "gzip",
@@ -24,3 +23,9 @@ reqwest = { version = "0.11.26", features = [
   "stream",
   "native-tls-vendored",
 ] }
+serde = { version = "1.0.197" }
+serde_json = "1.0.104"
+solana-rpc-client = { workspace = true }
+solana-rpc-client-api = { workspace = true }
+solana-sdk = { workspace = true }
+tokio = "1.36.0"

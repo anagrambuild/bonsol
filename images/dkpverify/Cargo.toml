@@ -2,6 +2,7 @@
 name = "dkp-generator"
 version = "0.1.0"
 edition = "2021"
+publish = false        # Exclude local crates from licensing checks
 
 [package.metadata.zkprogram]
 input_order = ["Private", "Private"]
@@ -12,7 +13,9 @@ target-dir = "./target"
 [workspace]
 
 [dependencies]
-risc0-zkvm = {git = "https://github.com/anagrambuild/risc0", branch = "v1.0.1-bonsai-fix", default-features = false, features = ["std"]}
+risc0-zkvm = { git = "https://github.com/anagrambuild/risc0", branch = "v1.0.1-bonsai-fix", default-features = false, features = [
+  "std",
+] }
 
 [dependencies.sha2]
 git = "https://github.com/risc0/RustCrypto-hashes"
