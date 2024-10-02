@@ -49,10 +49,42 @@
             canonicalizePath = crate: root + "/${crate}";
             canonicalizePaths = crates: map (crate: canonicalizePath crate) crates;
           };
+          # Returns true if the dependency requires `risc0-circuit-recursion` as part of its build.
+          isRisc0CircuitRecursion = p: lib.hasPrefix
+            "git+https://github.com/anagrambuild/risc0?branch=v1.0.1-bonsai-fix#189829d0b84d57e8928a85aa4fac60dd6ce45ea9"
+            p.source;
+          # Pre-pull the zkr file in order to apply in the postPatch phase for dependencies that require `risc0-circuit-recursion`.
+          risc0CircuitRecursionPatch =
+            let
+              # see https://github.com/risc0/risc0/blob/v1.0.5/risc0/circuit/recursion/build.rs
+              sha256Hash = "4e8496469e1efa00efb3630d261abf345e6b2905fb64b4f3a297be88ebdf83d2";
+              recursionZkr = pkgs.fetchurl {
+                name = "recursion_zkr.zip";
+                url = "https://risc0-artifacts.s3.us-west-2.amazonaws.com/zkr/${sha256Hash}.zip";
+                hash = "sha256-ToSWRp4e+gDvs2MNJhq/NF5rKQX7ZLTzope+iOvfg9I=";
+              };
+            in
+            ''
+              ln -sf ${recursionZkr} ./risc0/circuit/recursion/src/recursion_zkr.zip
+            '';
+          # Patch dependencies that require `risc0-circuit-recursion`.
+          cargoVendorDir = craneLib.vendorCargoDeps (workspace // {
+            overrideVendorGitCheckout = ps: drv:
+              if lib.any (p: (isRisc0CircuitRecursion p)) ps then
+              # Apply the patch for fetching the zkr zip file.
+                drv.overrideAttrs
+                  {
+                    postPatch = risc0CircuitRecursionPatch;
+                  }
+              else
+              # Nothing to change, leave the derivations as is.
+                drv;
+          });
 
           # Common arguments can be set here to avoid repeating them later
           commonArgs = {
             inherit (workspace) src;
+            inherit cargoVendorDir;
             strictDeps = true;
 
             nativeBuildInputs = with pkgs; [
@@ -112,7 +144,7 @@
           #     in
           #     mkCrateDrv "path/to/crate" deps;
           # ```
-          mkCrateDrv = crate: deps:
+          mkCrateDrv = name: crate: deps:
             let
               manifest = craneLib.crateNameFromCargoToml {
                 cargoToml = ((workspace.canonicalizePath crate) + "/Cargo.toml");
@@ -120,15 +152,17 @@
             in
             craneLib.buildPackage (individualCrateArgs // {
               inherit (manifest) version pname;
-              cargoExtraArgs = "--locked --bin ${manifest.pname}";
+              cargoExtraArgs = "--locked --bin ${name}";
               src = fileSetForCrate crate deps;
             });
 
-          bonsol-cli = mkCrateDrv "cli" [ "sdk" "onchain" "schemas-rust" ];
+          bonsol-cli = mkCrateDrv "bonsol" "cli" [ "sdk" "onchain" "schemas-rust" "iop" "relay" ];
 
           # Internally managed version of `cargo-risczero` that is pinned to
           # the version that bonsol relies on.
-          cargo-risczero = pkgs.callPackage ./nixos/pkgs/cargo-risczero { };
+          cargo-risczero = pkgs.callPackage ./nixos/pkgs/cargo-risczero {
+            inherit risc0CircuitRecursionPatch;
+          };
         in
         {
           checks = {
