@@ -43,12 +43,6 @@
             ./rust-toolchain.toml
             "sha256-VZZnlyP69+Y3crrLHQyJirqlHrTtGTsyiSnZB8jEvVo=";
           craneLib = (crane.mkLib pkgs).overrideToolchain rustToolchain.fenix-pkgs;
-          craneLibLLvmTools = craneLib.overrideToolchain
-            (fenix.packages.${system}.complete.withComponents [
-              "cargo"
-              "llvm-tools"
-              "rustc"
-            ]);
           workspace = rec {
             root = ./.;
             src = craneLib.cleanCargoSource root;
@@ -63,6 +57,7 @@
 
             nativeBuildInputs = with pkgs; [
               pkg-config
+              perl
             ];
 
             buildInputs = with pkgs; [
@@ -215,10 +210,6 @@
             inherit
               bonsol-cli
               cargo-risczero;
-          } // lib.optionalAttrs (!pkgs.stdenv.isDarwin) {
-            my-workspace-llvm-coverage = craneLibLLvmTools.cargoLlvmCov (commonArgs // {
-              inherit cargoArtifacts;
-            });
           };
 
           apps = { };
