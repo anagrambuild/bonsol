@@ -49,6 +49,7 @@
             canonicalizePath = crate: root + "/${crate}";
             canonicalizePaths = crates: map (crate: canonicalizePath crate) crates;
           };
+
           # Returns true if the dependency requires `risc0-circuit-recursion` as part of its build.
           isRisc0CircuitRecursion = p: lib.hasPrefix
             "git+https://github.com/anagrambuild/risc0?branch=v1.0.1-bonsai-fix#189829d0b84d57e8928a85aa4fac60dd6ce45ea9"
@@ -94,11 +95,6 @@
 
             buildInputs = with pkgs; [
               openssl.dev
-              (r0vm.overrideAttrs {
-                version = "1.0.1";
-              })
-              solana-cli
-              self.packages.${system}.cargo-risczero
             ];
           };
 
@@ -156,11 +152,16 @@
               src = fileSetForCrate crate deps;
             });
 
+          # The root Cargo.toml requires all of the workspace crates, otherwise this would be a bit neater.
           bonsol-cli = mkCrateDrv "bonsol" "cli" [ "sdk" "onchain" "schemas-rust" "iop" "relay" ];
+          bonsol-relay = mkCrateDrv "relay" "relay" [ "sdk" "onchain" "schemas-rust" "iop" "cli" ];
 
-          # Internally managed version of `cargo-risczero` that is pinned to
+          # Internally managed versions of risc0 binaries that are pinned to
           # the version that bonsol relies on.
-          cargo-risczero = pkgs.callPackage ./nixos/pkgs/cargo-risczero {
+          cargo-risczero = pkgs.callPackage ./nixos/pkgs/risc0/cargo-risczero {
+            inherit risc0CircuitRecursionPatch;
+          };
+          r0vm = pkgs.callPackage ./nixos/pkgs/risc0/r0vm {
             inherit risc0CircuitRecursionPatch;
           };
         in
@@ -169,7 +170,9 @@
             # Build the crates as part of `nix flake check` for convenience
             inherit
               bonsol-cli
-              cargo-risczero;
+              bonsol-relay
+              cargo-risczero
+              r0vm;
 
             # Run clippy (and deny all warnings) on the workspace source,
             # again, reusing the dependency artifacts from above.
@@ -243,7 +246,9 @@
           packages = {
             inherit
               bonsol-cli
-              cargo-risczero;
+              bonsol-relay
+              cargo-risczero
+              r0vm;
           };
 
           apps = { };
@@ -254,6 +259,9 @@
             packages = with pkgs; [
               nil # nix lsp
               nixpkgs-fmt # nix formatter
+              self.packages.${system}.r0vm
+              self.packages.${system}.cargo-risczero
+              solana-cli
               # pkgs.cargo-hakari
             ];
           };
