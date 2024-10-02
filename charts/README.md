@@ -39,9 +39,8 @@ rpc:
 To install the chart with the release name `my-release`:
 
 ```console
-git clone https://github.com/anagrambuild/bonsol.git
-cd chart
-helm install my-release . -f my_values.yaml
+helm repo add zkcharts https://zerocomputing.github.io/helm/
+helm install my-release zkcharts/bonsol-node -f my_values.yaml
 ```
 
 ## Uninstalling the Chart
