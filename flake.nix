@@ -156,6 +156,9 @@
           bonsol-cli = mkCrateDrv "bonsol" "cli" [ "sdk" "onchain" "schemas-rust" "iop" "relay" ];
           bonsol-relay = mkCrateDrv "relay" "relay" [ "sdk" "onchain" "schemas-rust" "iop" "cli" ];
 
+          validator = pkgs.callPackage ./nixos/pkgs/bonsol/validator.nix { };
+          run-relay = pkgs.callPackage ./nixos/pkgs/bonsol/run-relay.nix { };
+
           # Internally managed versions of risc0 binaries that are pinned to
           # the version that bonsol relies on.
           cargo-risczero = pkgs.callPackage ./nixos/pkgs/risc0/cargo-risczero {
@@ -173,8 +176,36 @@
               bonsol-cli
               bonsol-relay
               cargo-risczero
-              r0vm
-              ;
+              r0vm;
+
+            simple-e2e = pkgs.runCommand "simple-e2e-test"
+              {
+                buildInputs = [
+                  r0vm
+                  cargo-risczero
+                  solana-cli
+                  bonsol-cli
+                  bonsol-relay
+                  validator
+                  run-relay
+                  pkgs.bash
+                ] ++ rustToolchain.complete;
+              } ''
+                # TODO: ensure all directories are in place for shell scripts to execute successfully
+                bash ${validator}/validator.sh &
+                sleep 5
+                bash ${run-relay}/run-relay.sh &
+                sleep 5
+                ${bonsol-cli}/bin/bonsol deploy -m images/simple/manifest.json -t url --url https://bonsol-public-images.s3.amazonaws.com/simple-7cb4887749266c099ad1793e8a7d486a27ff1426d614ec0cc9ff50e686d17699
+                sleep 5
+                resp = $(${bonsol-cli}/bin/bonsol execute -f testing-examples/example-execution-request.json -x 2000 -m 2000 -w)
+                if [[ "$resp" =~ "success" ]]; then
+                  exit 0
+                else
+                  echo "response was not success"
+                  exit 1
+                fi
+              '';
 
             # Run clippy (and deny all warnings) on the workspace source,
             # again, reusing the dependency artifacts from above.
@@ -249,9 +280,13 @@
             inherit
               bonsol-cli
               bonsol-relay
+
+              validator
+              run-relay
+
               cargo-risczero
               r0vm
-              ;
+              solana-cli;
           };
 
           apps = { };
@@ -262,10 +297,14 @@
             packages = with pkgs; [
               nil # nix lsp
               nixpkgs-fmt # nix formatter
-              self.packages.${system}.r0vm
-              self.packages.${system}.cargo-risczero
               # pkgs.cargo-hakari
-            ] ++ [ solana-cli ];
+            ] ++ [
+              validator
+              run-relay
+              r0vm
+              cargo-risczero
+              solana-cli
+            ];
           };
 
           # Run nix fmt to format nix files in file tree
