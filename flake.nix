@@ -164,6 +164,7 @@
           r0vm = pkgs.callPackage ./nixos/pkgs/risc0/r0vm {
             inherit risc0CircuitRecursionPatch;
           };
+          solana-cli = pkgs.callPackage ./nixos/pkgs/solana { };
         in
         {
           checks = {
@@ -172,7 +173,8 @@
               bonsol-cli
               bonsol-relay
               cargo-risczero
-              r0vm;
+              r0vm
+              ;
 
             # Run clippy (and deny all warnings) on the workspace source,
             # again, reusing the dependency artifacts from above.
@@ -248,7 +250,8 @@
               bonsol-cli
               bonsol-relay
               cargo-risczero
-              r0vm;
+              r0vm
+              ;
           };
 
           apps = { };
@@ -261,9 +264,8 @@
               nixpkgs-fmt # nix formatter
               self.packages.${system}.r0vm
               self.packages.${system}.cargo-risczero
-              solana-cli
               # pkgs.cargo-hakari
-            ];
+            ] ++ [ solana-cli ];
           };
 
           # Run nix fmt to format nix files in file tree
