@@ -1,5 +1,6 @@
 { stdenv
 , fetchFromGitHub
+, fetchzip
 , lib
 , rustPlatform
 , pkg-config
@@ -40,15 +41,21 @@
   ]
 }:
 let
+  pname = "solana-cli";
   version = "1.18.22";
   hash = "sha256-MQcnxMhlD0a2cQ8xY//2K+EHgE6rvdUtqufhOw6Ib0Y=";
+  # Fetches the solana source to place the Cargo.lock in the nix store so we don't have to keep track of a Cargo.lock file for it.
+  solanaSource = fetchzip {
+    name = "${pname}-${version}";
+    url = "https://github.com/solana-labs/solana/archive/refs/tags/v${version}.zip";
+    sha256 = hash;
+  };
   rocksdb = rocksdb_8_3;
   inherit (darwin.apple_sdk_11_0) Libsystem;
   inherit (darwin.apple_sdk_11_0.frameworks) System IOKit AppKit Security;
 in
 rustPlatform.buildRustPackage {
-  pname = "solana-cli";
-  inherit version;
+  inherit pname version;
 
   src = fetchFromGitHub {
     owner = "solana-labs";
@@ -58,7 +65,7 @@ rustPlatform.buildRustPackage {
   };
 
   cargoLock = {
-    lockFile = ./Cargo.lock;
+    lockFile = "${solanaSource}/Cargo.lock";
     outputHashes = {
       "crossbeam-epoch-0.9.5" = "sha256-Jf0RarsgJiXiZ+ddy0vp4jQ59J9m0k3sgXhWhCdhgws=";
       "tokio-1.29.1" = "sha256-Z/kewMCqkPVTXdoBcSaFKG5GSQAdkdpj3mAzLLCjjGk=";
