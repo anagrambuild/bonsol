@@ -109,7 +109,7 @@ bonsol -f Node.toml
 You can use the following systemd service file to run the node.
 ```toml
 [Unit]
-Description=Solana Validator
+Description=Bonsol Node
 After=network.target
 StartLimitIntervalSec=0
 
