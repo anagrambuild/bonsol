@@ -191,21 +191,21 @@
                   pkgs.bash
                 ] ++ rustToolchain.complete;
               } ''
-                # TODO: ensure all directories are in place for shell scripts to execute successfully
-                bash ${validator}/validator.sh &
-                sleep 5
-                bash ${run-relay}/run-relay.sh &
-                sleep 5
-                ${bonsol-cli}/bin/bonsol deploy -m images/simple/manifest.json -t url --url https://bonsol-public-images.s3.amazonaws.com/simple-7cb4887749266c099ad1793e8a7d486a27ff1426d614ec0cc9ff50e686d17699
-                sleep 5
-                resp = $(${bonsol-cli}/bin/bonsol execute -f testing-examples/example-execution-request.json -x 2000 -m 2000 -w)
-                if [[ "$resp" =~ "success" ]]; then
-                  exit 0
-                else
-                  echo "response was not success"
-                  exit 1
-                fi
-              '';
+              # TODO: ensure all directories are in place for shell scripts to execute successfully
+              bash ${validator}/validator.sh &
+              sleep 5
+              bash ${run-relay}/run-relay.sh &
+              sleep 5
+              ${bonsol-cli}/bin/bonsol deploy -m images/simple/manifest.json -t url --url https://bonsol-public-images.s3.amazonaws.com/simple-7cb4887749266c099ad1793e8a7d486a27ff1426d614ec0cc9ff50e686d17699
+              sleep 5
+              resp = $(${bonsol-cli}/bin/bonsol execute -f testing-examples/example-execution-request.json -x 2000 -m 2000 -w)
+              if [[ "$resp" =~ "success" ]]; then
+                exit 0
+              else
+                echo "response was not success"
+                exit 1
+              fi
+            '';
 
             # Run clippy (and deny all warnings) on the workspace source,
             # again, reusing the dependency artifacts from above.
