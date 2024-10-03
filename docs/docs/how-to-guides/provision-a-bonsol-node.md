@@ -72,21 +72,6 @@ maximum_concurrent_proofs = 1
 max_image_size_mb = 4
 image_compression_ttl_hours = 24
 env = "dev"
-[transaction_sender_config]
-  Rpc = { rpc_url = "http://localhost:8899" }
-[signer_config]
-  KeypairFile = { path = "/opt/bonsol/keys/signer.json" }
-[ingester_config]
-  RpcBlockSubscription = { wss_rpc_url = "ws://localhost:8900" }
-
-risc0_image_folder = "/opt/bonsol/risc0_images"
-max_input_size_mb = 10
-image_download_timeout_secs = 60
-input_download_timeout_secs = 60
-maximum_concurrent_proofs = 1
-max_image_size_mb = 4
-image_compression_ttl_hours = 24
-env = "dev"
 stark_compression_tools_path = "<the path to the stark directory>" 
 missing_image_strategy = "DownloadAndClaim"
 [metrics_config]
@@ -109,7 +94,7 @@ bonsol -f Node.toml
 You can use the following systemd service file to run the node.
 ```toml
 [Unit]
-Description=Solana Validator
+Description=Bonsol Node
 After=network.target
 StartLimitIntervalSec=0
 
