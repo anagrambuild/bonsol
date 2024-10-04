@@ -167,7 +167,9 @@
           r0vm = pkgs.callPackage ./nixos/pkgs/risc0/r0vm {
             inherit risc0CircuitRecursionPatch;
           };
-          solana-cli = pkgs.callPackage ./nixos/pkgs/solana { };
+          solana-platform-tools = pkgs.callPackage ./nixos/pkgs/solana/platform-tools { };
+          cargo-build-sbf = pkgs.callPackage ./nixos/pkgs/solana { inherit solana-platform-tools; solanaPkgs = [ "cargo-build-sbf" ]; };
+          solana-cli = pkgs.callPackage ./nixos/pkgs/solana { inherit solana-platform-tools; };
         in
         {
           checks = {
@@ -184,6 +186,7 @@
                   r0vm
                   cargo-risczero
                   solana-cli
+                  solana-platform-tools
                   bonsol-cli
                   bonsol-relay
                   validator
@@ -192,9 +195,9 @@
                 ] ++ rustToolchain.complete;
               } ''
               # TODO: ensure all directories are in place for shell scripts to execute successfully
-              bash ${validator}/validator.sh &
+              bash ${validator}/bin/validator.sh &
               sleep 5
-              bash ${run-relay}/run-relay.sh &
+              bash ${run-relay}/bin/run-relay.sh &
               sleep 5
               ${bonsol-cli}/bin/bonsol deploy -m images/simple/manifest.json -t url --url https://bonsol-public-images.s3.amazonaws.com/simple-7cb4887749266c099ad1793e8a7d486a27ff1426d614ec0cc9ff50e686d17699
               sleep 5
@@ -286,7 +289,9 @@
 
               cargo-risczero
               r0vm
-              solana-cli;
+              solana-cli
+              cargo-build-sbf
+              solana-platform-tools;
           };
 
           apps = { };

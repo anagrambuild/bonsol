@@ -14,6 +14,7 @@
 , llvm
 , perl
 , libclang
+, solana-platform-tools
 , solanaPkgs ? [
     "solana"
     "solana-bench-tps"
@@ -75,8 +76,9 @@ rustPlatform.buildRustPackage {
     ++ lib.optionals stdenv.hostPlatform.isDarwin [ Security System Libsystem libcxx IOKit AppKit ];
 
   postInstall = ''
-    mkdir -p $out/bin/sdk
-    cp -a ./sdk/* $out/bin/sdk/
+    mkdir -p $out/bin/.cache/solana
+    cp -a ./* $out/bin/
+    ln -s ${solana-platform-tools}/v${solana-platform-tools.version} $out/bin/.cache/solana
   '';
 
   strictDeps = true;

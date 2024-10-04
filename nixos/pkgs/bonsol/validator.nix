@@ -1,10 +1,5 @@
-{ writeTextFile }:
+{ writeShellScriptBin }:
 let
   name = "validator.sh";
 in
-writeTextFile {
-  inherit name;
-  text = builtins.readFile ../../../validator.sh;
-  executable = true;
-  destination = "/${name}";
-}
+writeShellScriptBin name (builtins.readFile ../../../${name})
