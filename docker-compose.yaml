@@ -1,0 +1,18 @@
+version: "3.9"
+services:
+  relay:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: -f /opt/bonsol/Node.toml
+    volumes:
+      - ./relay/DockerNode.toml:/opt/bonsol/Node.toml
+      - relaykp.json:/app/keys/signer.json
+    ports:
+      - 9000:9000
+  solana:
+    image: solanalabs/solana:v1.18.22
+    ports:
+      - 8899:8899
+      - 8900:8900
+    
