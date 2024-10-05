@@ -1,6 +1,14 @@
 { lib
 , stdenv
 , fetchzip
+, autoPatchelfHook
+, zlib
+, openssl
+, libpanel
+, ncurses
+, python39
+, libxml2
+, lldb
 }:
 let
   owner = "anza-xyz";
@@ -13,12 +21,32 @@ let
     hash = "sha256-m+9QArPvapnOO9lMWYZK2/Yog5cVoY9x1DN7JAusYsk=";
     stripRoot = false;
   };
+  python38 = (python39.override {
+    sourceVersion = {
+      major = "3";
+      minor = "8";
+      patch = "9";
+      suffix = "";
+    };
+    hash = "sha256-XjkfPsRdopVEGcqwvq79i+OIlepc4zV3w+wUlAxLlXI=";
+  });
 in
 stdenv.mkDerivation {
   inherit src version;
   pname = repo;
-  sourceRoot = ".";
-  dontBuild = true;
+
+  nativeBuildInputs = [ autoPatchelfHook ];
+  buildInputs = [
+    zlib
+    stdenv.cc.cc
+    openssl
+    libpanel
+    ncurses
+    libxml2
+    lldb
+    python38
+  ];
+
   installPhase = ''
     mkdir -p $out/v${version}/platform-tools
     cp -r ${src}/* $out/v${version}/platform-tools/

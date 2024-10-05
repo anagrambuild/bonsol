@@ -1,0 +1,113 @@
+diff --git a/sdk/cargo-build-sbf/src/main.rs b/sdk/cargo-build-sbf/src/main.rs
+index 0da59ff230..5e90e8c688 100644
+--- a/sdk/cargo-build-sbf/src/main.rs
++++ b/sdk/cargo-build-sbf/src/main.rs
+@@ -5,7 +5,6 @@ use {
+     itertools::Itertools,
+     log::*,
+     regex::Regex,
+-    solana_download_utils::download_file,
+     solana_sdk::signature::{write_keypair_file, Keypair},
+     std::{
+         borrow::Cow,
+@@ -236,95 +235,12 @@ fn make_platform_tools_path_for_version(package: &str, version: &str) -> PathBuf
+ 
+ // Check whether a package is installed and install it if missing.
+ fn install_if_missing(
+-    config: &Config,
+-    package: &str,
+-    url: &str,
+-    download_file_name: &str,
+-    target_path: &Path,
++    _config: &Config,
++    _package: &str,
++    _url: &str,
++    _download_file_name: &str,
++    _target_path: &Path,
+ ) -> Result<(), String> {
+-    if config.force_tools_install {
+-        if target_path.is_dir() {
+-            debug!("Remove directory {:?}", target_path);
+-            fs::remove_dir_all(target_path).map_err(|err| err.to_string())?;
+-        }
+-        let source_base = config.sbf_sdk.join("dependencies");
+-        if source_base.exists() {
+-            let source_path = source_base.join(package);
+-            if source_path.exists() {
+-                debug!("Remove file {:?}", source_path);
+-                fs::remove_file(source_path).map_err(|err| err.to_string())?;
+-            }
+-        }
+-    }
+-    // Check whether the target path is an empty directory. This can
+-    // happen if package download failed on previous run of
+-    // cargo-build-sbf.  Remove the target_path directory in this
+-    // case.
+-    if target_path.is_dir()
+-        && target_path
+-            .read_dir()
+-            .map_err(|err| err.to_string())?
+-            .next()
+-            .is_none()
+-    {
+-        debug!("Remove directory {:?}", target_path);
+-        fs::remove_dir(target_path).map_err(|err| err.to_string())?;
+-    }
+-
+-    // Check whether the package is already in ~/.cache/solana.
+-    // Download it and place in the proper location if not found.
+-    if !target_path.is_dir()
+-        && !target_path
+-            .symlink_metadata()
+-            .map(|metadata| metadata.file_type().is_symlink())
+-            .unwrap_or(false)
+-    {
+-        if target_path.exists() {
+-            debug!("Remove file {:?}", target_path);
+-            fs::remove_file(target_path).map_err(|err| err.to_string())?;
+-        }
+-        fs::create_dir_all(target_path).map_err(|err| err.to_string())?;
+-        let mut url = String::from(url);
+-        url.push('/');
+-        url.push_str(config.platform_tools_version);
+-        url.push('/');
+-        url.push_str(download_file_name);
+-        let download_file_path = target_path.join(download_file_name);
+-        if download_file_path.exists() {
+-            fs::remove_file(&download_file_path).map_err(|err| err.to_string())?;
+-        }
+-        download_file(url.as_str(), &download_file_path, true, &mut None)?;
+-        let zip = File::open(&download_file_path).map_err(|err| err.to_string())?;
+-        let tar = BzDecoder::new(BufReader::new(zip));
+-        let mut archive = Archive::new(tar);
+-        archive.unpack(target_path).map_err(|err| err.to_string())?;
+-        fs::remove_file(download_file_path).map_err(|err| err.to_string())?;
+-    }
+-    // Make a symbolic link source_path -> target_path in the
+-    // sdk/sbf/dependencies directory if no valid link found.
+-    let source_base = config.sbf_sdk.join("dependencies");
+-    if !source_base.exists() {
+-        fs::create_dir_all(&source_base).map_err(|err| err.to_string())?;
+-    }
+-    let source_path = source_base.join(package);
+-    // Check whether the correct symbolic link exists.
+-    let invalid_link = if let Ok(link_target) = source_path.read_link() {
+-        if link_target.ne(target_path) {
+-            fs::remove_file(&source_path).map_err(|err| err.to_string())?;
+-            true
+-        } else {
+-            false
+-        }
+-    } else {
+-        true
+-    };
+-    if invalid_link {
+-        #[cfg(unix)]
+-        std::os::unix::fs::symlink(target_path, source_path).map_err(|err| err.to_string())?;
+-        #[cfg(windows)]
+-        std::os::windows::fs::symlink_dir(target_path, source_path)
+-            .map_err(|err| err.to_string())?;
+-    }
+     Ok(())
+ }
+ 

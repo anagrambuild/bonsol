@@ -168,7 +168,6 @@
             inherit risc0CircuitRecursionPatch;
           };
           solana-platform-tools = pkgs.callPackage ./nixos/pkgs/solana/platform-tools { };
-          cargo-build-sbf = pkgs.callPackage ./nixos/pkgs/solana { inherit solana-platform-tools; solanaPkgs = [ "cargo-build-sbf" ]; };
           solana-cli = pkgs.callPackage ./nixos/pkgs/solana { inherit solana-platform-tools; };
         in
         {
@@ -179,36 +178,6 @@
               bonsol-relay
               cargo-risczero
               r0vm;
-
-            simple-e2e = pkgs.runCommand "simple-e2e-test"
-              {
-                buildInputs = [
-                  r0vm
-                  cargo-risczero
-                  solana-cli
-                  solana-platform-tools
-                  bonsol-cli
-                  bonsol-relay
-                  validator
-                  run-relay
-                  pkgs.bash
-                ] ++ rustToolchain.complete;
-              } ''
-              # TODO: ensure all directories are in place for shell scripts to execute successfully
-              bash ${validator}/bin/validator.sh &
-              sleep 5
-              bash ${run-relay}/bin/run-relay.sh &
-              sleep 5
-              ${bonsol-cli}/bin/bonsol deploy -m images/simple/manifest.json -t url --url https://bonsol-public-images.s3.amazonaws.com/simple-7cb4887749266c099ad1793e8a7d486a27ff1426d614ec0cc9ff50e686d17699
-              sleep 5
-              resp = $(${bonsol-cli}/bin/bonsol execute -f testing-examples/example-execution-request.json -x 2000 -m 2000 -w)
-              if [[ "$resp" =~ "success" ]]; then
-                exit 0
-              else
-                echo "response was not success"
-                exit 1
-              fi
-            '';
 
             # Run clippy (and deny all warnings) on the workspace source,
             # again, reusing the dependency artifacts from above.
@@ -292,6 +261,38 @@
               solana-cli
               cargo-build-sbf
               solana-platform-tools;
+
+            simple-e2e-script = pkgs.writeShellApplication {
+              name = "simple-e2e-test";
+
+              runtimeInputs = [
+                r0vm
+                cargo-risczero
+                solana-cli
+                bonsol-cli
+                bonsol-relay
+                validator
+                run-relay
+              ]; # ++ rustToolchain.complete;
+
+              text = ''
+                bash ${validator}/bin/validator.sh &
+                sleep 5
+                bash ${run-relay}/bin/run-relay.sh &
+                sleep 5
+                ${bonsol-cli}/bin/bonsol deploy -m images/simple/manifest.json -t url --url https://bonsol-public-images.s3.amazonaws.com/simple-7cb4887749266c099ad1793e8a7d486a27ff1426d614ec0cc9ff50e686d17699
+                sleep 5
+                resp = $(${bonsol-cli}/bin/bonsol execute -f testing-examples/example-execution-request.json -x 2000 -m 2000 -w)
+                if [[ "$resp" =~ "success" ]]; then
+                  exit 0
+                else
+                  echo "response was not success"
+                  exit 1
+                fi
+              '';
+
+              checkPhase = "true";
+            };
           };
 
           apps = { };
@@ -302,6 +303,7 @@
             packages = with pkgs; [
               nil # nix lsp
               nixpkgs-fmt # nix formatter
+              rustup
               # pkgs.cargo-hakari
             ] ++ [
               validator
@@ -310,6 +312,28 @@
               cargo-risczero
               solana-cli
             ];
+
+            # Useful for debugging, sets the path that `cargo-build-sbf` will use to find `platform-tools`
+            #
+            # SBF_SDK_PATH = "${solana-cli}/bin/sdk/sbf"; # This is the default
+
+            shellHook = ''
+              cache_dir="''$HOME/.cache/solana"
+              # if the cache dir exists, ask if the user wants to remove it
+              if [[ -d "''$cache_dir" ]]; then
+                read -p "'$cache_dir' will be removed and replaced with a nix store symbolic link, continue? (y/n): " response
+                response=$(echo "$response" | tr '[:upper:]' '[:lower:]')
+                if [[ "''$response" == "y" || "''$response" == "yes" ]]; then
+                  rm -rf "''$cache_dir"
+                else
+                  exit 0
+                fi
+              fi
+              # create the cache dir
+              mkdir -p "''$cache_dir"
+              # symlink the platform tools to the cache dir
+              ln -s ${solana-platform-tools}/v${solana-platform-tools.version} ''$cache_dir
+            '';
           };
 
           # Run nix fmt to format nix files in file tree
