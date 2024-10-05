@@ -6,7 +6,7 @@ use solana_program::pubkey::Pubkey;
 use solana_program::{declare_id, entrypoint, msg};
 
 declare_id!("exay1T7QqsJPNcwzMiWubR6vZnqrgM16jZRraHgqBGG");
-const SIMPLE_IMAGE_ID: &str = "7cb4887749266c099ad1793e8a7d486a27ff1426d614ec0cc9ff50e686d17699";
+const SIMPLE_IMAGE_ID: &str = "68f4b0c5f9ce034aa60ceb264a18d6c410a3af68fafd931bcfd9ebe7c1e42960";
 
 entrypoint!(main);
 fn main(_program_id: &Pubkey, accounts: &[AccountInfo], instruction_data: &[u8]) -> ProgramResult {

@@ -19,6 +19,7 @@ use solana_sdk::signer::Signer;
 use std::io::{self, Read};
 use std::path::Path;
 
+const SOL_CHECK_MESSAGE: &str = "Your account needs to have some SOL to pay for the transactions";
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let cli = BonsolCli::parse();
@@ -61,9 +62,6 @@ async fn main() -> anyhow::Result<()> {
     } else {
         None
     };
-    if !sol_check(rpc.clone(), keypair.pubkey()).await {
-        anyhow::bail!("Your account needs to have some SOL to pay for the transactions");
-    }
     let sdk = BonsolClient::new(rpc.clone());
     match command {
         Commands::Build { zk_program_path } => match build::build(&keypair, zk_program_path) {
@@ -82,6 +80,9 @@ async fn main() -> anyhow::Result<()> {
             deploy_type,
             url_upload,
         } => {
+            if !sol_check(rpc.clone(), keypair.pubkey()).await {
+                anyhow::bail!(SOL_CHECK_MESSAGE);
+            }
             deploy::deploy(
                 rpc,
                 &keypair,
@@ -104,6 +105,9 @@ async fn main() -> anyhow::Result<()> {
             tip,
             timeout,
         } => {
+            if !sol_check(rpc.clone(), keypair.pubkey()).await {
+                anyhow::bail!(SOL_CHECK_MESSAGE);
+            }
             execute::execute(
                 &sdk,
                 rpc,
