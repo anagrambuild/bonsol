@@ -1,17 +1,23 @@
-version: "3.9"
 services:
   relay:
     build:
       context: .
       dockerfile: Dockerfile
-    command: -f /opt/bonsol/Node.toml
+    command: -f NodeDocker.toml
     volumes:
-      - ./relay/DockerNode.toml:/opt/bonsol/Node.toml
-      - relaykp.json:/app/keys/signer.json
+      - ${PWD}/relay/NodeDocker.toml:/usr/opt/bonsol/NodeDocker.toml
+      - ${PWD}/relaykp.json:/usr/opt/bonsol/keys/signer.json
+      - ${PWD}/images:/usr/opt/bonsol/risc0_images/
     ports:
       - 9000:9000
+    restart: always
+    depends_on:
+      - solana
   solana:
-    image: solanalabs/solana:v1.18.22
+    image: anzaxyz/agave:v2.0.13
+    entrypoint: ["solana-test-validator", "--limit-ledger-size", "100000", "--bind-address", "0.0.0.0", "--rpc-pubsub-enable-block-subscription", "--bpf-program", "BoNsHRcyLLNdtnoDf8hiCNZpyehMC4FDMxs6NTxFi3ew", "/programs/bonsol_channel.so", "--bpf-program", "exay1T7QqsJPNcwzMiWubR6vZnqrgM16jZRraHgqBGG", "/programs/callback_example.so"]
+    volumes:
+      - ${PWD}/target/deploy:/programs
     ports:
       - 8899:8899
       - 8900:8900

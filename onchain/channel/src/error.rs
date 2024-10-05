@@ -11,7 +11,7 @@ pub enum ChannelError {
     InvalidInstruction,
     #[error("Invalid Input Data")]
     InvalidInputs,
-    #[error("Invalid Input Lenght")]
+    #[error("Invalid Input Length")]
     InvalidInputLength,
     #[error("Invalid Instruction Parsing")]
     InvalidInstructionParse,
