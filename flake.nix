@@ -297,12 +297,13 @@
 
           apps = { };
 
-          devShells.default = craneLib.devShell {
+          devShells.default = pkgs.mkShell {
             # Inherit inputs from checks.
-            checks = self.checks.${system};
+            # checks = self.checks.${system};
             packages = with pkgs; [
               nil # nix lsp
               nixpkgs-fmt # nix formatter
+              # TODO: This works but ideally we would just use fenix, not rustup
               rustup
               # pkgs.cargo-hakari
             ] ++ [
