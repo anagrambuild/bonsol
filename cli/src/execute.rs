@@ -115,7 +115,6 @@ pub async fn execute(
         .or(execution_request_file.expiry)
         .ok_or(anyhow::anyhow!("Expiry not provided"))?;
     let callback_config = execution_request_file.callback_config;
-    println!("callbakc accoutns {:?}", callback_config);
     let mut execution_config = execution_request_file.execution_config;
     let signer = keypair.pubkey();
     let transformed_inputs = execute_transform_cli_inputs(inputs)?;

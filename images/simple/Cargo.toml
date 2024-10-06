@@ -1,5 +1,5 @@
 [package]
-name = "simple"
+name = "simple2"
 version = "0.1.0"
 edition = "2021"
 publish = false   # Exclude local crates from licensing checks

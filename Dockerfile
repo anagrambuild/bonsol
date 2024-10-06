@@ -1,5 +1,5 @@
 # syntax = docker/dockerfile:1.2
-ARG RUST_VERSION=1.80.0
+ARG RUST_VERSION=1.81.0
 FROM rust:${RUST_VERSION} as chef
 RUN cargo install cargo-chef
 
@@ -40,7 +40,7 @@ LABEL org.opencontainers.image.title="bonsol-relay"
 LABEL org.opencontainers.image.description="A bonsol proving node"
 ARG FLAVOR=standard  
 RUN mkdir -p /usr/opt/bonsol/stark
-RUN apt-get update && apt-get install -y --no-install-recommends software-properties-common wget ca-certificates
+RUN apt-get update && apt-get install -y --no-install-recommends software-properties-common wget ca-certificates libgmp-dev libsodium-dev nasm m4
 COPY --from=builder /app/target/release/relay /usr/opt/bonsol
 COPY --from=risczero/risc0-groth16-prover:v2024-05-17.1 /app/stark_verify /usr/opt/bonsol/stark/stark_verify
 COPY --from=risczero/risc0-groth16-prover:v2024-05-17.1 /app/stark_verify.dat /usr/opt/bonsol/stark/stark_verify.dat
