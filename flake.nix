@@ -156,6 +156,7 @@
           bonsol-cli = mkCrateDrv "bonsol" "cli" [ "sdk" "onchain" "schemas-rust" "iop" "relay" ];
           bonsol-relay = mkCrateDrv "relay" "relay" [ "sdk" "onchain" "schemas-rust" "iop" "cli" ];
 
+          setup = pkgs.callPackage ./nixos/pkgs/bonsol/setup.nix { };
           validator = pkgs.callPackage ./nixos/pkgs/bonsol/validator.nix { };
           run-relay = pkgs.callPackage ./nixos/pkgs/bonsol/run-relay.nix { };
 
@@ -259,7 +260,6 @@
               cargo-risczero
               r0vm
               solana-cli
-              cargo-build-sbf
               solana-platform-tools;
 
             simple-e2e-script = pkgs.writeShellApplication {
@@ -301,11 +301,18 @@
             # Inherit inputs from checks.
             # checks = self.checks.${system};
             packages = with pkgs; [
+              # pkgs.cargo-hakari
+
               nil # nix lsp
               nixpkgs-fmt # nix formatter
-              # TODO: This works but ideally we would just use fenix, not rustup
               rustup
-              # pkgs.cargo-hakari
+
+              # `setup.sh` dependencies
+              docker
+              corepack_22
+              nodejs_22
+              python3
+              udev
             ] ++ [
               validator
               run-relay
@@ -319,6 +326,7 @@
             # SBF_SDK_PATH = "${solana-cli}/bin/sdk/sbf"; # This is the default
 
             shellHook = ''
+              # TODO: use `rustup toolchain link` to link fenix toolchain to rustup as the override toolchain
               cache_dir="''$HOME/.cache/solana"
               # if the cache dir exists, ask if the user wants to remove it
               if [[ -d "''$cache_dir" ]]; then
@@ -326,14 +334,12 @@
                 response=$(echo "$response" | tr '[:upper:]' '[:lower:]')
                 if [[ "''$response" == "y" || "''$response" == "yes" ]]; then
                   rm -rf "''$cache_dir"
-                else
-                  exit 0
+                  # create the cache dir
+                  mkdir -p "''$cache_dir"
+                  # symlink the platform tools to the cache dir
+                  ln -s ${solana-platform-tools}/v${solana-platform-tools.version} ''$cache_dir
                 fi
               fi
-              # create the cache dir
-              mkdir -p "''$cache_dir"
-              # symlink the platform tools to the cache dir
-              ln -s ${solana-platform-tools}/v${solana-platform-tools.version} ''$cache_dir
             '';
           };
 

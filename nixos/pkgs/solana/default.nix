@@ -141,8 +141,8 @@ rustPlatform.buildRustPackage {
   # This is run only when the package is used in a nix-shell, in the event that it's consumed by outside sources.
   # This effectively "re-creates" the logic removed from `cargo-build-sbf` that forcibly removes and symlinks `platform-tools`.
   shellHook = ''
-    # make cargo-build-sbf of platfrom-tools
-    export SBF_SDK_PATH=$out/bin/sdk
+    # make cargo-build-sbf aware of platform-tools
+    export SBF_SDK_PATH=$out/bin/sdk # This is the default but we export it anyway just in case
     cache_dir="''$HOME/.cache/solana"
     # if the cache dir exists, ask if the user wants to remove it
     if [[ -d "''$cache_dir" ]]; then
@@ -150,14 +150,12 @@ rustPlatform.buildRustPackage {
       response=$(echo "$response" | tr '[:upper:]' '[:lower:]')
       if [[ "''$response" == "y" || "''$response" == "yes" ]]; then
         rm -rf "''$cache_dir"
-      else
-        exit 0
+        # create the cache dir
+        mkdir -p "''$cache_dir"
+        # symlink the platform tools to the cache dir
+        ln -s ${solana-platform-tools}/v${solana-platform-tools.version} ''$cache_dir
       fi
     fi
-    # create the cache dir
-    mkdir -p "''$cache_dir"
-    # symlink the platform tools to the cache dir
-    ln -s ${solana-platform-tools}/v${solana-platform-tools.version} ''$cache_dir
   '';
 
   meta = with lib; {
