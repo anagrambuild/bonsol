@@ -8,8 +8,8 @@ image_compression_ttl_hours = 24
 env = "dev"
 stark_compression_tools_path = "/usr/opt/bonsol/stark/"
 [transaction_sender_config]
-  Rpc = { rpc_url = "http://solana:8899" }
+Rpc = { rpc_url = "http://solana:8899" }
 [signer_config]
-  KeypairFile = { path = "/usr/opt/bonsol/keys/signer.json" }
+KeypairFile = { path = "/usr/opt/bonsol/keys/signer.json" }
 [ingester_config]
-  RpcBlockSubscription = { wss_rpc_url = "ws://solana:8900" }
+RpcBlockSubscription = { wss_rpc_url = "ws://solana:8900" }
