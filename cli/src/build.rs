@@ -1,9 +1,7 @@
-use std::{
-    fs::{self, File},
-    path::Path,
-    process::Command,
-    time::Duration,
-};
+use std::fs::{self, File};
+use std::path::Path;
+use std::process::Command;
+use std::time::Duration;
 
 use crate::common::*;
 use anyhow::Result;
