@@ -9,12 +9,7 @@
 , openssl
 , libcxx
 , rocksdb_8_3
-, zlib
-, clang
-, llvm
 , perl
-, libclang
-, cmake
 , autoPatchelfHook
 , solana-platform-tools
 , solanaPkgs ? [
@@ -87,19 +82,13 @@ rustPlatform.buildRustPackage {
   nativeBuildInputs = [
     pkg-config
     protobuf
-    clang
-    llvm
     perl
     autoPatchelfHook
-    cmake
-    libclang.lib
   ];
 
   buildInputs = [
     openssl
     rustPlatform.bindgenHook
-    zlib
-    libclang.lib
     rocksdb
   ] ++ (lib.optionals stdenv.hostPlatform.isLinux [ udev ])
   ++ lib.optionals stdenv.hostPlatform.isDarwin [
@@ -146,7 +135,7 @@ rustPlatform.buildRustPackage {
     cache_dir="''$HOME/.cache/solana"
     # if the cache dir exists, ask if the user wants to remove it
     if [[ -d "''$cache_dir" ]]; then
-      read -p "''$cache_dir will be removed and replaced with a nix store symbolic link, continue? (y/n): " response
+      read -p "'$cache_dir' will be removed and replaced with a nix store symbolic link, continue? (y/n): " response
       response=$(echo "$response" | tr '[:upper:]' '[:lower:]')
       if [[ "''$response" == "y" || "''$response" == "yes" ]]; then
         rm -rf "''$cache_dir"

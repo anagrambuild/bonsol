@@ -254,6 +254,7 @@
               bonsol-cli
               bonsol-relay
 
+              setup
               validator
               run-relay
 
@@ -271,6 +272,7 @@
                 solana-cli
                 bonsol-cli
                 bonsol-relay
+                setup
                 validator
                 run-relay
               ]; # ++ rustToolchain.complete;
@@ -314,6 +316,7 @@
               python3
               udev
             ] ++ [
+              setup
               validator
               run-relay
               r0vm
