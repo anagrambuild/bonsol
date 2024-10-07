@@ -8,6 +8,7 @@
 , protobuf
 , openssl
 , libcxx
+, libclang
 , rocksdb_8_3
 , perl
 , autoPatchelfHook
@@ -89,6 +90,7 @@ rustPlatform.buildRustPackage {
   buildInputs = [
     openssl
     rustPlatform.bindgenHook
+    libclang.lib
     rocksdb
   ] ++ (lib.optionals stdenv.hostPlatform.isLinux [ udev ])
   ++ lib.optionals stdenv.hostPlatform.isDarwin [
