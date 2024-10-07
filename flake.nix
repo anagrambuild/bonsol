@@ -91,10 +91,13 @@
             nativeBuildInputs = with pkgs; [
               pkg-config
               perl
+              autoPatchelfHook
             ];
 
             buildInputs = with pkgs; [
               openssl.dev
+              libgcc
+              libclang.lib
             ];
           };
 
@@ -158,7 +161,7 @@
 
           setup = pkgs.callPackage ./nixos/pkgs/bonsol/setup.nix { };
           validator = pkgs.callPackage ./nixos/pkgs/bonsol/validator.nix { };
-          run-relay = pkgs.callPackage ./nixos/pkgs/bonsol/run-relay.nix { };
+          run-relay = pkgs.callPackage ./nixos/pkgs/bonsol/run-relay.nix { inherit bonsol-relay; };
 
           # Internally managed versions of risc0 binaries that are pinned to
           # the version that bonsol relies on.
@@ -281,18 +284,25 @@
                 bonsol-relay
                 setup
                 validator
-                run-relay
+                (run-relay.override {
+                  use-nix = true;
+                })
               ];
 
               text = ''
-                bash ${setup}/bin/setup.sh
-                bash ${validator}/bin/validator.sh &
+                ${setup}/bin/setup.sh
+                ${bonsol-cli}/bin/bonsol --keypair $HOME/.config/solana/id.json --rpc-url http://localhost:8899 build -z images/simple
+                ${validator}/bin/validator.sh &
+                validator_pid=$!
+                sleep 25
+                ${run-relay}/bin/run-relay.sh &
+                relay_pid=$!
+                sleep 25
+                ${bonsol-cli}/bin/bonsol --keypair $HOME/.config/solana/id.json --rpc-url http://localhost:8899 deploy -m images/simple/manifest.json -t url --url https://bonsol-public-images.s3.amazonaws.com/simple-7cb4887749266c099ad1793e8a7d486a27ff1426d614ec0cc9ff50e686d17699
                 sleep 20
-                bash ${run-relay}/bin/run-relay.sh &
-                sleep 20
-                ${bonsol-cli}/bin/bonsol deploy -m images/simple/manifest.json -t url --url https://bonsol-public-images.s3.amazonaws.com/simple-7cb4887749266c099ad1793e8a7d486a27ff1426d614ec0cc9ff50e686d17699
-                sleep 20
-                resp = $(${bonsol-cli}/bin/bonsol execute -f testing-examples/example-execution-request.json -x 2000 -m 2000 -w)
+                resp = $(${bonsol-cli}/bin/bonsol --keypair $HOME/.config/solana/id.json --rpc-url http://localhost:8899 execute -f testing-examples/example-execution-request.json -x 2000 -m 2000 -w)
+                kill $validator_pid
+                kill $relay_pid
                 if [[ "$resp" =~ "success" ]]; then
                   exit 0
                 else
@@ -323,6 +333,9 @@
               nodejs_22
               python3
               udev
+
+              # checked for at runtime but never used
+              cargo-binstall
             ] ++ [
               setup
               validator
@@ -350,6 +363,11 @@
                   # symlink the platform tools to the cache dir
                   ln -s ${solana-platform-tools}/v${solana-platform-tools.version} ''$cache_dir
                 fi
+              else
+                # create the cache dir
+                mkdir -p "''$cache_dir"
+                # symlink the platform tools to the cache dir
+                ln -s ${solana-platform-tools}/v${solana-platform-tools.version} ''$cache_dir
               fi
             '';
           };

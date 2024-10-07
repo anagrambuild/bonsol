@@ -146,6 +146,11 @@ rustPlatform.buildRustPackage {
         # symlink the platform tools to the cache dir
         ln -s ${solana-platform-tools}/v${solana-platform-tools.version} ''$cache_dir
       fi
+    else
+      # create the cache dir
+      mkdir -p "''$cache_dir"
+      # symlink the platform tools to the cache dir
+      ln -s ${solana-platform-tools}/v${solana-platform-tools.version} ''$cache_dir
     fi
   '';
 
