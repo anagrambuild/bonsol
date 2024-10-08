@@ -292,18 +292,23 @@
               text = ''
                 ${setup}/bin/setup.sh
                 ${bonsol-cli}/bin/bonsol --keypair $HOME/.config/solana/id.json --rpc-url http://localhost:8899 build -z images/simple
-                ${validator}/bin/validator.sh &
+                echo "building validator"
+                ${validator}/bin/validator.sh > /dev/null 2>&1 &
                 validator_pid=$!
-                sleep 25
-                ${run-relay}/bin/run-relay.sh &
+                sleep 30
+                echo "validator is running: PID $validator_pid"
+                echo "building relay"
+                ${run-relay}/bin/run-relay.sh > /dev/null 2>&1 &
                 relay_pid=$!
-                sleep 25
-                ${bonsol-cli}/bin/bonsol --keypair $HOME/.config/solana/id.json --rpc-url http://localhost:8899 deploy -m images/simple/manifest.json -t url --url https://bonsol-public-images.s3.amazonaws.com/simple-7cb4887749266c099ad1793e8a7d486a27ff1426d614ec0cc9ff50e686d17699
+                sleep 30
+                echo "relay is running: PID $relay_pid"
+                ${bonsol-cli}/bin/bonsol --keypair $HOME/.config/solana/id.json --rpc-url http://localhost:8899 deploy -m images/simple/manifest.json -t url --url https://bonsol-public-images.s3.amazonaws.com/simple-7cb4887749266c099ad1793e8a7d486a27ff1426d614ec0cc9ff50e686d17699 -y
                 sleep 20
-                resp = $(${bonsol-cli}/bin/bonsol --keypair $HOME/.config/solana/id.json --rpc-url http://localhost:8899 execute -f testing-examples/example-execution-request.json -x 2000 -m 2000 -w)
+                resp=$(${bonsol-cli}/bin/bonsol --keypair $HOME/.config/solana/id.json --rpc-url http://localhost:8899 execute -f testing-examples/example-execution-request.json -x 2000 -m 2000 -w)
+                echo "execution response was: $resp"
                 kill $validator_pid
                 kill $relay_pid
-                if [[ "$resp" =~ "success" ]]; then
+                if [[ "$resp" =~ "Success" ]]; then
                   exit 0
                 else
                   echo "response was not success"

@@ -9,3 +9,4 @@ node_modules
 charts/bonsol-node/secret-values.yaml
 charts/bonsol-node/mainnet-values.yaml
 charts/bonsol-node/alloy.yaml
+relay/MyLogFile.log
