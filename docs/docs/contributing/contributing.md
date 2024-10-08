@@ -20,7 +20,6 @@ that avoids unecessary downloading, rebuilding and patching. With one command yo
 
 The following link will install nix with the above features and include the bonsol binary cache as a trusted substitutor. Without the substitutor many dependencies will build from source, which could take a the first time they are built!
 ```bash
-# TODO: We can include our nix binary cache as an extra-trusted-substitutor to the installation link which will speed up the process tremendously
 curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install --extra-conf "extra-substitutors = https://bonsol.cachix.org" --extra-conf "extra-trusted-public-keys = bonsol.cachix.org-1:yz7vi1rCPW1BpqoszdJvf08HZxQ/5gPTPxft4NnT74A="
 ```
 
