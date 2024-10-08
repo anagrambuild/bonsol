@@ -318,8 +318,6 @@
           apps = { };
 
           devShells.default = pkgs.mkShell {
-            # Inherit inputs from checks.
-            # checks = self.checks.${system};
             packages = with pkgs; [
               # pkgs.cargo-hakari
 
