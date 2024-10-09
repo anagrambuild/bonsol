@@ -10,8 +10,8 @@
 , version
 , gitHash
 , cargoHash
-, extraNativeBuildInputs ? []
-, extraBuildInputs ? []
+, extraNativeBuildInputs ? [ ]
+, extraBuildInputs ? [ ]
 , metaDescription
 , risc0CircuitRecursionPatch
 }:

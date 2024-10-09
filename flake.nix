@@ -91,10 +91,13 @@
             nativeBuildInputs = with pkgs; [
               pkg-config
               perl
+              autoPatchelfHook
             ];
 
             buildInputs = with pkgs; [
               openssl.dev
+              libgcc
+              libclang.lib
             ];
           };
 
@@ -156,6 +159,10 @@
           bonsol-cli = mkCrateDrv "bonsol" "cli" [ "sdk" "onchain" "schemas-rust" "iop" "relay" ];
           bonsol-relay = mkCrateDrv "relay" "relay" [ "sdk" "onchain" "schemas-rust" "iop" "cli" ];
 
+          setup = pkgs.callPackage ./nixos/pkgs/bonsol/setup.nix { };
+          validator = pkgs.callPackage ./nixos/pkgs/bonsol/validator.nix { };
+          run-relay = pkgs.callPackage ./nixos/pkgs/bonsol/run-relay.nix { inherit bonsol-relay; };
+
           # Internally managed versions of risc0 binaries that are pinned to
           # the version that bonsol relies on.
           cargo-risczero = pkgs.callPackage ./nixos/pkgs/risc0/cargo-risczero {
@@ -164,6 +171,8 @@
           r0vm = pkgs.callPackage ./nixos/pkgs/risc0/r0vm {
             inherit risc0CircuitRecursionPatch;
           };
+          solana-platform-tools = pkgs.callPackage ./nixos/pkgs/solana/platform-tools { };
+          solana-cli = pkgs.callPackage ./nixos/pkgs/solana { inherit solana-platform-tools; };
         in
         {
           checks = {
@@ -247,23 +256,123 @@
             inherit
               bonsol-cli
               bonsol-relay
+
+              setup
+              validator
+              run-relay
+
               cargo-risczero
-              r0vm;
+              r0vm
+              solana-cli
+              solana-platform-tools;
+
+            simple-e2e-script = pkgs.writeShellApplication {
+              name = "simple-e2e-test";
+
+              runtimeInputs = with pkgs; [
+                docker
+                corepack_22
+                nodejs_22
+                python3
+                udev
+                rustup
+              ] ++ [
+                r0vm
+                cargo-risczero
+                solana-cli
+                bonsol-cli
+                bonsol-relay
+                setup
+                validator
+                (run-relay.override {
+                  use-nix = true;
+                })
+              ];
+
+              text = ''
+                ${setup}/bin/setup.sh
+                ${bonsol-cli}/bin/bonsol --keypair $HOME/.config/solana/id.json --rpc-url http://localhost:8899 build -z images/simple
+                echo "building validator"
+                ${validator}/bin/validator.sh > /dev/null 2>&1 &
+                validator_pid=$!
+                sleep 30
+                echo "validator is running: PID $validator_pid"
+                echo "building relay"
+                ${run-relay}/bin/run-relay.sh > /dev/null 2>&1 &
+                relay_pid=$!
+                sleep 30
+                echo "relay is running: PID $relay_pid"
+                ${bonsol-cli}/bin/bonsol --keypair $HOME/.config/solana/id.json --rpc-url http://localhost:8899 deploy -m images/simple/manifest.json -t url --url https://bonsol-public-images.s3.amazonaws.com/simple-7cb4887749266c099ad1793e8a7d486a27ff1426d614ec0cc9ff50e686d17699 -y
+                sleep 20
+                resp=$(${bonsol-cli}/bin/bonsol --keypair $HOME/.config/solana/id.json --rpc-url http://localhost:8899 execute -f testing-examples/example-execution-request.json -x 2000 -m 2000 -w)
+                echo "execution response was: $resp"
+                kill $validator_pid
+                kill $relay_pid
+                if [[ "$resp" =~ "Success" ]]; then
+                  exit 0
+                else
+                  echo "response was not success"
+                  exit 1
+                fi
+              '';
+
+              checkPhase = "true";
+            };
           };
 
           apps = { };
 
-          devShells.default = craneLib.devShell {
-            # Inherit inputs from checks.
-            checks = self.checks.${system};
+          devShells.default = pkgs.mkShell {
             packages = with pkgs; [
+              # pkgs.cargo-hakari
+
               nil # nix lsp
               nixpkgs-fmt # nix formatter
-              self.packages.${system}.r0vm
-              self.packages.${system}.cargo-risczero
+              rustup
+
+              # `setup.sh` dependencies
+              docker
+              corepack_22
+              nodejs_22
+              python3
+              udev
+
+              # checked for at runtime but never used
+              cargo-binstall
+            ] ++ [
+              setup
+              validator
+              run-relay
+              r0vm
+              cargo-risczero
               solana-cli
-              # pkgs.cargo-hakari
             ];
+
+            # Useful for debugging, sets the path that `cargo-build-sbf` will use to find `platform-tools`
+            #
+            # SBF_SDK_PATH = "${solana-cli}/bin/sdk/sbf"; # This is the default
+
+            shellHook = ''
+              # TODO: use `rustup toolchain link` to link fenix toolchain to rustup as the override toolchain
+              cache_dir="''$HOME/.cache/solana"
+              # if the cache dir exists, ask if the user wants to remove it
+              if [[ -d "''$cache_dir" ]]; then
+                read -p "'$cache_dir' will be removed and replaced with a nix store symbolic link, continue? (y/n): " response
+                response=$(echo "$response" | tr '[:upper:]' '[:lower:]')
+                if [[ "''$response" == "y" || "''$response" == "yes" ]]; then
+                  rm -rf "''$cache_dir"
+                  # create the cache dir
+                  mkdir -p "''$cache_dir"
+                  # symlink the platform tools to the cache dir
+                  ln -s ${solana-platform-tools}/v${solana-platform-tools.version} ''$cache_dir
+                fi
+              else
+                # create the cache dir
+                mkdir -p "''$cache_dir"
+                # symlink the platform tools to the cache dir
+                ln -s ${solana-platform-tools}/v${solana-platform-tools.version} ''$cache_dir
+              fi
+            '';
           };
 
           # Run nix fmt to format nix files in file tree
