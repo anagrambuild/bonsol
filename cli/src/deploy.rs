@@ -3,10 +3,8 @@ use std::fs::{self, File};
 use std::path::Path;
 use std::str::FromStr;
 
-use crate::{
-    command::{DeployType, S3UploadDestination, ShadowDriveUpload, UrlUploadDestination},
-    common::ZkProgramManifest,
-};
+use crate::command::{DeployType, S3UploadDestination, ShadowDriveUpload, UrlUploadDestination};
+use crate::common::ZkProgramManifest;
 use anyhow::Result;
 use bonsol_sdk::{BonsolClient, ProgramInputType};
 use byte_unit::{Byte, ByteUnit};
