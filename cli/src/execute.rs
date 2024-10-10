@@ -4,6 +4,7 @@ use bonsol_sdk::input_resolver::{DefaultInputResolver, InputResolver, ProgramInp
 use bonsol_sdk::{BonsolClient, ExecutionAccountStatus, InputType};
 use indicatif::ProgressBar;
 use sha2::{Digest, Sha256};
+use solana_sdk::commitment_config::CommitmentConfig;
 use solana_rpc_client::nonblocking::rpc_client::RpcClient;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signer::Signer;
@@ -30,7 +31,7 @@ pub async fn execution_waiter(
         }
         interval.tick().await;
 
-        let current_block = sdk.get_block_height().await?;
+        let current_block = sdk.get_current_slot().await?;
         indicator.set_message(format!(
             "Waiting for execution to be claimed, current block {} expiry {}",
             current_block, expiry
@@ -124,7 +125,7 @@ pub async fn execute(
         && transformed_inputs.iter().all(|i| i.input_type != InputType::Private);
     if hash_inputs {
         indicator.set_message("Getting/Hashing inputs");
-        let rpc_client = Arc::new(RpcClient::new(rpc_url.clone()));
+        let rpc_client = Arc::new(RpcClient::new_with_commitment(rpc_url.clone(), CommitmentConfig::confirmed()));
         let input_resolver =
             DefaultInputResolver::new(Arc::new(reqwest::Client::new()), rpc_client);
         let hashing_inputs = input_resolver
@@ -141,8 +142,10 @@ pub async fn execute(
         let digest = hash.finalize();
         execution_config.input_hash = Some(digest.to_vec());
     }
-    let current_block = sdk.get_block_height().await?;
+    let current_block = sdk.get_current_slot().await?;
     let expiry = expiry + current_block;
+    println!("Execution expiry {}", expiry);
+    println!("current block {}", current_block);
     indicator.set_message("Building transaction");
     let ixs = sdk
         .execute_v1(

@@ -16,6 +16,7 @@ use shadow_drive_sdk::ShadowDriveClient;
 use solana_rpc_client::nonblocking::rpc_client::RpcClient;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::read_keypair_file;
+use solana_sdk::commitment_config::CommitmentConfig;
 
 pub async fn deploy(
     rpc: String,
@@ -29,7 +30,7 @@ pub async fn deploy(
 ) -> Result<()> {
     let bar = ProgressBar::new_spinner();
     let rpc_url = rpc.clone();
-    let rpc_client = RpcClient::new(rpc);
+    let rpc_client = RpcClient::new_with_commitment(rpc, CommitmentConfig::confirmed());
     let manifest_path = Path::new(&manifest_path);
     let manifest_file = File::open(manifest_path)
         .map_err(|e| anyhow::anyhow!("Error opening manifest file: {:?}", e))?;

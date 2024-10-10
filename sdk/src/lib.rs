@@ -47,10 +47,10 @@ impl BonsolClient {
         }
     }
 
-    pub async fn get_block_height(&self) -> Result<u64> {
+    pub async fn get_current_slot(&self) -> Result<u64> {
         self.rpc_client
-            .get_block_height()
-            .map_err(|_| anyhow::anyhow!("Failed to get block height"))
+            .get_slot()
+            .map_err(|_| anyhow::anyhow!("Failed to get slot"))
             .await
     }
 

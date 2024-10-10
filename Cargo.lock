@@ -1156,7 +1156,7 @@ checksum = "8d696c370c750c948ada61c69a0ee2cbbb9c50b1019ddb86d9317157a99c2cae"
 
 [[package]]
 name = "bonsol-channel"
-version = "0.0.1"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "ark-bn254",
@@ -1176,7 +1176,7 @@ dependencies = [
 
 [[package]]
 name = "bonsol-channel-interface"
-version = "0.0.1"
+version = "0.2.0"
 dependencies = [
  "anchor-lang 0.30.1",
  "arrayref",
@@ -1196,7 +1196,7 @@ dependencies = [
 
 [[package]]
 name = "bonsol-channel-utils"
-version = "0.0.1"
+version = "0.2.0"
 dependencies = [
  "solana-program",
  "solana-sdk",
@@ -1204,7 +1204,7 @@ dependencies = [
 
 [[package]]
 name = "bonsol-cli"
-version = "0.0.1"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "atty",
@@ -1236,7 +1236,7 @@ dependencies = [
 
 [[package]]
 name = "bonsol-schema"
-version = "0.0.1"
+version = "0.2.0"
 dependencies = [
  "bytemuck",
  "flatbuffers",
@@ -1247,7 +1247,7 @@ dependencies = [
 
 [[package]]
 name = "bonsol-sdk"
-version = "0.0.1"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "async-trait",
