@@ -17,7 +17,7 @@ use std::str::FromStr;
 
 pub fn cargo_has_plugin(plugin_name: &str) -> bool {
     Command::new("cargo")
-        .args(&["--list"])
+        .args(["--list"])
         .output()
         .map(|output| {
             String::from_utf8_lossy(&output.stdout)
@@ -108,12 +108,12 @@ pub struct CliCallbackConfig {
     pub extra_accounts: Option<Vec<CliAccountMeta>>,
 }
 
-impl Into<CallbackConfig> for CliCallbackConfig {
-    fn into(self) -> CallbackConfig {
+impl From<CliCallbackConfig> for CallbackConfig {
+    fn from(val: CliCallbackConfig) -> Self {
         CallbackConfig {
-            program_id: self.program_id.unwrap_or_default(),
-            instruction_prefix: self.instruction_prefix.unwrap_or_default(),
-            extra_accounts: self
+            program_id: val.program_id.unwrap_or_default(),
+            instruction_prefix: val.instruction_prefix.unwrap_or_default(),
+            extra_accounts: val
                 .extra_accounts
                 .map(|v| v.into_iter().map(|a| a.into()).collect())
                 .unwrap_or_default(),
@@ -130,12 +130,12 @@ pub struct CliAccountMeta {
     pub is_writable: bool,
 }
 
-impl Into<AccountMeta> for CliAccountMeta {
-    fn into(self) -> AccountMeta {
+impl From<CliAccountMeta> for AccountMeta {
+    fn from(val: CliAccountMeta) -> Self {
         AccountMeta {
-            pubkey: self.pubkey,
-            is_signer: self.is_signer,
-            is_writable: self.is_writable,
+            pubkey: val.pubkey,
+            is_signer: val.is_signer,
+            is_writable: val.is_writable,
         }
     }
 }
@@ -149,11 +149,7 @@ pub struct InputFile {
 pub async fn sol_check(rpc_client: String, pubkey: Pubkey) -> bool {
     let rpc_client = rpc_client::RpcClient::new(rpc_client);
     if let Ok(account) = rpc_client.get_account(&pubkey).await {
-        if account.lamports > 0 {
-            return true;
-        } else {
-            return false;
-        }
+        return account.lamports > 0
     }
     false
 }
@@ -262,21 +258,21 @@ fn is_valid_number(s: &str) -> Option<NumberType> {
 fn parse_entry(index: u8, s: &str) -> Result<ProgramInput> {
     if let Ok(num) = s.parse::<f64>() {
         return Ok(ProgramInput::Resolved(ResolvedInput {
-            index: index,
+            index,
             data: num.to_le_bytes().to_vec(),
             input_type: ProgramInputType::Private,
         }));
     }
     if let Ok(num) = s.parse::<u64>() {
         return Ok(ProgramInput::Resolved(ResolvedInput {
-            index: index,
+            index,
             data: num.to_le_bytes().to_vec(),
             input_type: ProgramInputType::Private,
         }));
     }
     if let Ok(num) = s.parse::<i64>() {
         return Ok(ProgramInput::Resolved(ResolvedInput {
-            index: index,
+            index,
             data: num.to_le_bytes().to_vec(),
             input_type: ProgramInputType::Private,
         }));
@@ -286,14 +282,14 @@ fn parse_entry(index: u8, s: &str) -> Result<ProgramInput> {
             .decode(s)
             .map_err(|e| anyhow::anyhow!("Error decoding base64 input: {:?}", e))?;
         return Ok(ProgramInput::Resolved(ResolvedInput {
-            index: index,
+            index,
             data: decoded,
             input_type: ProgramInputType::Private,
         }));
     }
 
     return Ok(ProgramInput::Resolved(ResolvedInput {
-        index: index,
+        index,
         data: s.as_bytes().to_vec(),
         input_type: ProgramInputType::Private,
     }));

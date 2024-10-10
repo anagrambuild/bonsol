@@ -70,4 +70,4 @@ cargo run -p bonsol-cli execute -f testing-examples/example-execution-request.js
 ```
 
 ## Contributing
-Please see our [Contributing Guide](../docs/docs/contributing/contributing.md) for details on how to get started building 乃ㄖ几丂ㄖㄥ.
+Please see our [Contributing Guide](https://bonsol.sh/docs/contributing) for details on how to get started building 乃ㄖ几丂ㄖㄥ.

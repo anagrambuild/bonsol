@@ -87,6 +87,12 @@ const config: Config = {
             label: 'Explanation',
           },
           {
+            type: 'docSidebar',
+            sidebarId: 'contributingSidebar',
+            position: 'left',
+            label: 'Contributing',
+          },
+          {
             href: 'https://github.com/anagrambuild/bonsol',
             label: 'GitHub',
             position: 'right',
