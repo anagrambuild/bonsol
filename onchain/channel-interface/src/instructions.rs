@@ -279,6 +279,7 @@ pub fn execute_v1(
     } else {
         None
     };
+    println!("Execution request v1 fbb expiry {}", expiration);
     let fbb_execute = ExecutionRequestV1::create(
         &mut fbb,
         &ExecutionRequestV1Args {
