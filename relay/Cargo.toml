@@ -1,6 +1,6 @@
 [package]
 name = "relay"
-version = "0.1.10"
+version = "0.2.0"
 edition = "2021"
 publish = false    # Exclude local crates from licensing checks
 
