@@ -1,6 +1,5 @@
 use crate::common::{proof_get_inputs, ZkProgramManifest};
 use anyhow::{anyhow, Result};
-use bincode;
 use bonsol_sdk::image::Image;
 use bonsol_sdk::prover::{get_risc0_prover, new_risc0_exec_env};
 use bonsol_sdk::BonsolClient;
@@ -22,7 +21,7 @@ pub async fn prove(
     let pwd = std::env::current_dir()?;
     let image_bytes = match (&program_id, manifest_path) {
         (Some(i), None) => {
-            let bytes: Bytes = sdk.download_program(&i).await?;
+            let bytes: Bytes = sdk.download_program(i).await?;
             Ok(bytes)
         }
         (None, Some(m)) => {

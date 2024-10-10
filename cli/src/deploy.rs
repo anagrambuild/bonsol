@@ -57,7 +57,7 @@ pub async fn deploy(
             let region = region.unwrap();
             let access_key = access_key.unwrap();
             let secret_key = secret_key.unwrap();
-            if bucket == "" {
+            if bucket.is_empty() {
                 bar.finish_and_clear();
                 return Err(anyhow::anyhow!("Please provide a bucket name"));
             }
@@ -77,7 +77,7 @@ pub async fn deploy(
                 "https://{}.s3.{}.amazonaws.com/{}",
                 bucket,
                 region,
-                dest.to_string()
+                dest
             );
             if exists {
                 bar.set_message("File already exists, skipping upload");
@@ -197,7 +197,7 @@ pub async fn deploy(
         Ok(Some(_)) => {
             bar.finish_and_clear();
             println!("Deployment already exists, deployments are immutable");
-            return Ok(());
+            Ok(())
         }
         Ok(None) => {
             let deploy_txn = bonsol_client
@@ -228,11 +228,11 @@ pub async fn deploy(
                     anyhow::bail!(e);
                 }
             };
-            return Ok(());
+            Ok(())
         }
         Err(e) => {
             bar.finish_with_message(format!("Error getting deployment: {:?}", e));
-            return Ok(());
+            Ok(())
         }
-    };
+    }
 }
