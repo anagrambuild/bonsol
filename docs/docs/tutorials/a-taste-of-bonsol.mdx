@@ -89,10 +89,10 @@ sequenceDiagram;
 We will break down a few parts of the code to show the bonsol specific parts. In `lib.rs` we have the following:
 
 ```rust
-use anagram_bonsol_channel_interface::anchor::{
+use anagram_bonsol_interface::anchor::{
     Bonsol, DeployV1Account, ExecutionRequestV1Account,
 };
-use anagram_bonsol_channel_interface::instructions::{
+use anagram_bonsol_interface::instructions::{
     execute_v1, CallbackConfig, ExecutionConfig, Input,
 };
 ...

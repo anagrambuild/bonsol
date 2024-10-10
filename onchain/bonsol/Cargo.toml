@@ -1,5 +1,5 @@
 [package]
-name = "bonsol-channel"
+name = "bonsol"
 version = "0.0.1"
 description = "Solana channel to bonsai"
 authors = ["anagram build team"]

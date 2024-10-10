@@ -1,11 +1,11 @@
 # Interact with Bonsol Contracts/Programs
 
-In your solana program you can interact with bonsol programs by using the `bonsol-channel-interface` crate.
+In your solana program you can interact with bonsol programs by using the `bonsol-interface` crate.
 
 ## Installing the crate
 
 ```bash
-cargo add bonsol-channel-interface
+cargo add bonsol-interface
 ```
 
 ## Using the crate in a standard solana program
@@ -22,7 +22,7 @@ You can can ensure you have the correct accounts by using the provided derivatio
 In rust as long as you know the IMAGE_ID and EXECUTION_REQEUST_ID you can use the following derivation functions to ensure you have the correct accounts.
 
 ```rust
-use bonsol_channel_interface::{execution_address, deployment_address};
+use bonsol_interface::{execution_address, deployment_address};
 
 const IMAGE_ID: &str = "image_id"; //this image id will be much longer and provided by the on chain record or in the manifest of a built zkprogram it will differ for each zkprogram
 
@@ -58,7 +58,7 @@ To create an execuition request you will need to provide the following informati
 Here is an example of how to create an execution request, taken from the PowPoW example.
 
 ```rust 
-use anagram_bonsol_channel_interface::instructions::{
+use anagram_channel_interface::instructions::{
     execute_v1, CallbackConfig, ExecutionConfig, Input,
 };
 ...
@@ -92,7 +92,7 @@ execute_v1(
 ```
 Here is an example of how to verify a callback from bonsol, taken from the PowPoW example.
 ```rust
-use anagram_bonsol_channel_interface::callback::handle_callback;
+use anagram_bonsol_interface::callback::handle_callback;
 ...
 pub fn your_instruction(
   program_id: &Pubkey,
@@ -116,7 +116,7 @@ pub fn your_instruction(
 Bonsol has anchor integration and allows you to use anchor accounts structs with bonsol types.
 
 ```rust
-use anagram_bonsol_channel_interface::anchor::{
+use anagram_bonsol_interface::anchor::{
     Bonsol, DeployV1Account, ExecutionRequestV1Account,
 };
 

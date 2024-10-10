@@ -4,7 +4,7 @@ name = "bonsol"
 [workspace]
 members = [
   "iop",
-  "onchain/channel",
+  "onchain/bonsol",
   "onchain/interface",
   "onchain/example-callback-program",
   "relay",

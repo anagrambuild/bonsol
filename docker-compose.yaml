@@ -15,7 +15,7 @@ services:
       - solana
   solana:
     image: anzaxyz/agave:v2.0.13
-    entrypoint: ["solana-test-validator", "--limit-ledger-size", "100000", "--bind-address", "0.0.0.0", "--rpc-pubsub-enable-block-subscription", "--bpf-program", "BoNsHRcyLLNdtnoDf8hiCNZpyehMC4FDMxs6NTxFi3ew", "/programs/bonsol_channel.so", "--bpf-program", "exay1T7QqsJPNcwzMiWubR6vZnqrgM16jZRraHgqBGG", "/programs/callback_example.so"]
+    entrypoint: ["solana-test-validator", "--limit-ledger-size", "100000", "--bind-address", "0.0.0.0", "--rpc-pubsub-enable-block-subscription", "--bpf-program", "BoNsHRcyLLNdtnoDf8hiCNZpyehMC4FDMxs6NTxFi3ew", "/programs/bonsol.so", "--bpf-program", "exay1T7QqsJPNcwzMiWubR6vZnqrgM16jZRraHgqBGG", "/programs/callback_example.so"]
     volumes:
       - ${PWD}/target/deploy:/programs
     ports:
