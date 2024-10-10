@@ -2,7 +2,7 @@
 name = "relay"
 version = "0.2.0"
 edition = "2021"
-publish = false    # Exclude local crates from licensing checks
+publish = false   # Exclude local crates from licensing checks
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
