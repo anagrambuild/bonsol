@@ -497,7 +497,7 @@ async fn handle_execution_request<'a>(
                             execution_id: eid.clone(),
                             image_id: image_id.clone(),
                             status: ClaimStatus::Claiming(sig),
-                            expiry: expiry,
+                            expiry,
                             requester: accounts[0],
                             program_callback: callback,
                             forward_output: exec.forward_output(),

@@ -5,8 +5,7 @@ name = "bonsol"
 members = [
   "iop",
   "onchain/channel",
-  "onchain/channel-utils",
-  "onchain/channel-interface",
+  "onchain/interface",
   "onchain/example-callback-program",
   "relay",
   "schemas-rust",

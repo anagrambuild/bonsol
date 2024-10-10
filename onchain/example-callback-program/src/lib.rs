@@ -1,4 +1,4 @@
-use bonsol_channel_interface::callback::handle_callback;
+use bonsol_interface::callback::handle_callback;
 use solana_program::account_info::AccountInfo;
 use solana_program::entrypoint::ProgramResult;
 use solana_program::program_error::ProgramError;

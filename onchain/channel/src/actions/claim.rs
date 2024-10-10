@@ -1,7 +1,7 @@
-use bonsol_channel_interface::{
-    bonsol_channel_utils::{execution_address_seeds, execution_claim_address_seeds},
+use bonsol_interface::{
     bonsol_schema::{root_as_execution_request_v1, ChannelInstruction, ClaimV1},
     claim_state::ClaimStateV1,
+    util::{execution_address_seeds, execution_claim_address_seeds},
 };
 
 use solana_program::{

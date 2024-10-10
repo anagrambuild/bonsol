@@ -4,9 +4,9 @@ use crate::{
     proof_handling::{output_digest, prepare_inputs, verify_risc0},
     utilities::*,
 };
-use bonsol_channel_interface::{
-    bonsol_channel_utils::execution_address_seeds,
+use bonsol_interface::{
     bonsol_schema::{root_as_execution_request_v1, ChannelInstruction, ExitCode, StatusV1},
+    util::execution_address_seeds,
 };
 use solana_program::{
     account_info::AccountInfo,

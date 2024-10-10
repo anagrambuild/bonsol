@@ -1,4 +1,3 @@
-use bonsol_channel_utils::{deployment_address, execution_address};
 use bonsol_schema::{
     Account, ChannelInstruction, ChannelInstructionArgs, ChannelInstructionIxType, DeployV1,
     DeployV1Args, ExecutionRequestV1, ExecutionRequestV1Args, InputBuilder, InputT, InputType,
@@ -6,7 +5,10 @@ use bonsol_schema::{
 };
 use flatbuffers::{FlatBufferBuilder, WIPOffset};
 
-use crate::error::ClientError;
+use crate::{
+    error::ClientError,
+    util::{deployment_address, execution_address},
+};
 
 #[cfg(feature = "on-chain")]
 use {

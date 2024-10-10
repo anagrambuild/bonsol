@@ -1,19 +1,18 @@
 [package]
-name = "bonsol-channel-interface"
+name = "bonsol-interface"
 version = "0.0.1"
 edition = "2021"
 publish = false                   # Exclude local crates from licensing checks
 
 [features]
-on-chain = ["solana-program", "bonsol-channel-utils/on-chain"]
-default = ["solana-sdk", "bonsol-channel-utils/default", "serde"]
+on-chain = ["solana-program"]
+default = ["solana-sdk", "serde"]
 anchor = ["on-chain", "anchor-lang"]
 idl-build = ["anchor-lang/idl-build"]
 
 [dependencies]
 arrayref = "0.3.6"
 base64 = "0.21.2"
-bonsol-channel-utils = { path = "../channel-utils", version = "0.0.1", optional = true, default-features = false }
 bonsol-schema = { path = "../../schemas-rust", version = "0.0.1" }
 bytemuck = { version = "1.15.0", features = ["derive"] }
 flatbuffers = { workspace = true }

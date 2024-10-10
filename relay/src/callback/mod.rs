@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use {
     async_trait::async_trait,
-    bonsol_channel_utils::{deployment_address, execution_address, execution_claim_address},
+    bonsol_interface::util::{deployment_address, execution_address, execution_claim_address},
     bonsol_schema::{
         ChannelInstruction, ChannelInstructionArgs, ChannelInstructionIxType, ClaimV1, ClaimV1Args,
         StatusTypes, StatusV1, StatusV1Args,
@@ -107,7 +107,7 @@ impl RpcTransactionSender {
     pub fn new(rpc_url: String, bonsol_program: Pubkey, signer: Keypair) -> Self {
         Self {
             rpc_client: Arc::new(RpcClient::new(rpc_url)),
-            signer: signer,
+            signer,
             bonsol_program,
             txn_status_handle: None,
             sigs: Arc::new(DashMap::new()),

@@ -1,10 +1,10 @@
 use crate::{assertions::*, error::ChannelError, utilities::*};
 
-use bonsol_channel_interface::{
-    bonsol_channel_utils::execution_address_seeds,
+use bonsol_interface::{
     bonsol_schema::{
         root_as_deploy_v1, root_as_input_set, ChannelInstruction, ExecutionRequestV1, InputType,
     },
+    util::execution_address_seeds,
 };
 
 use solana_program::{account_info::AccountInfo, bpf_loader_upgradeable, system_program};

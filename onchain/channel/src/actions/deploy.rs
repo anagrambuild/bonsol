@@ -1,8 +1,8 @@
 use crate::{assertions::*, error::ChannelError, utilities::*};
 
-use bonsol_channel_interface::{
-    bonsol_channel_utils::{deployment_address_seeds, img_id_hash},
+use bonsol_interface::{
     bonsol_schema::{ChannelInstruction, DeployV1},
+    util::{deployment_address_seeds, img_id_hash},
 };
 
 use solana_program::{account_info::AccountInfo, msg, system_program};

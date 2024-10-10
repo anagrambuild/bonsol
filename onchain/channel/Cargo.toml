@@ -20,7 +20,7 @@ test-sbf = []
 [dependencies]
 ark-bn254 = "0.4.0"
 ark-serialize = "0.4.0"
-bonsol-channel-interface = { path = "../channel-interface", features = [
+bonsol-interface = { path = "../interface", features = [
   "on-chain",
 ], default-features = false }
 flatbuffers = { workspace = true }

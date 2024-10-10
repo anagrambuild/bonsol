@@ -5,7 +5,7 @@ pub mod util;
 use std::time::Duration;
 
 use anyhow::Result;
-use bonsol_channel_interface::claim_state::ClaimStateHolder;
+use bonsol_interface::claim_state::ClaimStateHolder;
 use bonsol_schema::{root_as_deploy_v1, root_as_execution_request_v1};
 use bytes::Bytes;
 use futures_util::TryFutureExt;
@@ -22,8 +22,7 @@ use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signer::Signer;
 use solana_sdk::transaction::VersionedTransaction;
 
-pub use bonsol_channel_interface::{instructions, ID};
-pub use bonsol_channel_utils::*;
+pub use bonsol_interface::{instructions, util::*, ID};
 pub use bonsol_schema::{
     ClaimV1T, DeployV1T, ExecutionRequestV1T, ExitCode, InputSetT, InputT, InputType,
     ProgramInputType, StatusTypes,
@@ -137,7 +136,7 @@ impl BonsolClient {
     }
 
     pub async fn get_fees(&self, signer: &Pubkey) -> Result<u64> {
-        let fee_accounts = vec![signer.to_owned(), bonsol_channel_utils::ID];
+        let fee_accounts = vec![signer.to_owned(), bonsol_interface::ID];
         let compute_fees = self
             .rpc_client
             .get_recent_prioritization_fees(&fee_accounts)

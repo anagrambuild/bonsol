@@ -11,7 +11,7 @@ edition = "2021"
 test-sbf = []
 
 [dependencies]
-bonsol-channel-interface = { path = "../channel-interface", features = [
+bonsol-interface = { path = "../interface", features = [
   "on-chain",
 ], default-features = false }
 solana-program = { workspace = true }

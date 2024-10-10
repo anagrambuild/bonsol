@@ -21,7 +21,7 @@ ark-relations = { version = "0.4.0" }
 ark-serialize = "0.4.0"
 ark-std = { version = "0.4.0" }
 async-trait = "0.1.80"
-bonsol-channel-utils = { path = "../onchain/channel-utils" }
+bonsol-interface = { path = "../onchain/interface" }
 bonsol-schema = { path = "../schemas-rust" }
 bonsol-sdk = { path = "../sdk" }
 bytemuck = "1.15.0"

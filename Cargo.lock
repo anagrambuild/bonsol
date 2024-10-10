@@ -1161,7 +1161,7 @@ dependencies = [
  "anyhow",
  "ark-bn254",
  "ark-serialize",
- "bonsol-channel-interface",
+ "bonsol-interface",
  "flatbuffers",
  "groth16-solana",
  "hex",
@@ -1172,34 +1172,6 @@ dependencies = [
  "solana-sdk",
  "thiserror",
  "tokio-test",
-]
-
-[[package]]
-name = "bonsol-channel-interface"
-version = "0.0.1"
-dependencies = [
- "anchor-lang 0.30.1",
- "arrayref",
- "base64 0.21.7",
- "bonsol-channel-utils",
- "bonsol-schema",
- "bytemuck",
- "flatbuffers",
- "hex",
- "paste",
- "serde",
- "sha3 0.10.8",
- "solana-program",
- "solana-sdk",
- "thiserror",
-]
-
-[[package]]
-name = "bonsol-channel-utils"
-version = "0.0.1"
-dependencies = [
- "solana-program",
- "solana-sdk",
 ]
 
 [[package]]
@@ -1235,6 +1207,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "bonsol-interface"
+version = "0.0.1"
+dependencies = [
+ "anchor-lang 0.30.1",
+ "arrayref",
+ "base64 0.21.7",
+ "bonsol-schema",
+ "bytemuck",
+ "flatbuffers",
+ "hex",
+ "paste",
+ "serde",
+ "sha3 0.10.8",
+ "solana-program",
+ "solana-sdk",
+ "thiserror",
+]
+
+[[package]]
 name = "bonsol-schema"
 version = "0.0.1"
 dependencies = [
@@ -1252,8 +1243,7 @@ dependencies = [
  "anyhow",
  "async-trait",
  "bincode",
- "bonsol-channel-interface",
- "bonsol-channel-utils",
+ "bonsol-interface",
  "bonsol-schema",
  "bytes",
  "flatbuffers",
@@ -1523,7 +1513,7 @@ name = "callback-example"
 version = "0.0.1"
 dependencies = [
  "anyhow",
- "bonsol-channel-interface",
+ "bonsol-interface",
  "solana-program",
  "solana-program-test",
  "solana-sdk",
@@ -5209,7 +5199,7 @@ dependencies = [
  "ark-serialize",
  "ark-std",
  "async-trait",
- "bonsol-channel-utils",
+ "bonsol-interface",
  "bonsol-schema",
  "bonsol-sdk",
  "bytemuck",
