@@ -4,8 +4,8 @@ use bonsol_sdk::input_resolver::{DefaultInputResolver, InputResolver, ProgramInp
 use bonsol_sdk::{BonsolClient, ExecutionAccountStatus, InputType};
 use indicatif::ProgressBar;
 use sha2::{Digest, Sha256};
-use solana_sdk::commitment_config::CommitmentConfig;
 use solana_rpc_client::nonblocking::rpc_client::RpcClient;
+use solana_sdk::commitment_config::CommitmentConfig;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signer::Signer;
 use std::fs::File;
@@ -125,7 +125,10 @@ pub async fn execute(
         && transformed_inputs.iter().all(|i| i.input_type != InputType::Private);
     if hash_inputs {
         indicator.set_message("Getting/Hashing inputs");
-        let rpc_client = Arc::new(RpcClient::new_with_commitment(rpc_url.clone(), CommitmentConfig::confirmed()));
+        let rpc_client = Arc::new(RpcClient::new_with_commitment(
+            rpc_url.clone(),
+            CommitmentConfig::confirmed(),
+        ));
         let input_resolver =
             DefaultInputResolver::new(Arc::new(reqwest::Client::new()), rpc_client);
         let hashing_inputs = input_resolver

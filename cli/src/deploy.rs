@@ -14,9 +14,9 @@ use object_store::ObjectStore;
 use shadow_drive_sdk::models::ShadowFile;
 use shadow_drive_sdk::ShadowDriveClient;
 use solana_rpc_client::nonblocking::rpc_client::RpcClient;
+use solana_sdk::commitment_config::CommitmentConfig;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::read_keypair_file;
-use solana_sdk::commitment_config::CommitmentConfig;
 
 pub async fn deploy(
     rpc: String,
