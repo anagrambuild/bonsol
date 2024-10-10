@@ -29,13 +29,13 @@ use {
 use {
     crate::types::{BonsolInstruction, ProgramExec},
     anyhow::Result,
-    bonsol_schema::{parse_ix_data, root_as_deploy_v1, ChannelInstructionIxType},
-    bonsol_sdk::{
+    bonsol_prover::{
         image::Image,
         input_resolver::{InputResolver, ProgramInput},
         prover::{get_risc0_prover, new_risc0_exec_env},
         util::get_body_max_size,
     },
+    bonsol_schema::{parse_ix_data, root_as_deploy_v1, ChannelInstructionIxType},
     risc0_groth16::{ProofJson, Seal},
     risc0_zkvm::{
         recursion::identity_p254,

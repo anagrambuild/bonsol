@@ -1226,6 +1226,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "bonsol-prover"
+version = "0.0.1"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "bincode",
+ "bonsol-interface",
+ "bonsol-schema",
+ "bytes",
+ "flatbuffers",
+ "futures-util",
+ "num-traits",
+ "reqwest",
+ "risc0-binfmt",
+ "risc0-zkvm",
+ "serde",
+ "serde_json",
+ "solana-rpc-client",
+ "solana-rpc-client-api",
+ "solana-sdk",
+ "tokio",
+]
+
+[[package]]
 name = "bonsol-schema"
 version = "0.0.1"
 dependencies = [
@@ -5200,8 +5224,8 @@ dependencies = [
  "ark-std",
  "async-trait",
  "bonsol-interface",
+ "bonsol-prover",
  "bonsol-schema",
- "bonsol-sdk",
  "bytemuck",
  "byteorder",
  "bytes",

@@ -8,7 +8,7 @@ pub mod config;
 mod prover;
 use {
     anyhow::Result,
-    bonsol_sdk::input_resolver::DefaultInputResolver,
+    bonsol_prover::input_resolver::DefaultInputResolver,
     callback::{RpcTransactionSender, TransactionSender},
     config::*,
     ingest::{GrpcIngester, Ingester, RpcIngester},
