@@ -5,7 +5,7 @@ RUN cargo install cargo-chef
 FROM chef as planner
 WORKDIR /app
 COPY . .
-RUN cargo chef prepare --features=cuda --bin relay --recipe-path recipe.json
+RUN cargo chef prepare --bin relay --recipe-path recipe.json
 FROM chef as builder
 RUN apt-get clean && \
     rm -rf /var/lib/apt/lists/* && \
