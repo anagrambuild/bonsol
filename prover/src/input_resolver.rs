@@ -1,3 +1,7 @@
+use std::str::from_utf8;
+use std::sync::Arc;
+use std::time::{SystemTime, UNIX_EPOCH};
+
 use anyhow::Result;
 use async_trait::async_trait;
 use bonsol_schema::{root_as_input_set, InputT, InputType, ProgramInputType};
@@ -5,9 +9,6 @@ use reqwest::Url;
 use serde::{Deserialize, Serialize};
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signer::Signer;
-use std::str::from_utf8;
-use std::sync::Arc;
-use std::time::{SystemTime, UNIX_EPOCH};
 use tokio::task::{JoinHandle, JoinSet};
 
 use crate::util::get_body_max_size;

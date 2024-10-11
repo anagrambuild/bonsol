@@ -1,7 +1,7 @@
 use anyhow::Result;
 use base64::engine::general_purpose;
 use base64::Engine as _;
-use bonsol_sdk::input_resolver::{ProgramInput, ResolvedInput};
+use bonsol_prover::input_resolver::{ProgramInput, ResolvedInput};
 use bonsol_sdk::instructions::{CallbackConfig, ExecutionConfig};
 use bonsol_sdk::{InputT, InputType, ProgramInputType};
 use clap::{Args, ValueEnum};

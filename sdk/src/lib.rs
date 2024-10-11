@@ -1,7 +1,3 @@
-pub mod image;
-pub mod prover;
-pub mod util;
-
 use std::time::Duration;
 
 use anyhow::Result;
@@ -21,6 +17,7 @@ use solana_sdk::message::{v0, VersionedMessage};
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signer::Signer;
 use solana_sdk::transaction::VersionedTransaction;
+use tokio::time::Instant;
 
 pub use bonsol_interface::{instructions, util::*, ID};
 pub use bonsol_schema::{
@@ -28,8 +25,7 @@ pub use bonsol_schema::{
     ProgramInputType, StatusTypes,
 };
 pub use flatbuffers;
-use tokio::time::Instant;
-pub mod input_resolver;
+
 pub struct BonsolClient {
     rpc_client: RpcClient,
 }

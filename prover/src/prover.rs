@@ -1,9 +1,11 @@
-use crate::input_resolver::ProgramInput;
+use std::rc::Rc;
+
 use anyhow::Result;
 use bonsol_schema::ProgramInputType;
 use risc0_binfmt::MemoryImage;
 use risc0_zkvm::{get_prover_server, ExecutorEnv, ExecutorImpl, ProverOpts, ProverServer, Receipt};
-use std::rc::Rc;
+
+use crate::input_resolver::ProgramInput;
 
 /// Creates a new risc0 executor environment from the provided inputs, it hadles setting up the execution env in the same way across types of provers.
 pub fn new_risc0_exec_env(
