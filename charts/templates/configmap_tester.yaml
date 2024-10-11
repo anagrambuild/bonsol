@@ -1,0 +1,16 @@
+{{- if .Values.tester.enabled }}
+{{ $root := . }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "bonsol-tester.fullname" . }}
+  labels:
+    {{- include "bonsol-tester.labels" . | nindent 4 }}
+data:
+  {{- range $f := splitList "," (printf "%s,%s" (include "bonsol-tester.manifestPath" .) (include "bonsol-tester.executionReqPath" . ))  }}
+  {{ base $f }} : |-
+    {{- tpl ($root.Files.Get (printf "input_files/%s" (base $f) ) ) $root  | nindent 4 }}
+  {{- end }}
+{{- end }}
+
