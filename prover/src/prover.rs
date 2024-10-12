@@ -33,7 +33,7 @@ pub fn new_risc0_exec_env(
 }
 
 /// Gets the default r0 prover for this application
-/// Since the cli and the relay both produce proofs there is a need for a central prover configuration.
+/// Since the cli and the node both produce proofs there is a need for a central prover configuration.
 pub fn get_risc0_prover() -> Result<Rc<dyn ProverServer>> {
     let opts = ProverOpts::default();
     get_prover_server(&opts)

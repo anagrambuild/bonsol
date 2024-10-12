@@ -1,12 +1,12 @@
 services:
-  relay:
+  node:
     build:
       context: .
       dockerfile: Dockerfile
     command: -f NodeDocker.toml
     volumes:
-      - ${PWD}/relay/NodeDocker.toml:/usr/opt/bonsol/NodeDocker.toml
-      - ${PWD}/relaykp.json:/usr/opt/bonsol/keys/signer.json
+      - ${PWD}/node/NodeDocker.toml:/usr/opt/bonsol/NodeDocker.toml
+      - ${PWD}/node_keypair.json:/usr/opt/bonsol/keys/signer.json
       - ${PWD}/images:/usr/opt/bonsol/risc0_images/
     ports:
       - 9000:9000

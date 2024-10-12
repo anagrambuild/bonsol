@@ -56,7 +56,7 @@ async fn main() -> Result<()> {
         .init();
     let args: Vec<String> = std::env::args().collect();
     if args.len() < 3 || args[1] != "-f" {
-        error!("Usage: relay -f <config_file>");
+        error!("Usage: bonsol-node -f <config_file>");
         return Ok(());
     }
     let config_file = &args[2];

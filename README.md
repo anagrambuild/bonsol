@@ -52,9 +52,9 @@ Run the setup script to install the zksnark deps and compile the zksnark prover
 ```bash
 ./validator.sh
 ```
-3. On a separate terminal, compile the 乃ㄖ几丂ㄖㄥ off chain relay and starts it
+3. On a separate terminal, compile the 乃ㄖ几丂ㄖㄥ off-chain node and start it
 ```bash
-./run-relay.sh
+./run-node.sh
 ```
 4. Build the image binary if it hasn't already been built, this will result in the binary's path being available in the `manifest.json` (in this case `images/simple/manifest.json`)
 ```bash

@@ -9,4 +9,4 @@ env = "dev"
 [transaction_sender_config]
 Rpc = { rpc_url = "http://localhost:8899" }
 [signer_config]
-KeypairFile = { path = "../relaykp.json" }
+KeypairFile = { path = "../node_keypair.json" }

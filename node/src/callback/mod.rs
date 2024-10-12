@@ -2,11 +2,11 @@ use std::sync::Arc;
 
 use {
     async_trait::async_trait,
-    bonsol_interface::util::{deployment_address, execution_address, execution_claim_address},
-    bonsol_schema::{
+    bonsol_interface::bonsol_schema::{
         ChannelInstruction, ChannelInstructionArgs, ChannelInstructionIxType, ClaimV1, ClaimV1Args,
         StatusTypes, StatusV1, StatusV1Args,
     },
+    bonsol_interface::util::{deployment_address, execution_address, execution_claim_address},
     dashmap::DashMap,
     flatbuffers::FlatBufferBuilder,
     itertools::Itertools,

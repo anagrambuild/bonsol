@@ -1,8 +1,8 @@
 use std::time::Duration;
 
 use anyhow::Result;
+use bonsol_interface::bonsol_schema::{root_as_deploy_v1, root_as_execution_request_v1};
 use bonsol_interface::claim_state::ClaimStateHolder;
-use bonsol_schema::{root_as_deploy_v1, root_as_execution_request_v1};
 use bytes::Bytes;
 use futures_util::TryFutureExt;
 use instructions::{CallbackConfig, ExecutionConfig};
@@ -19,11 +19,11 @@ use solana_sdk::signer::Signer;
 use solana_sdk::transaction::VersionedTransaction;
 use tokio::time::Instant;
 
-pub use bonsol_interface::{instructions, util::*, ID};
-pub use bonsol_schema::{
+pub use bonsol_interface::bonsol_schema::{
     ClaimV1T, DeployV1T, ExecutionRequestV1T, ExitCode, InputSetT, InputT, InputType,
     ProgramInputType, StatusTypes,
 };
+pub use bonsol_interface::{instructions, util::*, ID};
 pub use flatbuffers;
 
 pub struct BonsolClient {

@@ -41,7 +41,7 @@ provernode:
 ## order to run the pod on Kubernetes node with GPU.
 ##
   image:
-    repository: ghcr.io/anagrambuild/bonsol-relay@sha256
+    repository: ghcr.io/anagrambuild/bonsol-node@sha256
     tag: a44f47818cbbc0bafcd27ae46226fdb2271662c3a070df6a1a84d5cc6b031a6d
     pullPolicy: "IfNotPresent" 
     imagePullSecrets: []

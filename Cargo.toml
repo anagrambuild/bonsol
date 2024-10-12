@@ -7,7 +7,7 @@ members = [
   "onchain/bonsol",
   "onchain/interface",
   "onchain/example-callback-program",
-  "relay",
+  "node",
   "schemas-rust",
   "cli",
   "sdk",

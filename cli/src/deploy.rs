@@ -3,8 +3,6 @@ use std::fs::{self, File};
 use std::path::Path;
 use std::str::FromStr;
 
-use crate::command::{DeployType, S3UploadDestination, ShadowDriveUpload, UrlUploadDestination};
-use crate::common::ZkProgramManifest;
 use anyhow::Result;
 use bonsol_sdk::{BonsolClient, ProgramInputType};
 use byte_unit::{Byte, ByteUnit};
@@ -16,6 +14,9 @@ use shadow_drive_sdk::ShadowDriveClient;
 use solana_rpc_client::nonblocking::rpc_client::RpcClient;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::read_keypair_file;
+
+use crate::command::{DeployType, S3UploadDestination, ShadowDriveUpload, UrlUploadDestination};
+use crate::common::ZkProgramManifest;
 
 pub async fn deploy(
     rpc: String,
