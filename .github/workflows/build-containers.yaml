@@ -44,11 +44,10 @@ jobs:
         with:
           context: .
           push: true
+          file: Dockerfile.${{ matrix.flavor }}
           tags: |
             ghcr.io/${{ github.repository_owner }}/bonsol-node:${{ matrix.flavor }}-${{ env.VERSION }}
-            ghcr.io/${{ github.repository_owner }}/bonsol-node:${{ matrix.flavor }}-latest
+            ghcr.io/${{ github.repository_owner }}/bonsol-node:${{ matrix.flavor }}-${{ github.sha }}
           platforms: linux/amd64 
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          build-args: |
-            FLAVOR=${{ matrix.flavor }}

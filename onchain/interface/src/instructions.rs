@@ -5,10 +5,8 @@ use bonsol_schema::{
 };
 use flatbuffers::{FlatBufferBuilder, WIPOffset};
 
-use crate::{
-    error::ClientError,
-    util::{deployment_address, execution_address},
-};
+use crate::error::ClientError;
+use crate::util::{deployment_address, execution_address};
 
 #[cfg(feature = "on-chain")]
 use {
@@ -281,6 +279,7 @@ pub fn execute_v1(
     } else {
         None
     };
+    println!("Execution request v1 fbb expiry {}", expiration);
     let fbb_execute = ExecutionRequestV1::create(
         &mut fbb,
         &ExecutionRequestV1Args {

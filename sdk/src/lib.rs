@@ -23,7 +23,8 @@ pub use bonsol_interface::bonsol_schema::{
     ClaimV1T, DeployV1T, ExecutionRequestV1T, ExitCode, InputSetT, InputT, InputType,
     ProgramInputType, StatusTypes,
 };
-pub use bonsol_interface::{instructions, util::*, ID};
+pub use bonsol_interface::util::*;
+pub use bonsol_interface::{instructions, ID};
 pub use flatbuffers;
 
 pub struct BonsolClient {
@@ -42,10 +43,10 @@ impl BonsolClient {
         }
     }
 
-    pub async fn get_block_height(&self) -> Result<u64> {
+    pub async fn get_current_slot(&self) -> Result<u64> {
         self.rpc_client
-            .get_block_height()
-            .map_err(|_| anyhow::anyhow!("Failed to get block height"))
+            .get_slot()
+            .map_err(|_| anyhow::anyhow!("Failed to get slot"))
             .await
     }
 

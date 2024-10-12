@@ -1,4 +1,4 @@
-# Contributing Guide
+# GeneralContributing Guide
 
 Welcome! We're glad you're here. Before we get started, let's make sure everyone is using the same tools.
 

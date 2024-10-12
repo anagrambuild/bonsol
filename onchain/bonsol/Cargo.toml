@@ -1,6 +1,6 @@
 [package]
 name = "bonsol"
-version = "0.0.1"
+version = "0.2.0"
 description = "Solana channel to bonsai"
 authors = ["anagram build team"]
 repository = "https://github.com/anagrambuild/bonsol"

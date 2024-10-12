@@ -21,17 +21,17 @@ pub fn build(keypair: &impl Signer, zk_program_path: String) -> Result<()> {
         ));
     }
 
-    let build_result = build_maifest(&image_path, &keypair);
+    let build_result = build_maifest(image_path, &keypair);
     let manifest_path = image_path.join("manifest.json");
     match build_result {
         Err(e) => {
             bar.finish_with_message(format!("Error building image: {:?}", e));
-            return Ok(());
+            Ok(())
         }
         Ok(manifest) => {
             serde_json::to_writer_pretty(File::create(&manifest_path).unwrap(), &manifest).unwrap();
             bar.finish_and_clear();
-            return Ok(());
+            Ok(())
         }
     }
 }
@@ -51,7 +51,7 @@ fn build_maifest(
             "Invalid Cargo.toml",
         ))?;
     let meta = manifest.package.as_ref().and_then(|p| p.metadata.as_ref());
-    if let None = meta {
+    if meta.is_none() {
         return Err(std::io::Error::new(
             std::io::ErrorKind::Other,
             "Invalid Cargo.toml, missing package metadata",
@@ -72,8 +72,8 @@ fn build_maifest(
 
     let binary_path = image_path
         .join("target/riscv-guest/riscv32im-risc0-zkvm-elf/docker")
-        .join(&package)
-        .join(&package);
+        .join(package)
+        .join(package);
     let output = Command::new("cargo")
         .current_dir(image_path)
         .arg("risczero")

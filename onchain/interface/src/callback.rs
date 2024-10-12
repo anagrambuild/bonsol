@@ -1,4 +1,5 @@
-use crate::{error::ClientError, util::execution_address};
+use crate::error::ClientError;
+use crate::util::execution_address;
 use bonsol_schema::root_as_execution_request_v1;
 use solana_program::account_info::AccountInfo;
 use solana_program::program_error::ProgramError;

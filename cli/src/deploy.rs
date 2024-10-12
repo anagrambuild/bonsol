@@ -12,6 +12,7 @@ use object_store::ObjectStore;
 use shadow_drive_sdk::models::ShadowFile;
 use shadow_drive_sdk::ShadowDriveClient;
 use solana_rpc_client::nonblocking::rpc_client::RpcClient;
+use solana_sdk::commitment_config::CommitmentConfig;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::read_keypair_file;
 
@@ -30,7 +31,7 @@ pub async fn deploy(
 ) -> Result<()> {
     let bar = ProgressBar::new_spinner();
     let rpc_url = rpc.clone();
-    let rpc_client = RpcClient::new(rpc);
+    let rpc_client = RpcClient::new_with_commitment(rpc, CommitmentConfig::confirmed());
     let manifest_path = Path::new(&manifest_path);
     let manifest_file = File::open(manifest_path)
         .map_err(|e| anyhow::anyhow!("Error opening manifest file: {:?}", e))?;
@@ -58,7 +59,7 @@ pub async fn deploy(
             let region = region.unwrap();
             let access_key = access_key.unwrap();
             let secret_key = secret_key.unwrap();
-            if bucket == "" {
+            if bucket.is_empty() {
                 bar.finish_and_clear();
                 return Err(anyhow::anyhow!("Please provide a bucket name"));
             }
@@ -74,12 +75,7 @@ pub async fn deploy(
             let destc = dest.clone();
             //get the file to see if it exists
             let exists = s3_client.head(&destc).await.is_ok();
-            let url = format!(
-                "https://{}.s3.{}.amazonaws.com/{}",
-                bucket,
-                region,
-                dest.to_string()
-            );
+            let url = format!("https://{}.s3.{}.amazonaws.com/{}", bucket, region, dest);
             if exists {
                 bar.set_message("File already exists, skipping upload");
                 Ok::<_, anyhow::Error>(url)
@@ -198,7 +194,7 @@ pub async fn deploy(
         Ok(Some(_)) => {
             bar.finish_and_clear();
             println!("Deployment already exists, deployments are immutable");
-            return Ok(());
+            Ok(())
         }
         Ok(None) => {
             let deploy_txn = bonsol_client
@@ -229,11 +225,11 @@ pub async fn deploy(
                     anyhow::bail!(e);
                 }
             };
-            return Ok(());
+            Ok(())
         }
         Err(e) => {
             bar.finish_with_message(format!("Error getting deployment: {:?}", e));
-            return Ok(());
+            Ok(())
         }
-    };
+    }
 }
