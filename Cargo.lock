@@ -1156,7 +1156,7 @@ checksum = "8d696c370c750c948ada61c69a0ee2cbbb9c50b1019ddb86d9317157a99c2cae"
 
 [[package]]
 name = "bonsol"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "anyhow",
  "ark-bn254",
@@ -1176,7 +1176,7 @@ dependencies = [
 
 [[package]]
 name = "bonsol-cli"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "anyhow",
  "atty",
@@ -1209,7 +1209,7 @@ dependencies = [
 
 [[package]]
 name = "bonsol-interface"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "anchor-lang 0.30.1",
  "arrayref",
@@ -1228,7 +1228,7 @@ dependencies = [
 
 [[package]]
 name = "bonsol-node"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "anyhow",
  "ark-bn254",
@@ -1290,7 +1290,7 @@ dependencies = [
 
 [[package]]
 name = "bonsol-prover"
-version = "0.0.1"
+version = "0.2.1"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -1311,7 +1311,7 @@ dependencies = [
 
 [[package]]
 name = "bonsol-schema"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "bytemuck",
  "flatbuffers",
@@ -1322,7 +1322,7 @@ dependencies = [
 
 [[package]]
 name = "bonsol-sdk"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "anyhow",
  "async-trait",
