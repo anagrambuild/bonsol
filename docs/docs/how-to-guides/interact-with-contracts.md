@@ -58,7 +58,7 @@ To create an execuition request you will need to provide the following informati
 Here is an example of how to create an execution request, taken from the PowPoW example.
 
 ```rust 
-use anagram_channel_interface::instructions::{
+use bonsol_interface::instructions::{
     execute_v1, CallbackConfig, ExecutionConfig, Input,
 };
 ...
@@ -92,7 +92,7 @@ execute_v1(
 ```
 Here is an example of how to verify a callback from bonsol, taken from the PowPoW example.
 ```rust
-use anagram_bonsol_interface::callback::handle_callback;
+use bonsol_interface::callback::handle_callback;
 ...
 pub fn your_instruction(
   program_id: &Pubkey,
@@ -116,7 +116,7 @@ pub fn your_instruction(
 Bonsol has anchor integration and allows you to use anchor accounts structs with bonsol types.
 
 ```rust
-use anagram_bonsol_interface::anchor::{
+use bonsol_interface::anchor::{
     Bonsol, DeployV1Account, ExecutionRequestV1Account,
 };
 
