@@ -1,6 +1,6 @@
 [package]
 name = "bonsol-prover"
-version = "0.0.1"
+version = "0.2.1"
 edition = "2021"
 publish = false        # Exclude local crates from licensing checks
 

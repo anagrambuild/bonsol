@@ -1,6 +1,6 @@
 [package]
 name = "bonsol-interface"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2021"
 publish = false           # Exclude local crates from licensing checks
 
@@ -13,7 +13,7 @@ idl-build = ["anchor-lang/idl-build"]
 [dependencies]
 arrayref = "0.3.6"
 base64 = "0.21.2"
-bonsol-schema = { path = "../../schemas-rust", version = "0.2.0" }
+bonsol-schema = { path = "../../schemas-rust", version = "0.2.1" }
 bytemuck = { version = "1.15.0", features = ["derive"] }
 flatbuffers = { workspace = true }
 hex = "0.4.3"
