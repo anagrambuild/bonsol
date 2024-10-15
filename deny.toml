@@ -106,7 +106,7 @@ ignore = [
     Solution: No safe upgrade is available!
   """ },
   { id = "RUSTSEC-2020-0077", reason = """
-    The `relay` crate relies on `memmap` which is unmaintained, there are alternatives that
+    The `node` crate relies on `memmap` which is unmaintained, there are alternatives that
     could be used in its place, such as `memmap2`.
 
     Cause:    memmap is unmaintained

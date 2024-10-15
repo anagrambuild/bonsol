@@ -4,19 +4,19 @@ name = "bonsol"
 [workspace]
 members = [
   "iop",
-  "onchain/channel",
-  "onchain/channel-utils",
-  "onchain/channel-interface",
+  "onchain/bonsol",
+  "onchain/interface",
   "onchain/example-callback-program",
-  "relay",
+  "node",
   "schemas-rust",
   "cli",
   "sdk",
+  "prover",
 ]
 resolver = "2"
 # Only necessary for nix cargo workspace artifacts to build without warnings.
 # The actual crate derivations build using their individual manifest version.
-package.version = "0.0.2"
+package.version = "0.2.1"
 
 [workspace.dependencies]
 solana-sdk = "=1.18.22"

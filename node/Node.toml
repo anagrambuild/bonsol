@@ -1,0 +1,12 @@
+risc0_image_folder = "../elf"
+max_input_size_mb = 10
+image_download_timeout_secs = 60
+input_download_timeout_secs = 60
+maximum_concurrent_proofs = 1
+max_image_size_mb = 4
+image_compression_ttl_hours = 24
+env = "dev"
+[transaction_sender_config]
+Rpc = { rpc_url = "http://localhost:8899" }
+[signer_config]
+KeypairFile = { path = "../node_keypair.json" }

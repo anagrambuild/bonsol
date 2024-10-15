@@ -35,7 +35,7 @@ spec:
           image: "{{ .Values.provernode.image.repository }}:{{ .Values.provernode.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ default "IfNotPresent" .Values.provernode.image.pullPolicy }}
           command:
-          - /usr/opt/bonsol/relay
+          - /usr/opt/bonsol/bonsol-node
           - -f
           - {{ .Values.provernode.config.filename }}
           {{- if and (hasKey .Values.provernode "env") (.Values.provernode.env) }}

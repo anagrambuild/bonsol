@@ -156,12 +156,12 @@
             });
 
           # The root Cargo.toml requires all of the workspace crates, otherwise this would be a bit neater.
-          bonsol-cli = mkCrateDrv "bonsol" "cli" [ "sdk" "onchain" "schemas-rust" "iop" "relay" ];
-          bonsol-relay = mkCrateDrv "relay" "relay" [ "sdk" "onchain" "schemas-rust" "iop" "cli" ];
+          bonsol-cli = mkCrateDrv "bonsol" "cli" [ "sdk" "onchain" "schemas-rust" "iop" "node" "prover" ];
+          bonsol-node = mkCrateDrv "bonsol-node" "node" [ "sdk" "onchain" "schemas-rust" "iop" "cli" "prover" ];
 
           setup = pkgs.callPackage ./nixos/pkgs/bonsol/setup.nix { };
           validator = pkgs.callPackage ./nixos/pkgs/bonsol/validator.nix { };
-          run-relay = pkgs.callPackage ./nixos/pkgs/bonsol/run-relay.nix { inherit bonsol-relay; };
+          run-node = pkgs.callPackage ./nixos/pkgs/bonsol/run-node.nix { inherit bonsol-node; };
 
           # Internally managed versions of risc0 binaries that are pinned to
           # the version that bonsol relies on.
@@ -179,7 +179,7 @@
             # Build the crates as part of `nix flake check` for convenience
             inherit
               bonsol-cli
-              bonsol-relay
+              bonsol-node
               cargo-risczero
               r0vm;
 
@@ -255,11 +255,11 @@
           packages = {
             inherit
               bonsol-cli
-              bonsol-relay
+              bonsol-node
 
               setup
               validator
-              run-relay
+              run-node
 
               cargo-risczero
               r0vm
@@ -281,10 +281,10 @@
                 cargo-risczero
                 solana-cli
                 bonsol-cli
-                bonsol-relay
+                bonsol-node
                 setup
                 validator
-                (run-relay.override {
+                (run-node.override {
                   use-nix = true;
                 })
               ];
@@ -297,17 +297,17 @@
                 validator_pid=$!
                 sleep 30
                 echo "validator is running: PID $validator_pid"
-                echo "building relay"
-                ${run-relay}/bin/run-relay.sh > /dev/null 2>&1 &
-                relay_pid=$!
+                echo "building node"
+                ${run-node}/bin/run-node.sh > /dev/null 2>&1 &
+                node_pid=$!
                 sleep 30
-                echo "relay is running: PID $relay_pid"
+                echo "node is running: PID $node_pid"
                 ${bonsol-cli}/bin/bonsol --keypair $HOME/.config/solana/id.json --rpc-url http://localhost:8899 deploy -m images/simple/manifest.json -t url --url https://bonsol-public-images.s3.amazonaws.com/simple-7cb4887749266c099ad1793e8a7d486a27ff1426d614ec0cc9ff50e686d17699 -y
                 sleep 20
                 resp=$(${bonsol-cli}/bin/bonsol --keypair $HOME/.config/solana/id.json --rpc-url http://localhost:8899 execute -f testing-examples/example-execution-request.json -x 2000 -m 2000 -w)
                 echo "execution response was: $resp"
                 kill $validator_pid
-                kill $relay_pid
+                kill $node_pid
                 if [[ "$resp" =~ "Success" ]]; then
                   exit 0
                 else
@@ -342,7 +342,7 @@
             ] ++ [
               setup
               validator
-              run-relay
+              run-node
               r0vm
               cargo-risczero
               solana-cli

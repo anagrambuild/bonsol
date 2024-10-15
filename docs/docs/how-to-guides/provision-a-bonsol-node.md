@@ -19,7 +19,7 @@ Ensure cargo is on the path
 
 On your local machine you will need to run a docker imahge to get the neede groth16 witness generator and snark binary. Ensure you have a recent version of docker installed. This docker file copies the binaries from the docker image to the local machine.
 ```bash
-docker build -f setup.dockerfile -o relay .
+docker build -f setup.dockerfile -o node .
 ```
 You will have a director called snark with the binaries in it. You need to copy these binaries to the node and remember the path to the snark directory.
 ```bash
@@ -108,7 +108,7 @@ LimitSTACK=infinity
 LimitNOFILE=1000000
 LogRateLimitIntervalSec=0
 WorkingDirectory=/home/ubuntu/bonsol
-ExecStart=/home/ubuntu/bonsol/target/release/relay -f Node.toml
+ExecStart=/home/ubuntu/bonsol/target/release/bonsol-node -f Node.toml
 
 # Create BACKTRACE only on panics
 Environment="RUST_BACKTRACE=1"
