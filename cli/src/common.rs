@@ -1,7 +1,7 @@
 use anyhow::Result;
 use base64::engine::general_purpose;
 use base64::Engine as _;
-use bonsol_sdk::input_resolver::{ProgramInput, ResolvedInput};
+use bonsol_prover::input_resolver::{ProgramInput, ResolvedInput};
 use bonsol_sdk::instructions::{CallbackConfig, ExecutionConfig};
 use bonsol_sdk::{InputT, InputType, ProgramInputType};
 use clap::{Args, ValueEnum};
@@ -149,7 +149,7 @@ pub struct InputFile {
 pub async fn sol_check(rpc_client: String, pubkey: Pubkey) -> bool {
     let rpc_client = rpc_client::RpcClient::new(rpc_client);
     if let Ok(account) = rpc_client.get_account(&pubkey).await {
-        return account.lamports > 0
+        return account.lamports > 0;
     }
     false
 }

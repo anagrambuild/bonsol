@@ -1,7 +1,7 @@
 use crate::common::{proof_get_inputs, ZkProgramManifest};
 use anyhow::{anyhow, Result};
-use bonsol_sdk::image::Image;
-use bonsol_sdk::prover::{get_risc0_prover, new_risc0_exec_env};
+use bonsol_prover::image::Image;
+use bonsol_prover::prover::{get_risc0_prover, new_risc0_exec_env};
 use bonsol_sdk::BonsolClient;
 use bytes::Bytes;
 use risc0_zkvm::VerifierContext;

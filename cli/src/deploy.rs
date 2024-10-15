@@ -3,8 +3,6 @@ use std::fs::{self, File};
 use std::path::Path;
 use std::str::FromStr;
 
-use crate::command::{DeployType, S3UploadDestination, ShadowDriveUpload, UrlUploadDestination};
-use crate::common::ZkProgramManifest;
 use anyhow::Result;
 use bonsol_sdk::{BonsolClient, ProgramInputType};
 use byte_unit::{Byte, ByteUnit};
@@ -17,6 +15,9 @@ use solana_rpc_client::nonblocking::rpc_client::RpcClient;
 use solana_sdk::commitment_config::CommitmentConfig;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::read_keypair_file;
+
+use crate::command::{DeployType, S3UploadDestination, ShadowDriveUpload, UrlUploadDestination};
+use crate::common::ZkProgramManifest;
 
 pub async fn deploy(
     rpc: String,
@@ -74,12 +75,7 @@ pub async fn deploy(
             let destc = dest.clone();
             //get the file to see if it exists
             let exists = s3_client.head(&destc).await.is_ok();
-            let url = format!(
-                "https://{}.s3.{}.amazonaws.com/{}",
-                bucket,
-                region,
-                dest
-            );
+            let url = format!("https://{}.s3.{}.amazonaws.com/{}", bucket, region, dest);
             if exists {
                 bar.set_message("File already exists, skipping upload");
                 Ok::<_, anyhow::Error>(url)
