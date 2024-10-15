@@ -2,7 +2,7 @@ services:
   node:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.standard
     command: -f NodeDocker.toml
     volumes:
       - ${PWD}/node/NodeDocker.toml:/usr/opt/bonsol/NodeDocker.toml
