@@ -85,10 +85,11 @@ missing_image_strategy = "DownloadAndClaim"
 ```
 
 ## Running the Node
-You can run the node with the following command.
+After building the relay package you can run the node with the following command.
 ```bash
 ulimit -s unlimited //this is required for the c++ groth16 witness generator it will blow your stack without a huge stack size
-bonsol -f Node.toml
+#from within the bonsol root dir
+./target/release/relay -f Node.toml
 ```
 ### Runnig the Node with systemd
 You can use the following systemd service file to run the node.
