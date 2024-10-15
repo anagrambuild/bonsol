@@ -62,7 +62,7 @@ cargo run -p bonsol-cli build -z images/simple
 ```
 5. Use the bonsol cli to deploy a zkprogram (here is a example already uploaded for you)
 ```bash
-cargo run -p bonsol-cli deploy -m images/simple/manifest.json -t url --url https://bonsol-public-images.s3.amazonaws.com/simple-7cb4887749266c099ad1793e8a7d486a27ff1426d614ec0cc9ff50e686d17699
+cargo run -p bonsol-cli deploy -m images/simple/manifest.json -t url --url https://bonsol-public-images.s3.amazonaws.com/simple-68f4b0c5f9ce034aa60ceb264a18d6c410a3af68fafd931bcfd9ebe7c1e42960
 ```
 6. Use the bonsol cli to execute a zkprogram
 ```bash
