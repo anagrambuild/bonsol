@@ -103,3 +103,18 @@ Selector labels
 app.kubernetes.io/name: {{ include "bonsol-tester.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
+
+{{/*
+Path to deployment manifest
+*/}}
+{{- define "bonsol-tester.manifestPath" -}}
+/input_files/simple_manifest.json
+{{- end }}
+
+{{/*
+Path to execution request
+*/}}
+{{- define "bonsol-tester.executionReqPath" -}}
+/input_files/simple_execution_request.json
+{{- end }}
+
