@@ -352,7 +352,7 @@
               run-node
               r0vm
               cargo-risczero
-              risc0-groth16-prover
+              # risc0-groth16-prover
               solana-cli
             ];
 
