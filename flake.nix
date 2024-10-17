@@ -171,6 +171,12 @@
           r0vm = pkgs.callPackage ./nixos/pkgs/risc0/r0vm {
             inherit risc0CircuitRecursionPatch;
           };
+          risc0-groth16-prover = pkgs.callPackage ./nixos/pkgs/risc0/groth16-prover {
+            inherit setup;
+            imageDigest = "sha256:5a862bac2c5c070ec50ff615572a05d870c1372818cf0f5d8bb9effc101590c8";
+            sha256 = "sha256-SV8nUjtq6TheYW+vQltyApOa7/gxnBrWx4Y6fQ71LFg=";
+            finalImageTag = "v2024-05-17.1";
+          };
           solana-platform-tools = pkgs.callPackage ./nixos/pkgs/solana/platform-tools { };
           solana-cli = pkgs.callPackage ./nixos/pkgs/solana { inherit solana-platform-tools; };
         in
@@ -263,6 +269,7 @@
 
               cargo-risczero
               r0vm
+              risc0-groth16-prover
               solana-cli
               solana-platform-tools;
 
@@ -345,6 +352,7 @@
               run-node
               r0vm
               cargo-risczero
+              risc0-groth16-prover
               solana-cli
             ];
 
