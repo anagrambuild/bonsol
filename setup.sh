@@ -1,7 +1,8 @@
 #!/bin/zsh
 set -e
-if [ ! -d "/stark/stark_verify" ]; then
-    docker build -f setup.dockerfile -o node .  
+if [ ! -f "/stark/stark_verify" ]; then
+    echo "stark_verify not found, please copy it to /stark/stark_verify"
+    exit 1
 fi
 
 pnpx snarkjs zkey export verificationkey node/stark/stark_verify_final.zkey verification_key.json
