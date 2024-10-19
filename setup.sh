@@ -5,7 +5,12 @@ if [ ! -f "/stark/stark_verify" ]; then
     exit 1
 fi
 
-pnpx snarkjs zkey export verificationkey node/stark/stark_verify_final.zkey verification_key.json
+pnpx snarkjs zkey export verificationkey /stark/stark_verify_final.zkey verification_key.json
+if [ ! -d vkey ]
+then
+    mkdir vkey
+fi
+
 cd vkey
-pnpm i && pnpm run parse-vk ../verification_key.json ../onchain/channel/src/ && \
+pnpm i && pnpm run parse-vk ../verification_key.json ../onchain/bonsol/src && \
 rm ../verification_key.json
