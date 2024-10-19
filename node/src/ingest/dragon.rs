@@ -7,7 +7,7 @@ use {
     yellowstone_grpc_proto::geyser::SubscribeUpdate,
 };
 
-use crate::types::BonsolInstruction;
+use crate::types::{filter_bonsol_instructions, BonsolInstruction};
 
 use {
     super::{Ingester, TxChannel},
@@ -49,15 +49,22 @@ impl GrpcIngester {
     }
 }
 
+impl<'a> TryFrom<&'a mut GrpcIngester> for GeyserGrpcBuilder {
+    type Error = anyhow::Error;
+    fn try_from(value: &'a mut GrpcIngester) -> Result<Self, Self::Error> {
+        Ok(GeyserGrpcClient::build_from_shared(value.url.clone())?
+            .x_token(Some(value.token.clone()))?
+            .connect_timeout(Duration::from_secs(
+                value.connection_timeout_secs.unwrap_or(10) as u64,
+            ))
+            .timeout(Duration::from_secs(value.timeout_secs.unwrap_or(10) as u64)))
+    }
+}
+
 impl Ingester for GrpcIngester {
     fn start(&mut self, program: Pubkey) -> Result<TxChannel> {
         let (txchan, rx) = tokio::sync::mpsc::unbounded_channel();
-        let stream_client = GeyserGrpcClient::build_from_shared(self.url.clone())?
-            .x_token(Some(self.token.clone()))?
-            .connect_timeout(Duration::from_secs(
-                self.connection_timeout_secs.unwrap_or(10) as u64,
-            ))
-            .timeout(Duration::from_secs(self.timeout_secs.unwrap_or(10) as u64));
+        let stream_client = GeyserGrpcBuilder::try_from(&mut *self)?;
         self.op_handle = Some(tokio::spawn(async move {
             ingest(program, txchan, stream_client).await
         }));
@@ -138,28 +145,19 @@ fn try_send_instructions(
     meta: Option<TransactionStatusMeta>,
     txchan: &UnboundedSender<Vec<BonsolInstruction>>,
 ) -> Result<()> {
+    let program_filter = |acc: &AccountKeys, program: &Pubkey, index: usize| -> bool {
+        acc.get(index).is_some_and(|p| p == program)
+    };
+
     if let VersionedMessage::V0(msg) = txndata.message {
-        let bonsolixs = msg
-            .instructions
-            .into_iter()
-            .filter_map(|ix| {
-                if acc
-                    .get(ix.program_id_index as usize)
-                    .is_some_and(|p| p == &program)
-                {
-                    return Some(BonsolInstruction::new(
-                        false,
-                        ix.accounts
-                            .into_iter()
-                            .filter_map(|idx| acc.get(idx as usize).copied())
-                            .collect(),
-                        ix.data,
-                        last_known_block,
-                    ));
-                }
-                None
-            })
-            .collect::<Vec<BonsolInstruction>>();
+        let bonsolixs: Vec<BonsolInstruction> = filter_bonsol_instructions(
+            msg.instructions,
+            &acc,
+            &program,
+            last_known_block,
+            program_filter,
+        )
+        .collect();
         if !bonsolixs.is_empty() {
             txchan.send(bonsolixs).map_err(|e| {
                 anyhow!(
@@ -170,29 +168,18 @@ fn try_send_instructions(
         }
         if let Some(metadata) = meta {
             if let Some(inner_ix) = metadata.inner_instructions {
-                let ixs = inner_ix
+                let ixs: Vec<BonsolInstruction> = inner_ix
                     .into_iter()
                     .flat_map(|ix| {
-                        ix.instructions.into_iter().filter_map(|ix| {
-                            if acc
-                                .get(ix.instruction.program_id_index as usize)
-                                .is_some_and(|p| p == &program)
-                            {
-                                return Some(BonsolInstruction::new(
-                                    true,
-                                    ix.instruction
-                                        .accounts
-                                        .into_iter()
-                                        .filter_map(|a| acc.get(a as usize).copied())
-                                        .collect(),
-                                    ix.instruction.data,
-                                    last_known_block,
-                                ));
-                            }
-                            None
-                        })
+                        filter_bonsol_instructions(
+                            ix.instructions,
+                            &acc,
+                            &program,
+                            last_known_block,
+                            program_filter,
+                        )
                     })
-                    .collect::<Vec<BonsolInstruction>>();
+                    .collect();
                 if !ixs.is_empty() {
                     txchan.send(ixs).map_err(|e| {
                         anyhow!(
@@ -213,14 +200,18 @@ mod dragon_ingester_tests {
 
     use super::{GrpcIngester, Ingester};
 
-    #[tokio::test]
-    async fn ingester_starts_and_stops() {
-        let mut ingester = GrpcIngester::new(
+    fn default_test_ingester() -> GrpcIngester {
+        GrpcIngester::new(
             "http://localhost:8899".into(),
             "test".into(),
-            Some(5),
-            Some(5),
-        );
+            Some(10),
+            Some(10),
+        )
+    }
+
+    #[tokio::test]
+    async fn ingester_starts_and_stops() {
+        let mut ingester = default_test_ingester();
         assert!(ingester.start(Pubkey::new_unique()).is_ok());
         assert!(ingester.stop().is_ok());
     }
