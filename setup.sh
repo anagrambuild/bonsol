@@ -1,7 +1,9 @@
 #!/bin/zsh
 set -e
 if [ ! -f "/stark/stark_verify" ]; then
-    echo "stark_verify not found, please copy it to /stark/stark_verify"
+    echo "Error: Bonsol requires 'stark_verify' to be located at /stark/stark_verify."
+    echo "You can install 'stark_verify' from supported container builds of 'risc0-groth16-prover'"
+    echo "or manually build it by following the instructions provided by 'risc0'."
     exit 1
 fi
 
