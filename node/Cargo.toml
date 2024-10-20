@@ -82,6 +82,7 @@ yellowstone-grpc-client = { workspace = true }
 yellowstone-grpc-proto = { workspace = true }
 
 [dev-dependencies]
+expect-test = "1.5.0"
 
 [lints]
 workspace = true
