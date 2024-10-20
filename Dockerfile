@@ -1,7 +1,7 @@
 # Bonsol Development Container
 
 # Stage 1: Node setup
-FROM debian:stable-slim as node-slim
+FROM debian:stable-slim AS node-slim
 RUN export DEBIAN_FRONTEND=noninteractive && \
     apt update && \
     apt install -y -q --no-install-recommends \
@@ -17,7 +17,7 @@ RUN mkdir -p ${NVM_DIR}
 ADD https://raw.githubusercontent.com/creationix/nvm/master/install.sh /usr/local/etc/nvm/install.sh
 RUN bash /usr/local/etc/nvm/install.sh
 
-
+# Stage 2: Bonsol Dev
 FROM ghcr.io/anagrambuild/risczero:latest
 
 ENV USER=solana
@@ -33,9 +33,13 @@ WORKDIR /workspaces/${PACKAGE}
 
 # Install Rust components
 RUN rustup component add \
-    rustfmt \
     clippy \
     rust-analyzer
+
+
+
+RUN rustup toolchain install nightly  && \
+    rustup component add rustfmt --toolchain nightly
 
 # Install Node
 ENV NODE_VERSION=v22.3.0
