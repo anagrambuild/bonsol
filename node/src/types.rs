@@ -1,5 +1,7 @@
-use solana_sdk::{instruction::CompiledInstruction, message::AccountKeys, pubkey::Pubkey};
-use solana_transaction_status::InnerInstruction;
+use {
+    solana_sdk::{instruction::CompiledInstruction, message::AccountKeys, pubkey::Pubkey},
+    solana_transaction_status::InnerInstruction,
+};
 
 #[derive(Debug)]
 pub struct BonsolInstruction {

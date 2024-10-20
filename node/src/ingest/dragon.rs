@@ -188,17 +188,18 @@ fn try_send_instructions(
 
 #[cfg(test)]
 mod dragon_ingester_tests {
-    use expect_test::{expect, Expect};
-    use solana_sdk::{
-        instruction::CompiledInstruction,
-        message::{v0::Message, AccountKeys, Message as LegacyMessage, VersionedMessage},
-        pubkey::Pubkey,
-        transaction::VersionedTransaction,
+    use {
+        expect_test::{expect, Expect},
+        solana_sdk::{
+            instruction::CompiledInstruction,
+            message::{v0::Message, AccountKeys, Message as LegacyMessage, VersionedMessage},
+            pubkey::Pubkey,
+            transaction::VersionedTransaction,
+        },
+        solana_transaction_status::{InnerInstruction, InnerInstructions, TransactionStatusMeta},
     };
-    use solana_transaction_status::{InnerInstruction, InnerInstructions, TransactionStatusMeta};
 
-    use super::try_send_instructions;
-    use crate::types::BonsolInstruction;
+    use {super::try_send_instructions, crate::types::BonsolInstruction};
 
     fn check_instructions(output: &[BonsolInstruction], expect: Expect) {
         expect.assert_eq(&format!("{output:#?}"));
