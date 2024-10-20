@@ -47,6 +47,9 @@ impl GrpcIngester {
             op_handle: None,
         }
     }
+    pub fn url(&self) -> &str {
+        &self.url
+    }
 }
 
 impl<'a> TryFrom<&'a mut GrpcIngester> for GeyserGrpcBuilder {
@@ -150,7 +153,7 @@ fn try_send_instructions(
     };
 
     if let VersionedMessage::V0(msg) = txndata.message {
-        let bonsolixs: Vec<BonsolInstruction> = filter_bonsol_instructions(
+        let mut bonsolixs: Vec<BonsolInstruction> = filter_bonsol_instructions(
             msg.instructions,
             &acc,
             &program,
@@ -158,6 +161,19 @@ fn try_send_instructions(
             program_filter,
         )
         .collect();
+        if let Some(metadata) = meta {
+            if let Some(inner_ix) = metadata.inner_instructions {
+                bonsolixs.extend(inner_ix.into_iter().flat_map(|ix| {
+                    filter_bonsol_instructions(
+                        ix.instructions,
+                        &acc,
+                        &program,
+                        last_known_block,
+                        program_filter,
+                    )
+                }));
+            }
+        }
         if !bonsolixs.is_empty() {
             txchan.send(bonsolixs).map_err(|e| {
                 anyhow!(
@@ -166,53 +182,150 @@ fn try_send_instructions(
                 )
             })?
         }
-        if let Some(metadata) = meta {
-            if let Some(inner_ix) = metadata.inner_instructions {
-                let ixs: Vec<BonsolInstruction> = inner_ix
-                    .into_iter()
-                    .flat_map(|ix| {
-                        filter_bonsol_instructions(
-                            ix.instructions,
-                            &acc,
-                            &program,
-                            last_known_block,
-                            program_filter,
-                        )
-                    })
-                    .collect();
-                if !ixs.is_empty() {
-                    txchan.send(ixs).map_err(|e| {
-                        anyhow!(
-                            "failed to send instructions to txn ingest channel: {:?}",
-                            e.0
-                        )
-                    })?
-                }
-            }
-        }
     }
     Ok(())
 }
 
 #[cfg(test)]
 mod dragon_ingester_tests {
-    use solana_sdk::pubkey::Pubkey;
+    use expect_test::{expect, Expect};
+    use solana_sdk::{
+        instruction::CompiledInstruction,
+        message::{v0::Message, AccountKeys, Message as LegacyMessage, VersionedMessage},
+        pubkey::Pubkey,
+        transaction::VersionedTransaction,
+    };
+    use solana_transaction_status::{InnerInstruction, InnerInstructions, TransactionStatusMeta};
 
-    use super::{GrpcIngester, Ingester};
+    use super::try_send_instructions;
+    use crate::types::BonsolInstruction;
 
-    fn default_test_ingester() -> GrpcIngester {
-        GrpcIngester::new(
-            "http://localhost:8899".into(),
-            "test".into(),
-            Some(10),
-            Some(10),
-        )
+    fn check_instructions(output: &[BonsolInstruction], expect: Expect) {
+        expect.assert_eq(&format!("{output:#?}"));
+    }
+
+    fn create_test_compiled_tx(
+        instructions: Vec<CompiledInstruction>,
+        legacy: bool,
+    ) -> (VersionedTransaction, Pubkey) {
+        let mut t = VersionedTransaction::default();
+        let program = Pubkey::new_unique();
+        t.message = if legacy {
+            let mut msg = LegacyMessage::default();
+            msg.instructions = instructions;
+            VersionedMessage::Legacy(msg)
+        } else {
+            let mut msg = Message::default();
+            msg.instructions = instructions;
+            VersionedMessage::V0(msg)
+        };
+        (t, program)
+    }
+
+    fn create_test_inner_tx(instructions: Vec<InnerInstructions>) -> TransactionStatusMeta {
+        let mut t = TransactionStatusMeta::default();
+        t.inner_instructions = Some(instructions);
+        t
     }
 
     #[tokio::test]
-    async fn ingester_starts_and_stops() {
-        let mut ingester = default_test_ingester();
-        assert!(ingester.start(Pubkey::new_unique()).is_ok());
-        assert!(ingester.stop().is_ok());
+    async fn v1_txns_pass() {
+        let (txchan, mut rx) = tokio::sync::mpsc::unbounded_channel();
+
+        let (txndata, program) = create_test_compiled_tx(
+            vec![CompiledInstruction::new_from_raw_parts(
+                0,
+                vec![0, 0, 0, 0],
+                vec![0, 1],
+            )],
+            false,
+        );
+        let meta = create_test_inner_tx(vec![InnerInstructions {
+            index: 0,
+            instructions: vec![InnerInstruction {
+                instruction: CompiledInstruction::new_from_raw_parts(
+                    0,
+                    vec![0, 0, 0, 0],
+                    vec![0, 1],
+                ),
+                stack_height: None,
+            }],
+        }]);
+        let static_keys = vec![program];
+        let acc = AccountKeys::new(&static_keys, None);
+
+        try_send_instructions(program, 1, acc, txndata, Some(meta), &txchan)
+            .expect("failed to send instructions");
+
+        assert!(!rx.is_empty());
+        let bonsol_ixs = rx
+            .recv()
+            .await
+            .expect("expected a non-empty vector of BonsolInstructions");
+
+        check_instructions(
+            &bonsol_ixs,
+            expect![[r#"
+            [
+                BonsolInstruction {
+                    cpi: false,
+                    accounts: [
+                        1111111QLbz7JHiBTspS962RLKV8GndWFwiEaqKM,
+                    ],
+                    data: [
+                        0,
+                        0,
+                        0,
+                        0,
+                    ],
+                    last_known_block: 1,
+                },
+                BonsolInstruction {
+                    cpi: true,
+                    accounts: [
+                        1111111QLbz7JHiBTspS962RLKV8GndWFwiEaqKM,
+                    ],
+                    data: [
+                        0,
+                        0,
+                        0,
+                        0,
+                    ],
+                    last_known_block: 1,
+                },
+            ]"#]],
+        );
+    }
+
+    #[tokio::test]
+    async fn legacy_txns_fail() {
+        let (txchan, rx) = tokio::sync::mpsc::unbounded_channel();
+
+        let (txndata, program) = create_test_compiled_tx(
+            vec![CompiledInstruction::new_from_raw_parts(
+                0,
+                vec![0, 0, 0, 0],
+                vec![0, 1],
+            )],
+            true,
+        );
+        let meta = create_test_inner_tx(vec![InnerInstructions {
+            index: 0,
+            instructions: vec![InnerInstruction {
+                instruction: CompiledInstruction::new_from_raw_parts(
+                    0,
+                    vec![0, 0, 0, 0],
+                    vec![0, 1],
+                ),
+                stack_height: None,
+            }],
+        }]);
+        let static_keys = vec![program];
+        let acc = AccountKeys::new(&static_keys, None);
+
+        try_send_instructions(program, 1, acc, txndata, Some(meta), &txchan)
+            .expect("failed to send instructions");
+
+        assert!(rx.is_empty())
     }
 }
