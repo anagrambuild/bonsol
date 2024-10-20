@@ -1,0 +1,7 @@
+FROM debian:stable-slim
+ARG PROVER_TAG
+WORKDIR /risc0-groth16-prover/${PROVER_TAG}
+COPY --from=risczero/risc0-groth16-prover:${PROVER_TAG} /app/stark_verify stark/stark_verify
+COPY --from=risczero/risc0-groth16-prover:${PROVER_TAG} /app/stark_verify.dat stark/stark_verify.dat
+COPY --from=risczero/risc0-groth16-prover:${PROVER_TAG} /app/stark_verify_final.zkey stark/stark_verify_final.zkey
+COPY --from=risczero/risc0-groth16-prover:${PROVER_TAG} /usr/local/sbin/rapidsnark stark/rapidsnark
