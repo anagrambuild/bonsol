@@ -1,0 +1,80 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "fmt",
+            "type": "shell",
+            "command": "cargo fmt --check",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": "false"
+            }
+        },
+        {
+            "label": "lint",
+            "type": "shell",
+            "command": "cargo clippy --all-features --no-deps",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": "false"
+            }
+        },
+        {
+            "label": "build",
+            "type": "shell",
+            "command": "cargo build",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": "false"
+            }
+        },
+        {
+            "label": "check",
+            "type": "shell",
+            "command": "cargo check",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": "true"
+            }
+        },
+        {
+            "label": "test",
+            "type": "shell",
+            "command": "cargo test --workspace --all-features --no-fail-fast",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "group": {
+                "kind": "test",
+                "isDefault": "true"
+            }
+        },
+        {
+            "label": "doc",
+            "type": "shell",
+            "command": "cargo doc --no-deps",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "dependsOn": "check",
+            "group": {
+                "kind": "build",
+                "isDefault": "false"
+            }
+        }
+    ]
+}

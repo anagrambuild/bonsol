@@ -42,7 +42,7 @@ provernode:
 ##
   image:
     repository: ghcr.io/anagrambuild/bonsol-node@sha256
-    tag: a44f47818cbbc0bafcd27ae46226fdb2271662c3a070df6a1a84d5cc6b031a6d
+    tag: 05d33ce69b8db9cd0755fa6ff474db8b51cc680c874ff36a17de814e70e31eae
     pullPolicy: "IfNotPresent" 
     imagePullSecrets: []
 
@@ -158,7 +158,7 @@ tester:
 ##
   image:
     repository: docker.io/zerocomputing/bonsol-tester
-    tag: 0.2.0
+    tag: 0.4.0
     pullPolicy: "IfNotPresent" 
     imagePullSecrets: []
 

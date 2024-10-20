@@ -40,6 +40,8 @@ spec:
             value: {{ .Values.signer.path }}
           - name: RPC_ENDPOINT
             value: "{{ .Values.rpc.url }}/{{ .Values.rpc.token }}"
+          - name: SIMPLE_IMAGE
+            value: "https://bonsol-public-images.s3.amazonaws.com/simple-68f4b0c5f9ce034aa60ceb264a18d6c410a3af68fafd931bcfd9ebe7c1e42960"
           {{- if and (hasKey .Values.tester "env") (.Values.tester.env) }}
           {{- range $k,$v := .Values.tester.env }}
           - name: {{ $k }}
@@ -56,9 +58,11 @@ spec:
           - bash
           - -c
           - |
+            solana config set --keypair {{ .Values.signer.path }} -u $RPC_ENDPOINT
+            bonsol deploy -y -m {{ include "bonsol-tester.manifestPath" . }} -t url --url $SIMPLE_IMAGE
             while :
             do
-              /root/.local/share/pnpm/pnpm jest --silent=false
+              bonsol execute -f {{ include "bonsol-tester.executionReqPath" . }} -x 1000 -m 10000 -w
               sleep 300
             done
           {{- end }}
@@ -69,6 +73,12 @@ spec:
             - name: key # only works with keypair signer for now
               mountPath: {{ .Values.signer.path }}
               subPath: {{ base .Values.signer.path }}
+            - name: infiles
+              mountPath: {{ include "bonsol-tester.manifestPath" . }}
+              subPath: {{ base (include "bonsol-tester.manifestPath" .) }}
+            - name: infiles
+              mountPath: {{ include "bonsol-tester.executionReqPath" . }}
+              subPath: {{ base (include "bonsol-tester.executionReqPath" .) }}
             {{- with .Values.tester.volumeMounts }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
@@ -76,6 +86,9 @@ spec:
         - name: key
           secret:
             secretName: {{ include "bonsol-provernode.fullname" . }}
+        - name: infiles
+          configMap:
+            name: {{ include "bonsol-tester.fullname" . }}
         {{- with .Values.tester.volumes }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
