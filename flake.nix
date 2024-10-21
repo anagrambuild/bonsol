@@ -172,7 +172,6 @@
             inherit risc0CircuitRecursionPatch;
           };
           risc0-groth16-prover = pkgs.callPackage ./nixos/pkgs/risc0/groth16-prover {
-            inherit setup;
             imageDigest = "sha256:5a862bac2c5c070ec50ff615572a05d870c1372818cf0f5d8bb9effc101590c8";
             sha256 = "sha256-SV8nUjtq6TheYW+vQltyApOa7/gxnBrWx4Y6fQ71LFg=";
             finalImageTag = "v2024-05-17.1";

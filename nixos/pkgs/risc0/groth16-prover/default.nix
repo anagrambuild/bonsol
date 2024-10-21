@@ -1,8 +1,5 @@
 { dockerTools
-, docker
-, corepack_22
-, runCommand
-, setup
+, stdenv
 
 , imageDigest
 , sha256
@@ -13,32 +10,32 @@ let
   owner = "risczero";
   pname = "risc0-groth16-prover";
   imageName = "${owner}/${pname}";
-  risc0-groth16-prover = dockerTools.pullImage {
+  src = dockerTools.pullImage {
     inherit
       imageName
       imageDigest
       sha256
       finalImageTag;
   };
-  risc0-groth16-prover-stream = dockerTools.streamLayeredImage {
-    name = imageName;
-    tag = finalImageTag;
-    fromImage = risc0-groth16-prover;
-    config.Cmd = [ "${pname}" ];
-  };
 in
-runCommand "${pname}" {
-  buildInputs = [
-    docker
-    corepack_22
-  ];
-} ''
-  mkdir -p $out/node/stark
-  mkdir -p $out/vkey
+stdenv.mkDerivation {
+  inherit pname src;
+  version = finalImageTag;
 
-  # Load the docker image we've pulled above by streaming from stdin
-  # See https://nixos.org/manual/nixpkgs/stable/#ssec-pkgs-dockerTools-streamLayeredImage
-  ${risc0-groth16-prover-stream} | ${docker}/bin/docker image load
-  # ${setup}/bin/setup.sh
-''
+  unpackPhase = ''
+    mkdir -p $out/app
+    # Extract files from the Docker image tarball
+    tar -xf ${src} -C $out/app
+  '';
 
+  buildPhase = ''
+    # Create output directories
+    mkdir -p $out/stark
+    
+    # Copy specific files to the output
+    cp $out/app/stark_verify $out/stark/
+    cp $out/app/stark_verify.dat $out/stark/
+    cp $out/app/stark_verify_final.zkey $out/stark/
+    cp $out/usr/local/sbin/rapidsnark $out/stark/
+  '';
+}
