@@ -1,6 +1,6 @@
 [package]
 name = "callback-example"
-version = "0.0.1"
+version.workspace = true
 description = "example raw solana program to show how to use the callback feature of bonsol"
 authors = ["anagram build team"]
 repository = "https://github.com/anagrambuild/bonsol"
