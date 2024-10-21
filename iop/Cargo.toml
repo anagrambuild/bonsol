@@ -1,8 +1,8 @@
 [package]
 name = "iop"
-version = "0.1.0"
+version.workspace = true
 edition = "2021"
-publish = false   # Exclude local crates from licensing checks
+publish = false          # Exclude local crates from licensing checks
 
 
 [dependencies]
