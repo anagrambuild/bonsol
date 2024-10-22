@@ -4,9 +4,10 @@ mod rpc;
 use anyhow::Result;
 pub use {dragon::GrpcIngester, rpc::RpcIngester};
 
-use crate::types::BonsolInstruction;
-use solana_sdk::pubkey::Pubkey;
-use tokio::sync::mpsc::UnboundedReceiver;
+use {
+    crate::types::BonsolInstruction, solana_sdk::pubkey::Pubkey,
+    tokio::sync::mpsc::UnboundedReceiver,
+};
 
 pub type TxChannel = UnboundedReceiver<Vec<BonsolInstruction>>;
 
