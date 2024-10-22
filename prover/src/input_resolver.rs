@@ -110,7 +110,7 @@ impl DefaultInputResolver {
                 let url = input.data.ok_or(anyhow::anyhow!("Invalid data"))?;
                 let url = from_utf8(&url)?;
                 let url = Url::parse(url)?;
-                task_set.spawn(dowload_public_input(
+                task_set.spawn(download_public_input(
                     client,
                     index as u8,
                     url.clone(),
@@ -146,7 +146,7 @@ impl DefaultInputResolver {
                 let url = input.data.ok_or(anyhow::anyhow!("Invalid data"))?;
                 let url = from_utf8(&url)?;
                 let url = Url::parse(url)?;
-                task_set.spawn(dowload_public_input(
+                task_set.spawn(download_public_input(
                     client,
                     index as u8,
                     url.clone(),
@@ -316,7 +316,7 @@ pub fn resolve_remote_public_data(
 ) -> Result<JoinHandle<Result<ResolvedInput>>> {
     let url = from_utf8(data)?;
     let url = Url::parse(url)?;
-    Ok(tokio::task::spawn(dowload_public_input(
+    Ok(tokio::task::spawn(download_public_input(
         client,
         index as u8,
         url,
@@ -333,7 +333,7 @@ pub struct PrivateInputRequest {
     now_utc: u64,
 }
 
-async fn dowload_public_input(
+async fn download_public_input(
     client: Arc<reqwest::Client>,
     index: u8,
     url: Url,
@@ -373,3 +373,82 @@ async fn download_private_input(
         input_type: ProgramInputType::Private,
     })
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use std::sync::Arc;
+    use mockito::Mock;
+    use reqwest::{Client, Url};
+
+    // Modified to return the server along with the mock and URL
+    pub async fn get_server(url_path: &str, response: &[u8]) -> (Mock, Url, mockito::ServerGuard) {
+        let mut server = mockito::Server::new_async().await;
+        let url = Url::parse(&format!("{}{}", server.url(), url_path)).unwrap();
+
+        let mock = server
+            .mock("GET", url_path) // Changed to POST to match your function
+            .with_status(200)
+            .with_header("content-type", "application/octet-stream")
+            .with_body(response)
+            .create_async()
+            .await;
+
+        (mock, url, server)
+    }
+
+    #[tokio::test]
+    async fn test_download_public_input_success() {
+        // 1 MB max size
+        let max_size_mb = 1;
+        // 10 KB response
+        let input_data = vec![1u8; 1024*10];
+
+        let (mock, url, _server) = get_server("/download", &input_data).await;
+        let client = Arc::new(Client::new());
+
+        let valid_result = download_public_input(
+            client.clone(),
+            1u8,
+            url,
+            max_size_mb,
+            ProgramInputType::Public,
+        )
+            .await;
+
+        assert!(valid_result.is_ok());
+        let resolved_input = valid_result.unwrap();
+        assert_eq!(resolved_input.index, 1);
+        assert_eq!(resolved_input.data, input_data);
+        assert!(matches!(resolved_input.input_type, ProgramInputType::Public));
+
+        mock.assert();
+    }
+
+    #[tokio::test]
+    async fn test_download_public_input_oversized() {
+        // 1 MB max size
+        let max_size_mb = 1;
+        // 2 MB response
+        let input_data = vec![1u8; 1024*1024*2];
+
+        let (mock, url, _server) = get_server("/download", &input_data).await;
+        let client = Arc::new(Client::new());
+
+        let valid_result = download_public_input(
+            client.clone(),
+            1u8,
+            url,
+            max_size_mb,
+            ProgramInputType::Public,
+        )
+            .await;
+
+        assert!(valid_result.is_err());
+        assert_eq!(valid_result.unwrap_err().to_string(), "Max size exceeded");
+
+        mock.assert();
+    }
+
+}
+
