@@ -1,8 +1,9 @@
 use bonsol_schema::{
-    Account, ChannelInstruction, ChannelInstructionArgs, ChannelInstructionIxType, DeployV1, DeployV1Args, ExecutionRequestV1, ExecutionRequestV1Args, ExecutionRequestV1T, InputBuilder, InputT, InputType, ProgramInputType
+    Account, ChannelInstruction, ChannelInstructionArgs, ChannelInstructionIxType, DeployV1,
+    DeployV1Args, ExecutionRequestV1, ExecutionRequestV1Args, ExecutionRequestV1T, InputBuilder,
+    InputT, InputType, ProgramInputType,
 };
 use flatbuffers::{FlatBufferBuilder, WIPOffset};
-
 
 use crate::error::ClientError;
 use crate::util::{deployment_address, execution_address};

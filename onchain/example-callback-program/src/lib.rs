@@ -2,10 +2,11 @@ use bonsol_interface::callback::handle_callback;
 use solana_program::account_info::AccountInfo;
 use solana_program::entrypoint::ProgramResult;
 use solana_program::program_error::ProgramError;
-use solana_program::{pubkey, pubkey::Pubkey};
+use solana_program::pubkey;
+use solana_program::pubkey::Pubkey;
 
-use solana_program::{declare_id, entrypoint, msg};
 use solana_program::program_memory::sol_memcmp;
+use solana_program::{declare_id, entrypoint, msg};
 
 declare_id!("exay1T7QqsJPNcwzMiWubR6vZnqrgM16jZRraHgqBGG");
 const SIMPLE_IMAGE_ID: &str = "68f4b0c5f9ce034aa60ceb264a18d6c410a3af68fafd931bcfd9ebe7c1e42960";

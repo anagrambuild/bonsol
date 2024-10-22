@@ -227,10 +227,7 @@ impl BonsolClient {
             let now = Instant::now();
             let confirm_transaction_initial_timeout = Duration::from_secs(retry_timeout);
             let (_, status) = loop {
-                let status = self
-                    .rpc_client
-                    .get_signature_status(&sig)
-                    .await?;
+                let status = self.rpc_client.get_signature_status(&sig).await?;
                 if status.is_none() {
                     let blockhash_not_found = !self
                         .rpc_client
