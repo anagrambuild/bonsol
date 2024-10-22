@@ -377,9 +377,9 @@ async fn download_private_input(
 #[cfg(test)]
 mod test {
     use super::*;
-    use std::sync::Arc;
     use mockito::Mock;
     use reqwest::{Client, Url};
+    use std::sync::Arc;
 
     // Modified to return the server along with the mock and URL
     pub async fn get_server(url_path: &str, response: &[u8]) -> (Mock, Url, mockito::ServerGuard) {
@@ -402,7 +402,7 @@ mod test {
         // 1 MB max size
         let max_size_mb = 1;
         // 10 KB response
-        let input_data = vec![1u8; 1024*10];
+        let input_data = vec![1u8; 1024 * 10];
 
         let (mock, url, _server) = get_server("/download", &input_data).await;
         let client = Arc::new(Client::new());
@@ -414,13 +414,16 @@ mod test {
             max_size_mb,
             ProgramInputType::Public,
         )
-            .await;
+        .await;
 
         assert!(valid_result.is_ok());
         let resolved_input = valid_result.unwrap();
         assert_eq!(resolved_input.index, 1);
         assert_eq!(resolved_input.data, input_data);
-        assert!(matches!(resolved_input.input_type, ProgramInputType::Public));
+        assert!(matches!(
+            resolved_input.input_type,
+            ProgramInputType::Public
+        ));
 
         mock.assert();
     }
@@ -430,7 +433,7 @@ mod test {
         // 1 MB max size
         let max_size_mb = 1;
         // 2 MB response
-        let input_data = vec![1u8; 1024*1024*2];
+        let input_data = vec![1u8; 1024 * 1024 * 2];
 
         let (mock, url, _server) = get_server("/download", &input_data).await;
         let client = Arc::new(Client::new());
@@ -442,13 +445,11 @@ mod test {
             max_size_mb,
             ProgramInputType::Public,
         )
-            .await;
+        .await;
 
         assert!(valid_result.is_err());
         assert_eq!(valid_result.unwrap_err().to_string(), "Max size exceeded");
 
         mock.assert();
     }
-
 }
-
