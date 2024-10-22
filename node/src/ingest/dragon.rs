@@ -188,6 +188,8 @@ fn try_send_instructions(
 
 #[cfg(test)]
 mod dragon_ingester_tests {
+    use std::str::FromStr;
+
     use {
         expect_test::{expect, Expect},
         solana_sdk::{
@@ -208,9 +210,8 @@ mod dragon_ingester_tests {
     fn create_test_compiled_tx(
         instructions: Vec<CompiledInstruction>,
         legacy: bool,
-    ) -> (VersionedTransaction, Pubkey) {
+    ) -> VersionedTransaction {
         let mut t = VersionedTransaction::default();
-        let program = Pubkey::new_unique();
         t.message = if legacy {
             let mut msg = LegacyMessage::default();
             msg.instructions = instructions;
@@ -220,7 +221,7 @@ mod dragon_ingester_tests {
             msg.instructions = instructions;
             VersionedMessage::V0(msg)
         };
-        (t, program)
+        t
     }
 
     fn create_test_inner_tx(instructions: Vec<InnerInstructions>) -> TransactionStatusMeta {
@@ -233,7 +234,7 @@ mod dragon_ingester_tests {
     async fn v1_txns_pass() {
         let (txchan, mut rx) = tokio::sync::mpsc::unbounded_channel();
 
-        let (txndata, program) = create_test_compiled_tx(
+        let txndata = create_test_compiled_tx(
             vec![CompiledInstruction::new_from_raw_parts(
                 0,
                 vec![0, 0, 0, 0],
@@ -252,6 +253,8 @@ mod dragon_ingester_tests {
                 stack_height: None,
             }],
         }]);
+        let program = Pubkey::from_str("1111111QLbz7JHiBTspS962RLKV8GndWFwiEaqKM")
+            .expect("failed to create pubkey from str");
         let static_keys = vec![program];
         let acc = AccountKeys::new(&static_keys, None);
 
@@ -302,7 +305,7 @@ mod dragon_ingester_tests {
     async fn legacy_txns_fail() {
         let (txchan, rx) = tokio::sync::mpsc::unbounded_channel();
 
-        let (txndata, program) = create_test_compiled_tx(
+        let txndata = create_test_compiled_tx(
             vec![CompiledInstruction::new_from_raw_parts(
                 0,
                 vec![0, 0, 0, 0],
@@ -321,6 +324,7 @@ mod dragon_ingester_tests {
                 stack_height: None,
             }],
         }]);
+        let program = Pubkey::new_unique();
         let static_keys = vec![program];
         let acc = AccountKeys::new(&static_keys, None);
 
