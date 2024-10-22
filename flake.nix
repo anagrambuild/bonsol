@@ -109,7 +109,7 @@
 
           individualCrateArgs = commonArgs // {
             inherit cargoArtifacts;
-            inherit (craneLib.crateNameFromCargoToml { inherit src; }) version;
+            inherit (craneLib.crateNameFromCargoToml { inherit (workspace) src; }) version;
             doCheck = false;
           };
 
@@ -150,7 +150,7 @@
               };
             in
             craneLib.buildPackage (individualCrateArgs // {
-              inherit (manifest) version pname;
+              inherit (manifest) pname;
               cargoExtraArgs = "--locked --bin ${name}";
               src = fileSetForCrate crate deps;
             });

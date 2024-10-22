@@ -4,7 +4,7 @@ use base64::Engine as _;
 use bonsol_prover::input_resolver::{ProgramInput, ResolvedInput};
 use bonsol_sdk::instructions::{CallbackConfig, ExecutionConfig};
 use bonsol_sdk::{InputT, InputType, ProgramInputType};
-use clap::{Args, ValueEnum};
+use clap::Args;
 use rand::distributions::Alphanumeric;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
