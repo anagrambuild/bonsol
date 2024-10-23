@@ -10,8 +10,11 @@ env:
   AWS_REGION: "us-east-1"
   PROVER_TAG: "v2024-05-17.1"
 concurrency:
-  group: "sync-prover-to-s3-${{ env.PROVER_TAG }}"
+  group: "sync-prover-to-s3"
   cancel-in-progress: true
+permissions:
+  id-token: write
+  contents: read
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -21,8 +24,8 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          audience: sts.amazonaws.com.cn
-          aws-region: us-east-1
+          audience: sts.amazonaws.com
+          aws-region: ${{ env.AWS_REGION }}
           role-to-assume: arn:aws:iam::041119533185:role/GithubBonsolCI
       - name: Build Prover Artifact
         run: |
