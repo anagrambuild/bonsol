@@ -21,7 +21,17 @@
     "instructionPrefix": [1],
     "extraAccounts": [
       {
-        "pubkey": "exay1T7QqsJPNcwzMiWubR6vZnqrgM16jZRraHgqBGG",
+        "pubkey": "3b6DR2gbTJwrrX27VLEZ2FJcHrDvTSLKEcTLVhdxCoaf",
+        "isSigner": false,
+        "isWritable": false
+      },
+      {
+        "pubkey": "g7dD1FHSemkUQrX1Eak37wzvDjscgBW2pFCENwjLdMX",
+        "isSigner": false,
+        "isWritable": true
+      },
+      {
+        "pubkey": "FHab8zDcP1DooZqXHWQowikqtXJb1eNHc46FEh1KejmX",
         "isSigner": false,
         "isWritable": false
       }

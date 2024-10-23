@@ -25,6 +25,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ExecutionRequestV1T = exports.ExecutionRequestV1 = void 0;
+/* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion */
 const flatbuffers = __importStar(require("flatbuffers"));
 const account_js_1 = require("./account.js");
 const input_js_1 = require("./input.js");
@@ -147,7 +148,7 @@ class ExecutionRequestV1 {
     }
     callbackExtraAccounts(index, obj) {
         const offset = this.bb.__offset(this.bb_pos, 24);
-        return offset ? (obj || new account_js_1.Account()).__init(this.bb.__vector(this.bb_pos + offset) + index * 33, this.bb) : null;
+        return offset ? (obj || new account_js_1.Account()).__init(this.bb.__vector(this.bb_pos + offset) + index * 40, this.bb) : null;
     }
     callbackExtraAccountsLength() {
         const offset = this.bb.__offset(this.bb_pos, 24);
@@ -230,7 +231,7 @@ class ExecutionRequestV1 {
         builder.addFieldOffset(10, callbackExtraAccountsOffset, 0);
     }
     static startCallbackExtraAccountsVector(builder, numElems) {
-        builder.startVector(33, numElems, 1);
+        builder.startVector(40, numElems, 8);
     }
     static endExecutionRequestV1(builder) {
         const offset = builder.endObject();

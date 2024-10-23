@@ -25,6 +25,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.InputSetOpV1T = exports.InputSetOpV1 = void 0;
+/* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion */
 const flatbuffers = __importStar(require("flatbuffers"));
 const input_js_1 = require("./input.js");
 const input_set_op_js_1 = require("./input-set-op.js");

@@ -3,17 +3,19 @@
 // @generated
 
 use crate::input_type_generated::*;
+use core::cmp::Ordering;
+use core::mem;
 
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
 
-// struct Account, aligned to 1
+// struct Account, aligned to 8
 #[repr(transparent)]
 #[derive(Clone, Copy, PartialEq)]
-pub struct Account(pub [u8; 33]);
+pub struct Account(pub [u8; 40]);
 impl Default for Account {
     fn default() -> Self {
-        Self([0; 33])
+        Self([0; 40])
     }
 }
 impl core::fmt::Debug for Account {
@@ -55,21 +57,22 @@ impl<'a> flatbuffers::Verifiable for Account {
         v: &mut flatbuffers::Verifier,
         pos: usize,
     ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
+        use self::flatbuffers::Verifiable;
         v.in_buffer::<Self>(pos)
     }
 }
 
 impl<'a> Account {
     #[allow(clippy::too_many_arguments)]
-    pub fn new(writable: bool, pubkey: &[u8; 32]) -> Self {
-        let mut s = Self([0; 33]);
+    pub fn new(writable: u8, pubkey: &[u8; 32]) -> Self {
+        let mut s = Self([0; 40]);
         s.set_writable(writable);
         s.set_pubkey(pubkey);
         s
     }
 
-    pub fn writable(&self) -> bool {
-        let mut mem = core::mem::MaybeUninit::<<bool as EndianScalar>::Scalar>::uninit();
+    pub fn writable(&self) -> u8 {
+        let mut mem = core::mem::MaybeUninit::<<u8 as EndianScalar>::Scalar>::uninit();
         // Safety:
         // Created from a valid Table for this object
         // Which contains a valid value in this slot
@@ -77,13 +80,13 @@ impl<'a> Account {
             core::ptr::copy_nonoverlapping(
                 self.0[0..].as_ptr(),
                 mem.as_mut_ptr() as *mut u8,
-                core::mem::size_of::<<bool as EndianScalar>::Scalar>(),
+                core::mem::size_of::<<u8 as EndianScalar>::Scalar>(),
             );
             mem.assume_init()
         })
     }
 
-    pub fn set_writable(&mut self, x: bool) {
+    pub fn set_writable(&mut self, x: u8) {
         let x_le = x.to_little_endian();
         // Safety:
         // Created from a valid Table for this object
@@ -92,7 +95,7 @@ impl<'a> Account {
             core::ptr::copy_nonoverlapping(
                 &x_le as *const _ as *const u8,
                 self.0[0..].as_mut_ptr(),
-                core::mem::size_of::<<bool as EndianScalar>::Scalar>(),
+                core::mem::size_of::<<u8 as EndianScalar>::Scalar>(),
             );
         }
     }
@@ -121,7 +124,7 @@ impl<'a> Account {
 
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct AccountT {
-    pub writable: bool,
+    pub writable: u8,
     pub pubkey: [u8; 32],
 }
 impl AccountT {
@@ -165,8 +168,8 @@ impl<'a> ExecutionRequestV1<'a> {
         ExecutionRequestV1 { _tab: table }
     }
     #[allow(unused_mut)]
-    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
-        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
         args: &'args ExecutionRequestV1Args<'args>,
     ) -> flatbuffers::WIPOffset<ExecutionRequestV1<'bldr>> {
         let mut builder = ExecutionRequestV1Builder::new(_fbb);
@@ -368,6 +371,7 @@ impl flatbuffers::Verifiable for ExecutionRequestV1<'_> {
         v: &mut flatbuffers::Verifier,
         pos: usize,
     ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
+        use self::flatbuffers::Verifiable;
         v.visit_table(pos)?
             .visit_field::<u64>("tip", Self::VT_TIP, false)?
             .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
@@ -444,11 +448,11 @@ impl<'a> Default for ExecutionRequestV1Args<'a> {
     }
 }
 
-pub struct ExecutionRequestV1Builder<'a: 'b, 'b> {
-    fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
+pub struct ExecutionRequestV1Builder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
+    fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
 }
-impl<'a: 'b, 'b> ExecutionRequestV1Builder<'a, 'b> {
+impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> ExecutionRequestV1Builder<'a, 'b, A> {
     #[inline]
     pub fn add_tip(&mut self, tip: u64) {
         self.fbb_
@@ -538,8 +542,8 @@ impl<'a: 'b, 'b> ExecutionRequestV1Builder<'a, 'b> {
     }
     #[inline]
     pub fn new(
-        _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>,
-    ) -> ExecutionRequestV1Builder<'a, 'b> {
+        _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> ExecutionRequestV1Builder<'a, 'b, A> {
         let start = _fbb.start_table();
         ExecutionRequestV1Builder {
             fbb_: _fbb,
@@ -606,9 +610,9 @@ impl Default for ExecutionRequestV1T {
     }
 }
 impl ExecutionRequestV1T {
-    pub fn pack<'b>(
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
         &self,
-        _fbb: &mut flatbuffers::FlatBufferBuilder<'b>,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
     ) -> flatbuffers::WIPOffset<ExecutionRequestV1<'b>> {
         let tip = self.tip;
         let execution_id = self.execution_id.as_ref().map(|x| _fbb.create_string(x));
@@ -718,16 +722,16 @@ pub unsafe fn size_prefixed_root_as_execution_request_v1_unchecked(
     flatbuffers::size_prefixed_root_unchecked::<ExecutionRequestV1>(buf)
 }
 #[inline]
-pub fn finish_execution_request_v1_buffer<'a, 'b>(
-    fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>,
+pub fn finish_execution_request_v1_buffer<'a, 'b, A: flatbuffers::Allocator + 'a>(
+    fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     root: flatbuffers::WIPOffset<ExecutionRequestV1<'a>>,
 ) {
     fbb.finish(root, None);
 }
 
 #[inline]
-pub fn finish_size_prefixed_execution_request_v1_buffer<'a, 'b>(
-    fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>,
+pub fn finish_size_prefixed_execution_request_v1_buffer<'a, 'b, A: flatbuffers::Allocator + 'a>(
+    fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     root: flatbuffers::WIPOffset<ExecutionRequestV1<'a>>,
 ) {
     fbb.finish_size_prefixed(root, None);

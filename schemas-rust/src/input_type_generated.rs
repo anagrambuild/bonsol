@@ -2,7 +2,11 @@
 
 // @generated
 
+use core::cmp::Ordering;
+use core::mem;
+
 extern crate flatbuffers;
+use self::flatbuffers::{EndianScalar, Follow};
 
 #[deprecated(
     since = "2.0.0",
@@ -252,8 +256,8 @@ impl<'a> Input<'a> {
         Input { _tab: table }
     }
     #[allow(unused_mut)]
-    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
-        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
         args: &'args InputArgs<'args>,
     ) -> flatbuffers::WIPOffset<Input<'bldr>> {
         let mut builder = InputBuilder::new(_fbb);
@@ -302,6 +306,7 @@ impl flatbuffers::Verifiable for Input<'_> {
         v: &mut flatbuffers::Verifier,
         pos: usize,
     ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
+        use self::flatbuffers::Verifiable;
         v.visit_table(pos)?
             .visit_field::<InputType>("input_type", Self::VT_INPUT_TYPE, false)?
             .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, u8>>>(
@@ -327,11 +332,11 @@ impl<'a> Default for InputArgs<'a> {
     }
 }
 
-pub struct InputBuilder<'a: 'b, 'b> {
-    fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
+pub struct InputBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
+    fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
 }
-impl<'a: 'b, 'b> InputBuilder<'a, 'b> {
+impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> InputBuilder<'a, 'b, A> {
     #[inline]
     pub fn add_input_type(&mut self, input_type: InputType) {
         self.fbb_
@@ -343,7 +348,7 @@ impl<'a: 'b, 'b> InputBuilder<'a, 'b> {
             .push_slot_always::<flatbuffers::WIPOffset<_>>(Input::VT_DATA, data);
     }
     #[inline]
-    pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> InputBuilder<'a, 'b> {
+    pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>) -> InputBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         InputBuilder {
             fbb_: _fbb,
@@ -380,9 +385,9 @@ impl Default for InputT {
     }
 }
 impl InputT {
-    pub fn pack<'b>(
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
         &self,
-        _fbb: &mut flatbuffers::FlatBufferBuilder<'b>,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
     ) -> flatbuffers::WIPOffset<Input<'b>> {
         let input_type = self.input_type;
         let data = self.data.as_ref().map(|x| _fbb.create_vector(x));

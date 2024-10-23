@@ -3,8 +3,11 @@
 // @generated
 
 use crate::input_type_generated::*;
+use core::cmp::Ordering;
+use core::mem;
 
 extern crate flatbuffers;
+use self::flatbuffers::{EndianScalar, Follow};
 
 pub enum DeployV1Offset {}
 #[derive(Copy, Clone, PartialEq)]
@@ -36,8 +39,8 @@ impl<'a> DeployV1<'a> {
         DeployV1 { _tab: table }
     }
     #[allow(unused_mut)]
-    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
-        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
         args: &'args DeployV1Args<'args>,
     ) -> flatbuffers::WIPOffset<DeployV1<'bldr>> {
         let mut builder = DeployV1Builder::new(_fbb);
@@ -148,6 +151,7 @@ impl flatbuffers::Verifiable for DeployV1<'_> {
         v: &mut flatbuffers::Verifier,
         pos: usize,
     ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
+        use self::flatbuffers::Verifiable;
         v.visit_table(pos)?
             .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, u8>>>(
                 "owner",
@@ -197,11 +201,11 @@ impl<'a> Default for DeployV1Args<'a> {
     }
 }
 
-pub struct DeployV1Builder<'a: 'b, 'b> {
-    fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
+pub struct DeployV1Builder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
+    fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
 }
-impl<'a: 'b, 'b> DeployV1Builder<'a, 'b> {
+impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> DeployV1Builder<'a, 'b, A> {
     #[inline]
     pub fn add_owner(&mut self, owner: flatbuffers::WIPOffset<flatbuffers::Vector<'b, u8>>) {
         self.fbb_
@@ -235,7 +239,7 @@ impl<'a: 'b, 'b> DeployV1Builder<'a, 'b> {
             .push_slot_always::<flatbuffers::WIPOffset<_>>(DeployV1::VT_INPUTS, inputs);
     }
     #[inline]
-    pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> DeployV1Builder<'a, 'b> {
+    pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>) -> DeployV1Builder<'a, 'b, A> {
         let start = _fbb.start_table();
         DeployV1Builder {
             fbb_: _fbb,
@@ -284,9 +288,9 @@ impl Default for DeployV1T {
     }
 }
 impl DeployV1T {
-    pub fn pack<'b>(
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
         &self,
-        _fbb: &mut flatbuffers::FlatBufferBuilder<'b>,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
     ) -> flatbuffers::WIPOffset<DeployV1<'b>> {
         let owner = self.owner.as_ref().map(|x| _fbb.create_vector(x));
         let image_id = self.image_id.as_ref().map(|x| _fbb.create_string(x));
@@ -370,16 +374,16 @@ pub unsafe fn size_prefixed_root_as_deploy_v1_unchecked(buf: &[u8]) -> DeployV1 
     flatbuffers::size_prefixed_root_unchecked::<DeployV1>(buf)
 }
 #[inline]
-pub fn finish_deploy_v1_buffer<'a, 'b>(
-    fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>,
+pub fn finish_deploy_v1_buffer<'a, 'b, A: flatbuffers::Allocator + 'a>(
+    fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     root: flatbuffers::WIPOffset<DeployV1<'a>>,
 ) {
     fbb.finish(root, None);
 }
 
 #[inline]
-pub fn finish_size_prefixed_deploy_v1_buffer<'a, 'b>(
-    fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>,
+pub fn finish_size_prefixed_deploy_v1_buffer<'a, 'b, A: flatbuffers::Allocator + 'a>(
+    fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     root: flatbuffers::WIPOffset<DeployV1<'a>>,
 ) {
     fbb.finish_size_prefixed(root, None);

@@ -506,11 +506,12 @@ async fn handle_execution_request<'a>(
                                 .unwrap_or_default()
                                 .into_iter()
                                 .map(|a| {
-                                    let (pkbytes, writable) = a.0.split_at(32);
+                                    let pkbytes: [u8; 32] = a.pubkey().into();
                                     let pubkey = Pubkey::try_from(pkbytes).unwrap_or_default();
+                                    let writable = a.writable();
                                     AccountMeta {
                                         pubkey,
-                                        is_writable: writable[0] == 1,
+                                        is_writable: writable == 1,
                                         is_signer: false,
                                     }
                                 })

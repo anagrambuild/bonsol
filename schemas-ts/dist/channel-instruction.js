@@ -25,6 +25,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ChannelInstructionT = exports.ChannelInstruction = void 0;
+/* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion */
 const flatbuffers = __importStar(require("flatbuffers"));
 const channel_instruction_ix_type_js_1 = require("./channel-instruction-ix-type.js");
 class ChannelInstruction {
