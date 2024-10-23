@@ -219,6 +219,7 @@ impl BonsolClient {
                         skip_preflight,
                         preflight_commitment: Some(CommitmentLevel::Confirmed),
                         max_retries: Some(0),
+                        preflight_commitment: Some(self.rpc_client.commitment().commitment),
                         ..Default::default()
                     },
                 )
@@ -227,14 +228,11 @@ impl BonsolClient {
             let now = Instant::now();
             let confirm_transaction_initial_timeout = Duration::from_secs(retry_timeout);
             let (_, status) = loop {
-                let status = self
-                    .rpc_client
-                    .get_signature_status_with_commitment(&sig, CommitmentConfig::processed())
-                    .await?;
+                let status = self.rpc_client.get_signature_status(&sig).await?;
                 if status.is_none() {
                     let blockhash_not_found = !self
                         .rpc_client
-                        .is_blockhash_valid(&blockhash, CommitmentConfig::processed())
+                        .is_blockhash_valid(&blockhash, self.rpc_client.commitment())
                         .await?;
                     if blockhash_not_found && now.elapsed() >= confirm_transaction_initial_timeout {
                         break (sig, status);

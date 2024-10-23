@@ -25,6 +25,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DeployV1T = exports.DeployV1 = void 0;
+/* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion */
 const flatbuffers = __importStar(require("flatbuffers"));
 class DeployV1 {
     constructor() {

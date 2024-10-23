@@ -13,25 +13,26 @@ class Account {
         return this;
     }
     writable() {
-        return !!this.bb.readInt8(this.bb_pos);
+        return this.bb.readUint8(this.bb_pos);
     }
     mutate_writable(value) {
-        this.bb.writeInt8(this.bb_pos + 0, value ? 1 : 0);
+        this.bb.writeUint8(this.bb_pos + 0, value);
         return true;
     }
     pubkey(index) {
         return this.bb.readUint8(this.bb_pos + 1 + index);
     }
     static sizeOf() {
-        return 33;
+        return 40;
     }
     static createAccount(builder, writable, pubkey) {
         var _a;
-        builder.prep(1, 33);
+        builder.prep(8, 40);
+        builder.pad(7);
         for (let i = 31; i >= 0; --i) {
             builder.writeInt8(((_a = pubkey === null || pubkey === void 0 ? void 0 : pubkey[i]) !== null && _a !== void 0 ? _a : 0));
         }
-        builder.writeInt8(Number(Boolean(writable)));
+        builder.writeInt8(writable);
         return builder.offset();
     }
     unpack() {
@@ -44,7 +45,7 @@ class Account {
 }
 exports.Account = Account;
 class AccountT {
-    constructor(writable = false, pubkey = []) {
+    constructor(writable = 0, pubkey = []) {
         this.writable = writable;
         this.pubkey = pubkey;
     }

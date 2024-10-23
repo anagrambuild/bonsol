@@ -2,7 +2,11 @@
 
 // @generated
 
+use core::cmp::Ordering;
+use core::mem;
+
 extern crate flatbuffers;
+use self::flatbuffers::{EndianScalar, Follow};
 
 pub enum ClaimV1Offset {}
 #[derive(Copy, Clone, PartialEq)]
@@ -30,8 +34,8 @@ impl<'a> ClaimV1<'a> {
         ClaimV1 { _tab: table }
     }
     #[allow(unused_mut)]
-    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
-        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
         args: &'args ClaimV1Args<'args>,
     ) -> flatbuffers::WIPOffset<ClaimV1<'bldr>> {
         let mut builder = ClaimV1Builder::new(_fbb);
@@ -80,6 +84,7 @@ impl flatbuffers::Verifiable for ClaimV1<'_> {
         v: &mut flatbuffers::Verifier,
         pos: usize,
     ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
+        use self::flatbuffers::Verifiable;
         v.visit_table(pos)?
             .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
                 "execution_id",
@@ -105,11 +110,11 @@ impl<'a> Default for ClaimV1Args<'a> {
     }
 }
 
-pub struct ClaimV1Builder<'a: 'b, 'b> {
-    fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
+pub struct ClaimV1Builder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
+    fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
 }
-impl<'a: 'b, 'b> ClaimV1Builder<'a, 'b> {
+impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> ClaimV1Builder<'a, 'b, A> {
     #[inline]
     pub fn add_execution_id(&mut self, execution_id: flatbuffers::WIPOffset<&'b str>) {
         self.fbb_
@@ -121,7 +126,7 @@ impl<'a: 'b, 'b> ClaimV1Builder<'a, 'b> {
             .push_slot::<u64>(ClaimV1::VT_BLOCK_COMMITMENT, block_commitment, 0);
     }
     #[inline]
-    pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> ClaimV1Builder<'a, 'b> {
+    pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>) -> ClaimV1Builder<'a, 'b, A> {
         let start = _fbb.start_table();
         ClaimV1Builder {
             fbb_: _fbb,
@@ -158,9 +163,9 @@ impl Default for ClaimV1T {
     }
 }
 impl ClaimV1T {
-    pub fn pack<'b>(
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
         &self,
-        _fbb: &mut flatbuffers::FlatBufferBuilder<'b>,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
     ) -> flatbuffers::WIPOffset<ClaimV1<'b>> {
         let execution_id = self.execution_id.as_ref().map(|x| _fbb.create_string(x));
         let block_commitment = self.block_commitment;
@@ -236,16 +241,16 @@ pub unsafe fn size_prefixed_root_as_claim_v1_unchecked(buf: &[u8]) -> ClaimV1 {
     flatbuffers::size_prefixed_root_unchecked::<ClaimV1>(buf)
 }
 #[inline]
-pub fn finish_claim_v1_buffer<'a, 'b>(
-    fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>,
+pub fn finish_claim_v1_buffer<'a, 'b, A: flatbuffers::Allocator + 'a>(
+    fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     root: flatbuffers::WIPOffset<ClaimV1<'a>>,
 ) {
     fbb.finish(root, None);
 }
 
 #[inline]
-pub fn finish_size_prefixed_claim_v1_buffer<'a, 'b>(
-    fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>,
+pub fn finish_size_prefixed_claim_v1_buffer<'a, 'b, A: flatbuffers::Allocator + 'a>(
+    fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     root: flatbuffers::WIPOffset<ClaimV1<'a>>,
 ) {
     fbb.finish_size_prefixed(root, None);

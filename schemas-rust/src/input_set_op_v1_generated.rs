@@ -3,8 +3,11 @@
 // @generated
 
 use crate::input_type_generated::*;
+use core::cmp::Ordering;
+use core::mem;
 
 extern crate flatbuffers;
+use self::flatbuffers::{EndianScalar, Follow};
 
 #[deprecated(
     since = "2.0.0",
@@ -125,8 +128,8 @@ impl<'a> InputSetOpV1<'a> {
         InputSetOpV1 { _tab: table }
     }
     #[allow(unused_mut)]
-    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
-        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
         args: &'args InputSetOpV1Args<'args>,
     ) -> flatbuffers::WIPOffset<InputSetOpV1<'bldr>> {
         let mut builder = InputSetOpV1Builder::new(_fbb);
@@ -191,6 +194,7 @@ impl flatbuffers::Verifiable for InputSetOpV1<'_> {
         v: &mut flatbuffers::Verifier,
         pos: usize,
     ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
+        use self::flatbuffers::Verifiable;
         v.visit_table(pos)?
             .visit_field::<flatbuffers::ForwardsUOffset<&str>>("id", Self::VT_ID, false)?
             .visit_field::<InputSetOp>("op", Self::VT_OP, false)?
@@ -219,11 +223,11 @@ impl<'a> Default for InputSetOpV1Args<'a> {
     }
 }
 
-pub struct InputSetOpV1Builder<'a: 'b, 'b> {
-    fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
+pub struct InputSetOpV1Builder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
+    fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
 }
-impl<'a: 'b, 'b> InputSetOpV1Builder<'a, 'b> {
+impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> InputSetOpV1Builder<'a, 'b, A> {
     #[inline]
     pub fn add_id(&mut self, id: flatbuffers::WIPOffset<&'b str>) {
         self.fbb_
@@ -245,7 +249,9 @@ impl<'a: 'b, 'b> InputSetOpV1Builder<'a, 'b> {
             .push_slot_always::<flatbuffers::WIPOffset<_>>(InputSetOpV1::VT_INPUTS, inputs);
     }
     #[inline]
-    pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> InputSetOpV1Builder<'a, 'b> {
+    pub fn new(
+        _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> InputSetOpV1Builder<'a, 'b, A> {
         let start = _fbb.start_table();
         InputSetOpV1Builder {
             fbb_: _fbb,
@@ -285,9 +291,9 @@ impl Default for InputSetOpV1T {
     }
 }
 impl InputSetOpV1T {
-    pub fn pack<'b>(
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
         &self,
-        _fbb: &mut flatbuffers::FlatBufferBuilder<'b>,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
     ) -> flatbuffers::WIPOffset<InputSetOpV1<'b>> {
         let id = self.id.as_ref().map(|x| _fbb.create_string(x));
         let op = self.op;
@@ -361,16 +367,16 @@ pub unsafe fn size_prefixed_root_as_input_set_op_v1_unchecked(buf: &[u8]) -> Inp
     flatbuffers::size_prefixed_root_unchecked::<InputSetOpV1>(buf)
 }
 #[inline]
-pub fn finish_input_set_op_v1_buffer<'a, 'b>(
-    fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>,
+pub fn finish_input_set_op_v1_buffer<'a, 'b, A: flatbuffers::Allocator + 'a>(
+    fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     root: flatbuffers::WIPOffset<InputSetOpV1<'a>>,
 ) {
     fbb.finish(root, None);
 }
 
 #[inline]
-pub fn finish_size_prefixed_input_set_op_v1_buffer<'a, 'b>(
-    fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>,
+pub fn finish_size_prefixed_input_set_op_v1_buffer<'a, 'b, A: flatbuffers::Allocator + 'a>(
+    fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     root: flatbuffers::WIPOffset<InputSetOpV1<'a>>,
 ) {
     fbb.finish_size_prefixed(root, None);
