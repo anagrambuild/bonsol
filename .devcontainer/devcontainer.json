@@ -11,7 +11,8 @@
 	"customizations": {
 		"vscode": {
 			"extensions": [
-				"1YiB.rust-bundle"
+				"1YiB.rust-bundle",
+				"vadimcn.vscode-lldb"
 			]
 		}
 	},

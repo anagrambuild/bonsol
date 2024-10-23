@@ -1,0 +1,18 @@
+# Declare the build argument before any FROM instructions
+ARG PROVER_TAG
+
+# Use the build argument in the FROM instruction and name the stage with the version reference
+FROM risczero/risc0-groth16-prover:${PROVER_TAG} AS prover
+
+# Start a new stage from scratch
+FROM scratch
+ARG PROVER_TAG
+# Set the working directory
+WORKDIR /${PROVER_TAG}
+
+# Copy files from the 'prover' stage
+COPY --from=prover /app/stark_verify stark/prover.sh
+COPY --from=prover /app/stark_verify stark/stark_verify
+COPY --from=prover /app/stark_verify.dat stark/stark_verify.dat
+COPY --from=prover /app/stark_verify_final.zkey stark/stark_verify_final.zkey
+COPY --from=prover /usr/local/sbin/rapidsnark stark/rapidsnark

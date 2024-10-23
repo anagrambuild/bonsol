@@ -1,0 +1,32 @@
+name: Sync Prover to S3
+on:
+  push:
+    tags:
+      - "*"
+  workflow_dispatch:
+# Allow one concurrent deployment
+env:
+  S3_BUCKET_NAME: "risc0-prover-us-east-1-041119533185"
+  AWS_REGION: "us-east-1"
+  PROVER_TAG: "v2024-05-17.1"
+concurrency:
+  group: "sync-prover-to-s3-${{ env.PROVER_TAG }}"
+  cancel-in-progress: true
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          audience: sts.amazonaws.com.cn
+          aws-region: us-east-1
+          role-to-assume: arn:aws:iam::041119533185:role/GithubBonsolCI
+      - name: Build Prover Artifact
+        run: |
+          docker build --progress=plain -f .github/docker/Dockerfile.prover -o risc0-groth16-prover . --build-arg PROVER_TAG=${PROVER_TAG}
+      - name: Sync S3 Bucket
+        run: |
+          aws s3 sync ./risc0-groth16-prover/ s3://${S3_BUCKET_NAME} --region ${{ env.AWS_REGION }}
