@@ -132,17 +132,18 @@ pub fn process_status_v1<'a>(
                     }
                     for (i, a) in sa.extra_accounts.iter().enumerate() {
                         let stored_a = extra_accounts.get(i);
-                        if sol_memcmp(a.key.as_ref(), &stored_a.0[0..32], 32) != 0 {
+                        let key: [u8; 32] = stored_a.pubkey().into();
+                        if sol_memcmp(a.key.as_ref(), &key, 32) != 0 {
                             return Err(ChannelError::InvalidCallbackExtraAccounts.into());
                         }
                         // dont cary feepayer signature through to callback we set all signer to false except the ER
                         if a.is_writable {
-                            if !stored_a.writable() {
+                            if !stored_a.writable() == 0 {
                                 return Err(ChannelError::InvalidCallbackExtraAccounts.into());
                             }
                             accounts.push(AccountMeta::new(*a.key, false));
                         } else {
-                            if stored_a.writable() {
+                            if stored_a.writable() == 1 {
                                 //maybe relax this for devs?
                                 return Err(ChannelError::InvalidCallbackExtraAccounts.into());
                             }

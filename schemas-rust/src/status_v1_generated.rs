@@ -2,7 +2,11 @@
 
 // @generated
 
+use core::cmp::Ordering;
+use core::mem;
+
 extern crate flatbuffers;
+use self::flatbuffers::{EndianScalar, Follow};
 
 #[deprecated(
     since = "2.0.0",
@@ -144,8 +148,8 @@ impl<'a> StatusV1<'a> {
         StatusV1 { _tab: table }
     }
     #[allow(unused_mut)]
-    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
-        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
         args: &'args StatusV1Args<'args>,
     ) -> flatbuffers::WIPOffset<StatusV1<'bldr>> {
         let mut builder = StatusV1Builder::new(_fbb);
@@ -312,6 +316,7 @@ impl flatbuffers::Verifiable for StatusV1<'_> {
         v: &mut flatbuffers::Verifier,
         pos: usize,
     ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
+        use self::flatbuffers::Verifiable;
         v.visit_table(pos)?
             .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
                 "execution_id",
@@ -378,11 +383,11 @@ impl<'a> Default for StatusV1Args<'a> {
     }
 }
 
-pub struct StatusV1Builder<'a: 'b, 'b> {
-    fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
+pub struct StatusV1Builder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
+    fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
 }
-impl<'a: 'b, 'b> StatusV1Builder<'a, 'b> {
+impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> StatusV1Builder<'a, 'b, A> {
     #[inline]
     pub fn add_execution_id(&mut self, execution_id: flatbuffers::WIPOffset<&'b str>) {
         self.fbb_
@@ -447,7 +452,7 @@ impl<'a: 'b, 'b> StatusV1Builder<'a, 'b> {
             .push_slot::<u32>(StatusV1::VT_EXIT_CODE_USER, exit_code_user, 0);
     }
     #[inline]
-    pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> StatusV1Builder<'a, 'b> {
+    pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>) -> StatusV1Builder<'a, 'b, A> {
         let start = _fbb.start_table();
         StatusV1Builder {
             fbb_: _fbb,
@@ -505,9 +510,9 @@ impl Default for StatusV1T {
     }
 }
 impl StatusV1T {
-    pub fn pack<'b>(
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
         &self,
-        _fbb: &mut flatbuffers::FlatBufferBuilder<'b>,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
     ) -> flatbuffers::WIPOffset<StatusV1<'b>> {
         let execution_id = self.execution_id.as_ref().map(|x| _fbb.create_string(x));
         let status = self.status;
@@ -606,16 +611,16 @@ pub unsafe fn size_prefixed_root_as_status_v1_unchecked(buf: &[u8]) -> StatusV1 
     flatbuffers::size_prefixed_root_unchecked::<StatusV1>(buf)
 }
 #[inline]
-pub fn finish_status_v1_buffer<'a, 'b>(
-    fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>,
+pub fn finish_status_v1_buffer<'a, 'b, A: flatbuffers::Allocator + 'a>(
+    fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     root: flatbuffers::WIPOffset<StatusV1<'a>>,
 ) {
     fbb.finish(root, None);
 }
 
 #[inline]
-pub fn finish_size_prefixed_status_v1_buffer<'a, 'b>(
-    fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>,
+pub fn finish_size_prefixed_status_v1_buffer<'a, 'b, A: flatbuffers::Allocator + 'a>(
+    fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     root: flatbuffers::WIPOffset<StatusV1<'a>>,
 ) {
     fbb.finish_size_prefixed(root, None);

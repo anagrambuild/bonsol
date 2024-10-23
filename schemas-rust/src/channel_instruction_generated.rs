@@ -6,10 +6,13 @@ use crate::claim_v1_generated::*;
 use crate::deploy_v1_generated::*;
 use crate::execution_request_v1_generated::*;
 use crate::input_set_op_v1_generated::*;
+use crate::input_type_generated::*;
 use crate::status_v1_generated::*;
+use core::cmp::Ordering;
+use core::mem;
 
 extern crate flatbuffers;
-use self::flatbuffers::Follow;
+use self::flatbuffers::{EndianScalar, Follow};
 
 #[deprecated(
     since = "2.0.0",
@@ -148,8 +151,8 @@ impl<'a> ChannelInstruction<'a> {
         ChannelInstruction { _tab: table }
     }
     #[allow(unused_mut)]
-    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
-        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
         args: &'args ChannelInstructionArgs<'args>,
     ) -> flatbuffers::WIPOffset<ChannelInstruction<'bldr>> {
         let mut builder = ChannelInstructionBuilder::new(_fbb);
@@ -323,6 +326,7 @@ impl flatbuffers::Verifiable for ChannelInstruction<'_> {
         v: &mut flatbuffers::Verifier,
         pos: usize,
     ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
+        use self::flatbuffers::Verifiable;
         v.visit_table(pos)?
             .visit_field::<ChannelInstructionIxType>("ix_type", Self::VT_IX_TYPE, false)?
             .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, u8>>>(
@@ -376,11 +380,11 @@ impl<'a> Default for ChannelInstructionArgs<'a> {
     }
 }
 
-pub struct ChannelInstructionBuilder<'a: 'b, 'b> {
-    fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
+pub struct ChannelInstructionBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
+    fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
 }
-impl<'a: 'b, 'b> ChannelInstructionBuilder<'a, 'b> {
+impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> ChannelInstructionBuilder<'a, 'b, A> {
     #[inline]
     pub fn add_ix_type(&mut self, ix_type: ChannelInstructionIxType) {
         self.fbb_.push_slot::<ChannelInstructionIxType>(
@@ -438,8 +442,8 @@ impl<'a: 'b, 'b> ChannelInstructionBuilder<'a, 'b> {
     }
     #[inline]
     pub fn new(
-        _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>,
-    ) -> ChannelInstructionBuilder<'a, 'b> {
+        _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> ChannelInstructionBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
         ChannelInstructionBuilder {
             fbb_: _fbb,
@@ -488,9 +492,9 @@ impl Default for ChannelInstructionT {
     }
 }
 impl ChannelInstructionT {
-    pub fn pack<'b>(
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
         &self,
-        _fbb: &mut flatbuffers::FlatBufferBuilder<'b>,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
     ) -> flatbuffers::WIPOffset<ChannelInstruction<'b>> {
         let ix_type = self.ix_type;
         let execute_v1 = self.execute_v1.as_ref().map(|x| _fbb.create_vector(x));
@@ -578,16 +582,16 @@ pub unsafe fn size_prefixed_root_as_channel_instruction_unchecked(
     flatbuffers::size_prefixed_root_unchecked::<ChannelInstruction>(buf)
 }
 #[inline]
-pub fn finish_channel_instruction_buffer<'a, 'b>(
-    fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>,
+pub fn finish_channel_instruction_buffer<'a, 'b, A: flatbuffers::Allocator + 'a>(
+    fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     root: flatbuffers::WIPOffset<ChannelInstruction<'a>>,
 ) {
     fbb.finish(root, None);
 }
 
 #[inline]
-pub fn finish_size_prefixed_channel_instruction_buffer<'a, 'b>(
-    fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>,
+pub fn finish_size_prefixed_channel_instruction_buffer<'a, 'b, A: flatbuffers::Allocator + 'a>(
+    fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     root: flatbuffers::WIPOffset<ChannelInstruction<'a>>,
 ) {
     fbb.finish_size_prefixed(root, None);

@@ -1,7 +1,7 @@
 use bonsol_schema::{
     Account, ChannelInstruction, ChannelInstructionArgs, ChannelInstructionIxType, DeployV1,
-    DeployV1Args, ExecutionRequestV1, ExecutionRequestV1Args, InputBuilder, InputT, InputType,
-    ProgramInputType,
+    DeployV1Args, ExecutionRequestV1, ExecutionRequestV1Args, ExecutionRequestV1T, InputBuilder,
+    InputT, InputType, ProgramInputType,
 };
 use flatbuffers::{FlatBufferBuilder, WIPOffset};
 
@@ -222,9 +222,9 @@ pub fn execute_v1(
             let cb_instruction_prefix = fbb.create_vector(cb.instruction_prefix.as_slice());
             let ealen = cb.extra_accounts.len();
             fbb.start_vector::<WIPOffset<Account>>(ealen);
-            for ea in cb.extra_accounts {
+            for ea in cb.extra_accounts.iter().rev() {
                 let pkbytes = arrayref::array_ref!(ea.pubkey.as_ref(), 0, 32);
-                let eab = Account::new(ea.is_writable, pkbytes);
+                let eab = Account::new(ea.is_writable as u8, pkbytes);
                 fbb.push(eab);
             }
             (
@@ -279,7 +279,6 @@ pub fn execute_v1(
     } else {
         None
     };
-    println!("Execution request v1 fbb expiry {}", expiration);
     let fbb_execute = ExecutionRequestV1::create(
         &mut fbb,
         &ExecutionRequestV1Args {

@@ -1,6 +1,7 @@
 use crate::common::*;
 use anyhow::Result;
 use bonsol_prover::input_resolver::{DefaultInputResolver, InputResolver, ProgramInput};
+use bonsol_sdk::instructions::CallbackConfig;
 use bonsol_sdk::{BonsolClient, ExecutionAccountStatus, InputType};
 use indicatif::ProgressBar;
 use sha2::{Digest, Sha256};
