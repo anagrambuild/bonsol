@@ -1,0 +1,24 @@
+name: commitlint
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - "*"
+jobs:
+  run-commitlint-on-pull-request:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Setup Node
+        uses: actions/setup-node@v2
+        with:
+          node-version: 22.x
+      - name: Install dependencies
+        run: npm install -g @commitlint/{cli,config-conventional}
+      - name: Validate all commits from PR
+        run: npx commitlint --from HEAD~${{ github.event.pull_request.commits }} --to HEAD --verbose

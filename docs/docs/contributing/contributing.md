@@ -133,6 +133,66 @@ Otherwise refer to this checklist:
 - [] When adding dependencies, please be cautious that the dependency is well maintained and does not create a security vulnerability. The flake checks will prevent this, and `cargo deny` can give other safe options to choose from.
 - [] Ensure your PR is not introducing new lints: `cargo clippy`.
 
+## Commit Message Guidelines
+
+We use **commitlint** to ensure that all commit messages follow a consistent style based on the [Conventional Commits](https://www.conventionalcommits.org) specification. This makes it easier to understand the history of the project and generate changelogs automatically.
+
+### Commit Message Format
+
+Each commit message must be structured as follows:
+#### Type
+
+The type must be one of the following:
+
+- **feat**: A new feature
+- **fix**: A bug fix
+- **docs**: Documentation only changes
+- **style**: Changes that do not affect the meaning of the code (white-space, formatting, missing semi-colons, etc.)
+- **refactor**: A code change that neither fixes a bug nor adds a feature
+- **perf**: A code change that improves performance
+- **test**: Adding missing or correcting existing tests
+- **build**: Changes that affect the build system or external dependencies (example scopes: gulp, npm)
+- **ci**: Changes to our CI configuration files and scripts (example scopes: Travis, Circle, BrowserStack, SauceLabs)
+- **chore**: Other changes that don't modify src or test files
+- **revert**: Reverts a previous commit
+
+#### Scope
+
+The scope is optional and provides additional context about what the commit affects (e.g., `api`, `cli`, `frontend`, etc.).
+
+#### Description
+
+The description is a short, imperative summary of the change. It should start with a verb and be written in the present tense (e.g., "add feature," "fix bug").
+
+#### Body (optional)
+
+The body of the commit message provides additional details about the change. Use this when the change is not trivial and requires more explanation.
+
+#### Footer (optional)
+
+The footer should contain any relevant information about breaking changes or issues being closed:
+
+- Breaking changes should start with the word `BREAKING CHANGE:`, followed by an explanation of what changed and why.
+- Issues should be referenced using the `Closes` keyword, like so: `Closes #123`.
+
+### Example Commit Messages
+
+```text
+feat(api): add user authentication
+```
+
+```text
+fix(auth): correct token expiration logic
+```
+
+```text
+docs: update README with new installation steps
+```
+
+```text
+chore: update dependencies
+```
+
 ## Troubleshooting
 
 - Docker Permissions: Adding your user to the `docker` group may help -- https://docs.docker.com/engine/install/linux-postinstall/

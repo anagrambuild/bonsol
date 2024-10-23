@@ -1,6 +1,9 @@
 # 乃ㄖ几丂ㄖㄥ
 Bonsol is the Offchain compute framework to make everything possible on solana.
 
+[![commitlint](https://github.com/anagrambuild/bonsol/actions/workflows/commit-lint.yaml/badge.svg)](https://github.com/anagrambuild/bonsol/actions/workflows/commit-lint.yaml)
+[![Docker Build from Image CI](https://github.com/anagrambuild/bonsol/actions/workflows/build-ci-image.yaml/badge.svg)](https://github.com/anagrambuild/bonsol/actions/workflows/build-ci-image.yaml)
+
 Interact with the docs at [Bonsol.sh](https://bonsol.sh)
 ## Roadmap
 Stage 1: Dawn (current stage)

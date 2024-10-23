@@ -1,0 +1,27 @@
+# Stage: Bonsol Test
+FROM ghcr.io/anagrambuild/risczero:latest
+
+ENV USER=solana
+ARG SOLANA=1.18.22
+ENV CARGO_HOME=/usr/local/cargo
+ENV RUSTUP_HOME=/usr/local/rustup
+ENV PATH=${PATH}:/usr/local/cargo/bin:/go/bin:/home/solana/.local/share/solana/install/releases/${SOLANA}/bin
+USER solana
+
+# Set user and working directory
+ARG PACKAGE=bonsol
+WORKDIR /workspaces/${PACKAGE}
+
+# Install Rust components
+RUN rustup component add \
+    clippy
+
+RUN rustup toolchain install nightly  && \
+    rustup component add rustfmt --toolchain nightly
+
+COPY . .
+
+RUN /go/bin/yamlfmt -lint .github/workflows/*.yaml .github/workflows/*.yml .github/*.yaml .github/*.yml
+
+RUN cargo +nightly fmt --all -- --check
+RUN cargo test   

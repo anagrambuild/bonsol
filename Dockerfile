@@ -36,8 +36,6 @@ RUN rustup component add \
     clippy \
     rust-analyzer
 
-
-
 RUN rustup toolchain install nightly  && \
     rustup component add rustfmt --toolchain nightly
 
