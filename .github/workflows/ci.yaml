@@ -21,7 +21,7 @@ jobs:
       - uses: DeterminateSystems/nix-installer-action@main
         with:
           extra-conf: |
-            extra-substitutors = https://bonsol.cachix.org
+            extra-substituters = https://bonsol.cachix.org
             extra-trusted-public-keys = bonsol.cachix.org-1:yz7vi1rCPW1BpqoszdJvf08HZxQ/5gPTPxft4NnT74A=
       - uses: DeterminateSystems/magic-nix-cache-action@main
       - uses: DeterminateSystems/flake-checker-action@main
@@ -38,7 +38,7 @@ jobs:
       - uses: DeterminateSystems/nix-installer-action@main
         with:
           extra-conf: |
-            extra-substitutors = https://bonsol.cachix.org
+            extra-substituters = https://bonsol.cachix.org
             extra-trusted-public-keys = bonsol.cachix.org-1:yz7vi1rCPW1BpqoszdJvf08HZxQ/5gPTPxft4NnT74A=
       - uses: DeterminateSystems/magic-nix-cache-action@main
       - run: nix develop
