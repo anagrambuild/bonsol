@@ -1,8 +1,8 @@
 [package]
 name = "bonsol-prover"
-version = "0.2.1"
+version.workspace = true
 edition = "2021"
-publish = false        # Exclude local crates from licensing checks
+publish = false          # Exclude local crates from licensing checks
 
 [dependencies]
 anyhow = "1.0.86"
@@ -25,3 +25,6 @@ solana-rpc-client = { workspace = true }
 solana-rpc-client-api = { workspace = true }
 solana-sdk = { workspace = true }
 tokio = "1.36.0"
+
+[dev-dependencies]
+mockito = "1.5.0"

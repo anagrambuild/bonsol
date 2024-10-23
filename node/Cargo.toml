@@ -1,8 +1,8 @@
 [package]
 name = "bonsol-node"
-version = "0.2.1"
+version.workspace = true
 edition = "2021"
-publish = false      # Exclude local crates from licensing checks
+publish = false          # Exclude local crates from licensing checks
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -82,6 +82,7 @@ yellowstone-grpc-client = { workspace = true }
 yellowstone-grpc-proto = { workspace = true }
 
 [dev-dependencies]
+expect-test = "1.5.0"
 
 [lints]
 workspace = true

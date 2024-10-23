@@ -6,7 +6,7 @@
         {
             "label": "fmt",
             "type": "shell",
-            "command": "cargo fmt --check",
+            "command": "cargo +nightly fmt --check",
             "options": {
                 "cwd": "${workspaceFolder}"
             },
@@ -43,6 +43,7 @@
             "label": "check",
             "type": "shell",
             "command": "cargo check",
+            "dependsOn": "fmt",
             "options": {
                 "cwd": "${workspaceFolder}"
             },
@@ -54,7 +55,8 @@
         {
             "label": "test",
             "type": "shell",
-            "command": "cargo test --workspace --all-features --no-fail-fast",
+            "command": "cargo test",
+            "dependsOn": "fmt",
             "options": {
                 "cwd": "${workspaceFolder}"
             },

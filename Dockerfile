@@ -1,78 +1,70 @@
-# Development Container
-# Stage 1: Build yamlfmt
-FROM golang:1 AS go-builder
-# defined from build kit
-# DOCKER_BUILDKIT=1 docker build . -t ...
-ARG TARGETARCH
+# Bonsol Development Container
 
-# Install yamlfmt
-WORKDIR /yamlfmt
-RUN go install github.com/google/yamlfmt/cmd/yamlfmt@latest && \
-    strip $(which yamlfmt) && \
-    yamlfmt --version
+# Stage 1: Node setup
+FROM debian:stable-slim AS node-slim
+RUN export DEBIAN_FRONTEND=noninteractive && \
+    apt update && \
+    apt install -y -q --no-install-recommends \
+    build-essential git gnupg2 curl \
+    ca-certificates && \
+    apt clean && \
+    rm -rf /var/lib/apt/lists/*
 
-# Stage 2: Rust Development Container
-FROM rust:1-slim
-ARG TARGETARCH
+ENV NODE_VERSION=v22.3.0
+ENV NVM_DIR=/usr/local/nvm
 
-# Install packages
-ENV DEBIAN_FRONTEND=noninteractive
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    binutils \
-    ca-certificates \
-    clang \
-    cmake \ 
-    curl \
-    git \
-    gnupg2 \
-    libssl-dev \
-    make \
-    ninja-build \ 
-    perl \ 
-    pkg-config \
-    protobuf-c-compiler \
-    python3 \
-    python3-pip \
-    ripgrep \
-    sudo \
-    valgrind \
-    && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+RUN mkdir -p ${NVM_DIR}
+ADD https://raw.githubusercontent.com/creationix/nvm/master/install.sh /usr/local/etc/nvm/install.sh
+RUN bash /usr/local/etc/nvm/install.sh
 
-RUN echo "building platform $(uname -m)"
+# Stage 2: Bonsol Dev
+FROM ghcr.io/anagrambuild/risczero:latest
 
-# create dev user
-RUN useradd --create-home --shell /bin/bash bonsol
-RUN usermod -a -G sudo bonsol
-RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
-
-## Rust
-ENV USER=bonsol
-COPY --chown=${USER}:${USER} --from=go-builder /go/bin/yamlfmt /go/bin/yamlfmt
-USER bonsol
-ENV PATH=${PATH}:/go/bin
+ENV USER=solana
+ARG SOLANA=1.18.22
+ENV CARGO_HOME=/usr/local/cargo
+ENV RUSTUP_HOME=/usr/local/rustup
+ENV PATH=${PATH}:/usr/local/cargo/bin:/go/bin:/home/solana/.local/share/solana/install/releases/${SOLANA}/bin
+USER solana
 
 # Set user and working directory
 ARG PACKAGE=bonsol
-USER bonsol
 WORKDIR /workspaces/${PACKAGE}
 
 # Install Rust components
 RUN rustup component add \
-    rustfmt \
     clippy \
     rust-analyzer
 
-RUN cargo install cargo-binstall
-RUN yes | cargo binstall cargo-risczero
-RUN cargo risczero build-toolchain
 
-# Clean up
-RUN rm -rf /home/bonsol/.cargo/registry /home/bonsol/.cargo/git
 
-ENV PATH=${PATH}:/home/bonsol/.cargo/bin
+RUN rustup toolchain install nightly  && \
+    rustup component add rustfmt --toolchain nightly
+
+# Install Node
+ENV NODE_VERSION=v22.3.0
+ENV NVM_DIR=/usr/local/nvm
+ENV NVM_NODE_PATH ${NVM_DIR}/versions/node/${NODE_VERSION}
+ENV NODE_PATH ${NVM_NODE_PATH}/lib/node_modules
+ENV PATH      ${NVM_NODE_PATH}/bin:$PATH
+COPY --from=node-slim --chown=${USER}:${USER} /usr/local/nvm /usr/local/nvm
+RUN bash -c ". $NVM_DIR/nvm.sh && nvm install $NODE_VERSION && nvm alias default $NODE_VERSION && nvm use default"
+
+RUN npm install npm -g
+RUN npm install yarn -g
+
+# Install PNPM
+ENV PNPM_HOME=/home/solana/.local/share
+RUN curl -fsSL https://get.pnpm.io/install.sh | \
+    bash -
+
+ENV PATH=${PATH}:/home/solana/.local/share/pnpm
+    
+# Risk0 Groth16 Prover
+COPY --from=risczero/risc0-groth16-prover:v2024-05-17.1 /app/stark_verify /stark/stark_verify
+COPY --from=risczero/risc0-groth16-prover:v2024-05-17.1 /app/stark_verify.dat /stark/stark_verify.dat
+COPY --from=risczero/risc0-groth16-prover:v2024-05-17.1 /app/stark_verify_final.zkey /stark/stark_verify_final.zkey
+COPY --from=risczero/risc0-groth16-prover:v2024-05-17.1 /usr/local/sbin/rapidsnark /stark/rapidsnark
 
 LABEL \
     org.label-schema.name="bonsol" \
