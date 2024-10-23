@@ -20,8 +20,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: DeterminateSystems/nix-installer-action@main
         with:
-          extra-conf: extra-substitutors = https://bonsol.cachix.org
-          extra-conf: extra-trusted-public-keys = bonsol.cachix.org-1:yz7vi1rCPW1BpqoszdJvf08HZxQ/5gPTPxft4NnT74A=
+          extra-conf: |
+            extra-substitutors = https://bonsol.cachix.org
+            extra-trusted-public-keys = bonsol.cachix.org-1:yz7vi1rCPW1BpqoszdJvf08HZxQ/5gPTPxft4NnT74A=
       - uses: DeterminateSystems/magic-nix-cache-action@main
       - uses: DeterminateSystems/flake-checker-action@main
       - run: nix flake check --all-systems -L
@@ -33,15 +34,12 @@ jobs:
       id-token: "write"
       contents: "read"
     steps:
-      - name: Free Disk Space (Ubuntu)
-        uses: jlumbroso/free-disk-space@main
-        with:
-          tool-cache: true
       - uses: actions/checkout@v4
       - uses: DeterminateSystems/nix-installer-action@main
         with:
-          extra-conf: extra-substitutors = https://bonsol.cachix.org
-          extra-conf: extra-trusted-public-keys = bonsol.cachix.org-1:yz7vi1rCPW1BpqoszdJvf08HZxQ/5gPTPxft4NnT74A=
+          extra-conf: |
+            extra-substitutors = https://bonsol.cachix.org
+            extra-trusted-public-keys = bonsol.cachix.org-1:yz7vi1rCPW1BpqoszdJvf08HZxQ/5gPTPxft4NnT74A=
       - uses: DeterminateSystems/magic-nix-cache-action@main
       - run: nix develop
 
