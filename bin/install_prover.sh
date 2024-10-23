@@ -89,6 +89,6 @@ for stark_tech in stark/rapidsnark stark/stark_verify stark/stark_verify_final.z
         echo "Downloading ${stark_tech} from ${PROVER_PROVIDER_URL}/${PROVER_VERSION}"
         curl --max-time ${JOB_TIMEOUT} -o "${INSTALL_PREFIX}/${stark_tech}" "$PROVER_PROVIDER_URL/${PROVER_VERSION}/${stark_tech}"
     else 
-        echo "${INSTALL_PREFIX}$${stark_tech} already exists. Skipping download."
+        echo "${INSTALL_PREFIX}${stark_tech} already exists. Skipping download."
     fi
 done

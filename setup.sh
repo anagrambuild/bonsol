@@ -1,4 +1,4 @@
-#!/bin/zsh
+#!/usr/bin/env zsh
 set -e
 if [ ! -f "/stark/stark_verify" ]; then
     echo "Error: Bonsol requires 'stark_verify' to be located at /stark/stark_verify."
