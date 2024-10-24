@@ -31,7 +31,9 @@ jobs:
         run: |
           docker build --progress=plain -f .github/docker/Dockerfile.prover -o risc0-groth16-prover . --build-arg PROVER_TAG=${PROVER_TAG}
           for file in risc0-groth16-prover/${PROVER_TAG}/stark/*; do
-              sha256sum $file
+              sha256sum $file > $file.sha256
+              echo -n "SHA256SUM for $file"
+              cat $file.sha256
           done
       - name: Sync S3 Bucket
         run: |
