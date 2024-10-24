@@ -30,6 +30,9 @@ jobs:
       - name: Build Prover Artifact
         run: |
           docker build --progress=plain -f .github/docker/Dockerfile.prover -o risc0-groth16-prover . --build-arg PROVER_TAG=${PROVER_TAG}
+          for file in risc0-groth16-prover/${PROVER_TAG}/stark/*; do
+              sha256sum $file
+          done
       - name: Sync S3 Bucket
         run: |
           aws s3 sync ./risc0-groth16-prover/ s3://${S3_BUCKET_NAME} --no-progress --region ${{ env.AWS_REGION }}
