@@ -191,9 +191,6 @@ chore: update dependencies
 
 - Docker Permissions: Adding your user to the `docker` group may help -- https://docs.docker.com/engine/install/linux-postinstall/
 
-- Nix Permissions: Anything that would require root privileges, ie. dependencies that are installed globally only for root (docker), or commands that change ownership (lchown)
-may require nix to also be elevated. If permission is denied or a dependency that would have been handled by nix (like pnpm) is not found, try `sudo su` then `nix develop`.
-
 - Invalid Keypair: You need to generate a solana keypair, which you can check for at `~/.config/solana/id.json`. Generate a new keypair with `solana-keygen new` if it's missing.
 
 - Keypair Not Found: If your keypair isn't automatically found, you can pass the keypair and RPC URL to the `bonsol-cli` invocation like so:
