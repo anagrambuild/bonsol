@@ -1,12 +1,11 @@
 name: Build and Publish Node Images (CUDA & Standard)
 on:
   push:
-    branches:
-      - main
-      - helm
+    tags:
+      - "*"
 jobs:
   build-and-push:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-m
     strategy:
       matrix:
         flavor: [standard, cuda]

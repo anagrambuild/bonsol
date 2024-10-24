@@ -3,7 +3,7 @@
 set -e
 
 DEFAULT_PROVER_PROVIDER_URL="http://risc0-prover-us-east-1-041119533185.s3-website-us-east-1.amazonaws.com"
-DEFAULT_INSTALL_PREFIX="/opt/risc0-prover"
+DEFAULT_INSTALL_PREFIX="."
 DEFAULT_JOB_TIMEOUT=3600
 DEFAULT_VERSION="v2024-05-17.1"
 
@@ -83,12 +83,20 @@ fi
 parse_arguments "$@"
 
 mkdir -p "${INSTALL_PREFIX}"/stark
-
 for stark_tech in stark/rapidsnark stark/stark_verify stark/stark_verify_final.zkey stark/stark_verify.dat; do
     if [ ! -f "${INSTALL_PREFIX}/${stark_tech}" ]; then
         echo "Downloading ${stark_tech} from ${PROVER_PROVIDER_URL}/${PROVER_VERSION}"
         curl --max-time ${JOB_TIMEOUT} -o "${INSTALL_PREFIX}/${stark_tech}" "$PROVER_PROVIDER_URL/${PROVER_VERSION}/${stark_tech}"
+        if [ -x $(which sha256sum) ]; then
+            echo "Verifying the integrity of ${stark_tech}"
+            curl -q --max-time ${JOB_TIMEOUT} -o "${INSTALL_PREFIX}/${stark_tech}".sha256 "$PROVER_PROVIDER_URL/${PROVER_VERSION}/${stark_tech}".sha256
+            basefile=$(basename "${stark_tech}")
+            (cd ${INSTALL_PREFIX}/stark && sha256sum -c "${basefile}.sha256")
+        fi
     else 
-        echo "${INSTALL_PREFIX}${stark_tech} already exists. Skipping download."
+        echo "${INSTALL_PREFIX}/${stark_tech} already exists. Skipping download."
     fi
 done
+chmod +x "${INSTALL_PREFIX}/stark/rapidsnark"
+chmod +x "${INSTALL_PREFIX}/stark/stark_verify"
+

@@ -57,12 +57,6 @@ RUN curl -fsSL https://get.pnpm.io/install.sh | \
     bash -
 
 ENV PATH=${PATH}:/home/solana/.local/share/pnpm
-    
-# Risk0 Groth16 Prover
-COPY --from=risczero/risc0-groth16-prover:v2024-05-17.1 /app/stark_verify /stark/stark_verify
-COPY --from=risczero/risc0-groth16-prover:v2024-05-17.1 /app/stark_verify.dat /stark/stark_verify.dat
-COPY --from=risczero/risc0-groth16-prover:v2024-05-17.1 /app/stark_verify_final.zkey /stark/stark_verify_final.zkey
-COPY --from=risczero/risc0-groth16-prover:v2024-05-17.1 /usr/local/sbin/rapidsnark /stark/rapidsnark
 
 LABEL \
     org.label-schema.name="bonsol" \

@@ -169,7 +169,15 @@ pub async fn deploy(
             println!("Uploaded to shadow drive");
             Ok::<_, anyhow::Error>(resp.message)
         }
-        Some(DeployType::Url) => Ok(url_upload.url),
+        Some(DeployType::Url) => {
+            let req = reqwest::get(&url_upload.url).await?;
+            let bytes = req.bytes().await?;
+            if bytes != loaded_binary {
+                return Err(anyhow::anyhow!("The binary uploaded does not match the local binary, check that the url is correct"));
+            }
+            bar.finish_and_clear();
+            Ok(url_upload.url)
+        }
         _ => {
             bar.finish_and_clear();
             return Err(anyhow::anyhow!("Please provide an upload config"));

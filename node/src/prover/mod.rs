@@ -1,5 +1,5 @@
 mod utils;
-use solana_sdk::instruction::AccountMeta;
+use {solana_sdk::instruction::AccountMeta, utils::check_stark_compression_tools_path};
 
 use {
     crate::{
@@ -28,7 +28,7 @@ use {
 
 use {
     crate::types::{BonsolInstruction, ProgramExec},
-    anyhow::Result,
+    anyhow::{anyhow, Result},
     bonsol_interface::bonsol_schema::{parse_ix_data, root_as_deploy_v1, ChannelInstructionIxType},
     bonsol_prover::{
         image::Image,
@@ -112,11 +112,10 @@ impl Risc0Runner {
     pub async fn new(
         config: ProverNodeConfig,
         self_identity: Pubkey,
-        image_dir: String,
         txn_sender: Arc<RpcTransactionSender>,
         input_resolver: Arc<dyn InputResolver + 'static>,
     ) -> Result<Risc0Runner> {
-        let dir = fs::read_dir(image_dir)?;
+        let dir = fs::read_dir(&config.risc0_image_folder)?;
         let loaded_images = DashMap::new();
         for entry in dir {
             let entry = entry?;
@@ -126,6 +125,7 @@ impl Risc0Runner {
                 loaded_images.insert(img.id.clone(), img);
             }
         }
+        check_stark_compression_tools_path(&config.stark_compression_tools_path)?;
 
         Ok(Risc0Runner {
             config: Arc::new(config),
@@ -591,7 +591,6 @@ fn risc0_prove(
     let prover = get_risc0_prover()?;
     let ctx = VerifierContext::default();
     let info = emit_event_with_duration!(MetricEvents::ProofGeneration,{
-        
         prover.prove_session(&ctx, &session)
     }, system => "risc0")?;
     emit_histogram!(MetricEvents::ProofSegments, info.stats.segments as f64, system => "risc0", image_id => &image_id);

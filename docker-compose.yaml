@@ -5,7 +5,7 @@ services:
       dockerfile: Dockerfile.standard
     command: -f NodeDocker.toml
     volumes:
-      - ${PWD}/node/NodeDocker.toml:/usr/opt/bonsol/NodeDocker.toml
+      - ${PWD}/NodeDocker.toml:/usr/opt/bonsol/NodeDocker.toml
       - ${PWD}/node_keypair.json:/usr/opt/bonsol/keys/signer.json
       - ${PWD}/images:/usr/opt/bonsol/risc0_images/
     ports:
