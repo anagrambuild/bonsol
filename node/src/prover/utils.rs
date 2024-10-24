@@ -1,5 +1,5 @@
 use {
-    anyhow::{Context, Result},
+    anyhow::{anyhow, Context, Result},
     iop::*,
     num_bigint::BigUint,
     num_traits::Num,
@@ -8,9 +8,29 @@ use {
         digest::{Digest, DIGEST_WORDS},
         hash::poseidon_254::digest_to_fr,
     },
-    std::io::Write,
+    std::{io::Write, path::Path},
     tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt},
 };
+
+static TOOLS_ENTRIES: [&str; 4] = [
+    "stark_verify",
+    "stark_verify.dat",
+    "stark_verify_final.zkey",
+    "rapidsnark",
+];
+pub fn check_stark_compression_tools_path(path: &str) -> Result<()> {
+    let tools_path = Path::new(path);
+    for entry in TOOLS_ENTRIES.iter() {
+        let entry_path = tools_path.join(entry);
+        if !entry_path.exists() {
+            return Err(anyhow!(
+                "Error: Stark compression tools not found at {}",
+                entry_path.to_string_lossy()
+            ));
+        }
+    }
+    Ok(())
+}
 
 pub async fn async_to_json<
     R: AsyncRead + std::marker::Unpin,

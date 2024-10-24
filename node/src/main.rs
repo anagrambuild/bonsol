@@ -19,7 +19,7 @@ use {
     rlimit::Resource,
     solana_rpc_client::nonblocking::rpc_client::RpcClient,
     solana_sdk::{pubkey::Pubkey, signature::read_keypair_file, signer::Signer},
-    std::{str::FromStr, sync::Arc},
+    std::{path::Path, str::FromStr, sync::Arc},
     thiserror::Error,
     tokio::{select, signal},
     tracing::{error, info},
@@ -49,7 +49,6 @@ async fn main() -> Result<()> {
         Ok(_) => {}
         Err(e) => eprintln!("Error setting rlimit: {}", e),
     }
-
     tracing_subscriber::fmt()
         .json()
         .with_timer(tracing_subscriber::fmt::time::UtcTime::rfc_3339())
@@ -76,10 +75,8 @@ async fn main() -> Result<()> {
             info!("Using Keypair File");
             read_keypair_file(&path).map_err(|_| CliError::InvalidSigner)?
         }
-        _ => return Err(CliError::InvalidSigner.into()),
     };
     let signer_identity = signer.pubkey();
-
     //Todo traitify ingester
     let mut ingester: Box<dyn Ingester> = match config.ingester_config.clone() {
         IngesterConfig::RpcBlockSubscription { wss_rpc_url } => {
@@ -120,7 +117,6 @@ async fn main() -> Result<()> {
     let mut runner = Risc0Runner::new(
         config.clone(),
         signer_identity,
-        config.risc0_image_folder,
         Arc::new(transaction_sender),
         Arc::new(input_resolver),
     )

@@ -5,6 +5,10 @@ Bonsol is the Offchain compute framework to make everything possible on solana.
 [![Docker Build from Image CI](https://github.com/anagrambuild/bonsol/actions/workflows/build-ci-image.yaml/badge.svg)](https://github.com/anagrambuild/bonsol/actions/workflows/build-ci-image.yaml)
 
 Interact with the docs at [Bonsol.sh](https://bonsol.sh)
+
+# NOTE !!!!!
+Do not use `node_keypair.json` in production, it is for local development only. 
+
 ## Roadmap
 Stage 1: Dawn (current stage)
 * Developer feedback
