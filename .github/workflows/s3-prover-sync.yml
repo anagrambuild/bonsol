@@ -30,11 +30,6 @@ jobs:
       - name: Build Prover Artifact
         run: |
           docker build --progress=plain -f .github/docker/Dockerfile.prover -o risc0-groth16-prover . --build-arg PROVER_TAG=${PROVER_TAG}
-          for file in risc0-groth16-prover/${PROVER_TAG}/stark/*; do
-              sha256sum $file > $file.sha256
-              echo -n "sha256sum "
-              cat $file.sha256
-          done
       - name: Generate SHA-256 Verification
         run: |
           for file in risc0-groth16-prover/${PROVER_TAG}/stark/*; do
