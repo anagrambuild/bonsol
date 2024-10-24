@@ -12,3 +12,5 @@ charts/bonsol-node/mainnet-values.yaml
 charts/bonsol-node/alloy.yaml
 relay/MyLogFile.log
 NodeDragon.toml
+images/**/manifest.json
+stark
