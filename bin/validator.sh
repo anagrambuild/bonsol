@@ -1,10 +1,5 @@
 #!/usr/bin/env bash
 
-# zsh if available, else keep bash
-if [ -x "$(command -v zsh)" ]; then
-    exec zsh "$0" "$@"
-fi
-
 set -e
 export COPYFILE_DISABLE=1
 
@@ -47,8 +42,10 @@ done
 
 set -x
 
-cargo --version
-
+if [ ! -x $(which cargo)]; then
+    echo "Rust and cargo must be installed"
+    exit 1
+fi    
 
 cargo build-sbf && solana-test-validator \
     --limit-ledger-size 0 \

@@ -1,9 +1,5 @@
 #!/usr/bin/env bash
 
-if [ -x "$(command -v zsh)" ]; then
-    exec zsh "$0" "$@"
-fi
-
 set -e
 
 NKP=node_keypair.json
