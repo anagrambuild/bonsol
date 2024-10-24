@@ -32,11 +32,11 @@ async fn main() -> anyhow::Result<()> {
             let config_location = CONFIG_FILE
                 .clone()
                 .ok_or(anyhow!("Please provide a config file"))?;
-            let config = Config::load(&config.unwrap_or(config_location));
+            let config = Config::load(&config.unwrap_or(config_location.clone()));
             match config {
                 Ok(config) => (config.json_rpc_url, config.keypair_path),
                 Err(e) => {
-                    anyhow::bail!("Error loading config: {:?}", e);
+                    anyhow::bail!("Error loading config [{}]: {:?}", config_location, e);
                 }
             }
         }
