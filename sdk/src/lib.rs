@@ -217,7 +217,6 @@ impl BonsolClient {
                     &tx,
                     RpcSendTransactionConfig {
                         skip_preflight,
-                        preflight_commitment: Some(CommitmentLevel::Confirmed),
                         max_retries: Some(0),
                         preflight_commitment: Some(self.rpc_client.commitment().commitment),
                         ..Default::default()
