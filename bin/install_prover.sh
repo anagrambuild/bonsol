@@ -89,9 +89,10 @@ for stark_tech in stark/rapidsnark stark/stark_verify stark/stark_verify_final.z
         curl --max-time ${JOB_TIMEOUT} -o "${INSTALL_PREFIX}/${stark_tech}" "$PROVER_PROVIDER_URL/${PROVER_VERSION}/${stark_tech}"
         if [ -x $(which sha256sum) ]; then
             echo "Verifying the integrity of ${stark_tech}"
-            sha256sum -c "${INSTALL_PREFIX}/${stark_tech}.sha256"
-            cat "${INSTALL_PREFIX}/${stark_tech}.sha256"
+            curl --max-time ${JOB_TIMEOUT} -o "${INSTALL_PREFIX}/${stark_tech}".sha256 "$PROVER_PROVIDER_URL/${PROVER_VERSION}/${stark_tech}".sha256
+            $(cd ${INSTALL_PREFIX} && sha256sum -c "${stark_tech}.sha256")
         fi
+        exit 0
     else 
         echo "${INSTALL_PREFIX}/${stark_tech} already exists. Skipping download."
     fi
