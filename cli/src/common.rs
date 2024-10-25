@@ -1,6 +1,7 @@
 use anyhow::Result;
+use base64ct::{Base64, Encoding};
 use bonsol_prover::input_resolver::{ProgramInput, ResolvedInput};
-use bonsol_sdk::instructions::{CallbackConfig, ExecutionConfig};
+use bonsol_sdk::instructions::{CallbackConfig, ExecutionConfig, InputRef};
 use bonsol_sdk::{InputT, InputType, ProgramInputType};
 use clap::Args;
 use rand::distributions::Alphanumeric;
@@ -105,16 +106,6 @@ pub struct CliExecutionConfig {
     pub forward_output: Option<bool>,
 }
 
-impl From<CliExecutionConfig> for ExecutionConfig {
-    fn from(val: CliExecutionConfig) -> Self {
-        ExecutionConfig {
-            verify_input_hash: val.verify_input_hash.unwrap_or(true),
-            input_hash: val.input_hash.map(|v| bs58::decode(v).into_vec().unwrap()),
-            forward_output: val.forward_output.unwrap_or(false),
-        }
-    }
-}
-
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct CliCallbackConfig {
@@ -209,15 +200,16 @@ pub fn execute_transform_cli_inputs(inputs: Vec<CliInput>) -> Result<Vec<InputT>
         let input_type = CliInputType::from_str(&input.input_type)?.0;
         match input_type {
             InputType::PublicData => {
-                if is_valid_base64(&input.data) {
-                    let data = general_purpose::STANDARD.decode(&input.data)?;
+                let (is_valid, data) = is_valid_base64(&input.data);
+                if is_valid {
                     res.push(InputT::public(data));
+                    break;
                 }
                 if let Some(n) = is_valid_number(&input.data) {
                     let data = n.into_bytes();
                     res.push(InputT::public(data));
+                    break;
                 }
-
                 res.push(InputT::public(input.data.into_bytes()));
             }
             _ => res.push(InputT::new(input_type, Some(input.data.into_bytes()))),
@@ -226,19 +218,20 @@ pub fn execute_transform_cli_inputs(inputs: Vec<CliInput>) -> Result<Vec<InputT>
     Ok(res)
 }
 
-fn is_valid_base64(s: &str) -> bool {
+fn is_valid_base64(s: &str) -> (bool, Vec<u8>) {
     if s.len() % 4 != 0 {
-        return false;
+        return (false, vec![]);
     }
     let is_base64_char = |c: char| c.is_ascii_alphanumeric() || c == '+' || c == '/' || c == '=';
     if !s.chars().all(is_base64_char) {
-        return false;
+        return (false, vec![]);
     }
     let padding_count = s.chars().rev().take_while(|&c| c == '=').count();
     if padding_count > 2 {
-        return false;
+        return (false, vec![]);
     }
-    general_purpose::STANDARD.decode(s).is_ok()
+    let out = Base64::decode_vec(s);
+    (out.is_ok(), out.unwrap_or_default())
 }
 
 pub enum NumberType {
@@ -293,13 +286,11 @@ fn parse_entry(index: u8, s: &str) -> Result<ProgramInput> {
             input_type: ProgramInputType::Private,
         }));
     }
-    if is_valid_base64(s) {
-        let decoded = general_purpose::STANDARD
-            .decode(s)
-            .map_err(|e| anyhow::anyhow!("Error decoding base64 input: {:?}", e))?;
+    let (is_valid, data) = is_valid_base64(s);
+    if is_valid {
         return Ok(ProgramInput::Resolved(ResolvedInput {
             index,
-            data: decoded,
+            data,
             input_type: ProgramInputType::Private,
         }));
     }

@@ -1190,10 +1190,10 @@ version = "0.2.1"
 dependencies = [
  "anyhow",
  "atty",
+ "base64ct",
  "bincode",
  "bonsol-prover",
  "bonsol-sdk",
- "bs58 0.4.0",
  "byte-unit",
  "bytes",
  "cargo_toml 0.20.5",

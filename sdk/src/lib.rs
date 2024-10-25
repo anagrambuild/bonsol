@@ -3,6 +3,7 @@ use std::time::Duration;
 use anyhow::Result;
 use bonsol_interface::bonsol_schema::{root_as_deploy_v1, root_as_execution_request_v1};
 use bonsol_interface::claim_state::ClaimStateHolder;
+use bonsol_interface::instructions::InputRef;
 use bytes::Bytes;
 use futures_util::TryFutureExt;
 use instructions::{CallbackConfig, ExecutionConfig};
@@ -10,7 +11,7 @@ use num_traits::FromPrimitive;
 use solana_rpc_client::nonblocking::rpc_client::RpcClient;
 use solana_rpc_client_api::config::RpcSendTransactionConfig;
 use solana_sdk::account::Account;
-use solana_sdk::commitment_config::{CommitmentConfig, CommitmentLevel};
+use solana_sdk::commitment_config::CommitmentConfig;
 use solana_sdk::compute_budget::ComputeBudgetInstruction;
 use solana_sdk::instruction::Instruction;
 use solana_sdk::message::{v0, VersionedMessage};
@@ -162,15 +163,15 @@ impl BonsolClient {
         Ok(vec![compute, compute_price, instruction])
     }
 
-    pub async fn execute_v1(
+    pub async fn execute_v1<'a>(
         &self,
         signer: &Pubkey,
         image_id: &str,
         execution_id: &str,
-        inputs: Vec<InputT>,
+        inputs: Vec<InputRef<'a>>,
         tip: u64,
         expiration: u64,
-        config: ExecutionConfig,
+        config: ExecutionConfig<'a>,
         callback: Option<CallbackConfig>,
     ) -> Result<Vec<Instruction>> {
         let compute_price_val = self.get_fees(signer).await?;
