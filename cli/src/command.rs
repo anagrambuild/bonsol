@@ -1,15 +1,25 @@
-use clap::{command, Args, Parser, Subcommand, ValueEnum};
+use clap::{command, ArgGroup, Args, Parser, Subcommand, ValueEnum};
+
 #[derive(Parser, Debug)]
 #[command(version)]
+#[command(group(
+    // Ensures mutual exclusivity of config, or keypair and rpc_url
+    ArgGroup::new("config_group")
+        .required(false)
+        .args(&["config"])
+        .conflicts_with("rpc_url")
+        .conflicts_with("keypair")
+        .multiple(false)
+))]
 pub struct BonsolCli {
     #[arg(short = 'c', long)]
     pub config: Option<String>,
-    #[arg(short = 'k', long)]
+    #[arg(short = 'k', long, requires = "rpc_url")]
     pub keypair: Option<String>,
-    #[arg(short = 'u', long)]
+    #[arg(short = 'u', long, requires = "keypair")]
     pub rpc_url: Option<String>,
     #[command(subcommand)]
-    pub command: Commands,
+    pub command: Command,
 }
 
 #[derive(Debug, Clone, Args)]
@@ -50,7 +60,7 @@ pub enum DeployType {
 }
 
 #[derive(Subcommand, Debug)]
-pub enum Commands {
+pub enum Command {
     Deploy {
         #[arg(short = 'm', long)]
         manifest_path: String,

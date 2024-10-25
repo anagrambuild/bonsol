@@ -1,4 +1,9 @@
-use anyhow::Result;
+use std::fs::File;
+use std::path::PathBuf;
+use std::process::Command;
+use std::str::FromStr;
+
+use anyhow::{Context, Result};
 use base64::engine::general_purpose;
 use base64::Engine as _;
 use bonsol_prover::input_resolver::{ProgramInput, ResolvedInput};
@@ -11,9 +16,8 @@ use serde::{Deserialize, Serialize};
 use solana_rpc_client::nonblocking::rpc_client;
 use solana_sdk::instruction::AccountMeta;
 use solana_sdk::pubkey::Pubkey;
-use std::fs::File;
-use std::process::Command;
-use std::str::FromStr;
+
+use crate::error::{BonsolCliError, ParseConfigError};
 
 pub fn cargo_has_plugin(plugin_name: &str) -> bool {
     Command::new("cargo")
@@ -144,6 +148,60 @@ impl From<CliAccountMeta> for AccountMeta {
 #[serde(rename_all = "camelCase")]
 pub struct InputFile {
     pub inputs: Vec<CliInput>,
+}
+
+/// Attempt to load the RPC URL and keypair file from a solana `config.yaml`.
+pub(crate) fn try_load_from_config(config: Option<String>) -> anyhow::Result<(String, String)> {
+    let whoami = String::from_utf8_lossy(&std::process::Command::new("whoami").output()?.stdout)
+        .trim_end()
+        .to_string();
+    let default_config_path = solana_cli_config::CONFIG_FILE.as_ref();
+
+    let config_file = config.as_ref().map_or_else(
+        || -> anyhow::Result<&String> {
+            let inner_err = ParseConfigError::DefaultConfigNotFound {
+                whoami: whoami.clone(),
+            };
+            let context = inner_err.context(None);
+
+            // If no config is given, try to find it at the default location.
+            default_config_path
+                .and_then(|s| PathBuf::from_str(s).is_ok_and(|p| p.exists()).then_some(s))
+                .ok_or(BonsolCliError::ParseConfigError(inner_err))
+                .context(context)
+        },
+        |config| -> anyhow::Result<&String> {
+            // Here we throw an error if the user provided a path to a config that does not exist.
+            // Instead of using the default location, it's better to show the user the path they
+            // expected to use was not valid.
+            if !PathBuf::from_str(config)?.exists() {
+                let inner_err = ParseConfigError::ConfigNotFound {
+                    path: config.into(),
+                };
+                let context = inner_err.context(None);
+                let err: anyhow::Error = BonsolCliError::ParseConfigError(inner_err).into();
+                return Err(err.context(context));
+            }
+            Ok(config)
+        },
+    )?;
+    let config = {
+        let mut inner_err = ParseConfigError::Uninitialized;
+
+        let mut maybe_config = solana_cli_config::Config::load(config_file).map_err(|err| {
+            let err = ParseConfigError::FailedToLoad {
+                path: config.unwrap_or(default_config_path.cloned().unwrap()),
+                err: format!("{err:?}"),
+            };
+            inner_err = err.clone();
+            BonsolCliError::ParseConfigError(err).into()
+        });
+        if maybe_config.is_err() {
+            maybe_config = maybe_config.context(inner_err.context(Some(whoami)));
+        }
+        maybe_config
+    }?;
+    Ok((config.json_rpc_url, config.keypair_path))
 }
 
 pub async fn sol_check(rpc_client: String, pubkey: Pubkey) -> bool {
