@@ -61,7 +61,7 @@ async fn example_sdk_test(
             ExecutionConfig {
                 verify_input_hash: true,
                 input_hash: Some(input_hash.as_ref()),
-                forward_output: true,
+                forward_output: true
             },
             Some(CallbackConfig {
                 program_id: example_program,

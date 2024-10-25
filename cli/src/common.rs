@@ -1,5 +1,4 @@
 use anyhow::Result;
-
 use bonsol_prover::input_resolver::{ProgramInput, ResolvedInput};
 use bonsol_sdk::instructions::CallbackConfig;
 use bonsol_sdk::{InputT, InputType, ProgramInputType};

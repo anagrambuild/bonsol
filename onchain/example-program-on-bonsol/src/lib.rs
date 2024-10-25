@@ -11,8 +11,10 @@ use solana_program::instruction::AccountMeta;
 use solana_program::program::invoke_signed;
 use solana_program::program_memory::sol_memcmp;
 use solana_program::rent::Rent;
+
+use solana_program::system_instruction;
 use solana_program::sysvar::Sysvar;
-use solana_program::{declare_id, entrypoint, msg, system_instruction};
+use solana_program::{declare_id, entrypoint, msg};
 use std::str::from_utf8;
 
 declare_id!("exay1T7QqsJPNcwzMiWubR6vZnqrgM16jZRraHgqBGG");
@@ -23,6 +25,7 @@ static EA2: Pubkey = pubkey!("g7dD1FHSemkUQrX1Eak37wzvDjscgBW2pFCENwjLdMX");
 static EA3: Pubkey = pubkey!("FHab8zDcP1DooZqXHWQowikqtXJb1eNHc46FEh1KejmX");
 
 entrypoint!(main);
+
 /// This program is used as a testbed for bonsol, to test various scenarios
 /// and to test the callback functionality
 fn main<'a>(
@@ -132,7 +135,9 @@ fn main<'a>(
             if sol_memcmp(accounts[3].key.as_ref(), EA3.as_ref(), 32) != 0 {
                 return Err(ProgramError::InvalidInstructionData.into());
             }
-            assert!(accounts[1].is_writable, "Writable account not found");
+            if !accounts[1].is_writable {
+                return Err(ProgramError::InvalidInstructionData.into());
+            }
             if callback_output.committed_outputs.len() == 1
                 && callback_output.committed_outputs[0] == 1
             {

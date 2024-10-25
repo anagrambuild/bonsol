@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 * `risc0-groth16-prover` binaries (rapidsnark & stark-verify) are available to the nix store, partially unblocking NixOS support.
 * Fixed alignment of `Account` struct in the schemas.
 * `flatbuffers` code is now dynamically generated at build time
+* Fixed alignment of `Account` struct in the schemas.
+
 
 
 ## [0.2.1] - 2024-10-13
