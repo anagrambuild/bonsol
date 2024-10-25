@@ -6,7 +6,7 @@ members = [
   "iop",
   "onchain/bonsol",
   "onchain/interface",
-  "onchain/example-callback-program",
+  "onchain/example-program-on-bonsol",
   "node",
   "schemas-rust",
   "cli",

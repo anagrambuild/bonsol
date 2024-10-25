@@ -6,6 +6,10 @@ use solana_program::program_error::ProgramError;
 use solana_program::program_memory::sol_memcmp;
 use solana_program::pubkey::Pubkey;
 
+pub struct BonsolCallback<'a> {
+    pub input_digest: &'a [u8],
+    pub committed_outputs: &'a [u8],
+}
 /// This is the callback handler for the bonsol program, use this to properly validate an incoming callback from bonsol
 /// Ensure you strip the instruction prefix from the data before passing it to this function and that the Execution Id
 /// matches the one in the execution request account
@@ -14,7 +18,7 @@ pub fn handle_callback<'a>(
     execution_account: &Pubkey,
     accounts: &[AccountInfo],
     stripped_data: &'a [u8],
-) -> Result<&'a [u8], ProgramError> {
+) -> Result<BonsolCallback<'a>, ProgramError> {
     let er_info = accounts
         .get(0)
         .ok_or::<ProgramError>(ClientError::InvalidCallbackInstructionAccounts.into())?;
@@ -38,7 +42,11 @@ pub fn handle_callback<'a>(
     if er.image_id() != Some(image_id) {
         return Err(ClientError::InvalidCallbackImageId.into());
     }
-    Ok(stripped_data)
+    let (input_digest, committed_outputs) = stripped_data.split_at(32);
+    Ok(BonsolCallback {
+        input_digest,
+        committed_outputs,
+    })
 }
 
 pub fn handle_callback_id<'a>(
@@ -47,7 +55,7 @@ pub fn handle_callback_id<'a>(
     request_account: &Pubkey,
     accounts: &'a [AccountInfo<'a>],
     data: &'a [u8],
-) -> Result<&'a [u8], ProgramError> {
+) -> Result<BonsolCallback<'a>, ProgramError> {
     let (execution_account, _) = execution_address(request_account, execution_id.as_bytes());
     handle_callback(image_id, &execution_account, accounts, data)
 }

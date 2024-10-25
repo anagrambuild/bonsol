@@ -1,7 +1,7 @@
 use bonsol_schema::{
     Account, ChannelInstruction, ChannelInstructionArgs, ChannelInstructionIxType, DeployV1,
-    DeployV1Args, ExecutionRequestV1, ExecutionRequestV1Args, ExecutionRequestV1T, InputBuilder,
-    InputT, InputType, ProgramInputType,
+    DeployV1Args, ExecutionRequestV1, ExecutionRequestV1Args, InputBuilder, InputT, InputType,
+    ProgramInputType,
 };
 use flatbuffers::{FlatBufferBuilder, WIPOffset};
 
@@ -73,10 +73,9 @@ pub fn deploy_v1(
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
-pub struct ExecutionConfig {
+pub struct ExecutionConfig<'a> {
     pub verify_input_hash: bool,
-    #[cfg_attr(feature = "serde", serde(default, with = "serde_helpers::b64_bytes"))]
-    pub input_hash: Option<Vec<u8>>,
+    pub input_hash: Option<&'a [u8]>,
     pub forward_output: bool,
 }
 
@@ -130,48 +129,9 @@ pub mod serde_helpers {
                 .map(Some)
         }
     }
-
-    pub mod b64_bytes {
-        use base64::engine::general_purpose;
-        use base64::Engine as _;
-        use serde::{self, Deserialize, Deserializer, Serializer};
-
-        pub fn serialize<S>(value: &Option<Vec<u8>>, serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: Serializer,
-        {
-            match value {
-                Some(v) => serializer.serialize_str(&general_purpose::STANDARD.encode(v)),
-                None => serializer.serialize_none(),
-            }
-        }
-
-        pub fn deserialize<'de, D>(deserializer: D) -> Result<Option<Vec<u8>>, D::Error>
-        where
-            D: Deserializer<'de>,
-        {
-            #[derive(Deserialize)]
-            #[serde(untagged)]
-            enum InputHash {
-                Base64(String),
-                Bytes(Vec<u8>),
-            }
-
-            match Option::<InputHash>::deserialize(deserializer)? {
-                Some(InputHash::Base64(v)) => {
-                    let bytes = general_purpose::STANDARD.decode(v).map_err(|e| {
-                        serde::de::Error::custom(format!("Error decoding base64 input: {:?}", e))
-                    })?;
-                    Ok(Some(bytes))
-                }
-                Some(InputHash::Bytes(v)) => Ok(Some(v)),
-                None => Ok(None),
-            }
-        }
-    }
 }
 
-impl ExecutionConfig {
+impl<'a> ExecutionConfig<'a> {
     pub fn validate(&self) -> Result<(), ClientError> {
         if self.verify_input_hash && self.input_hash.is_none() {
             return Err(ClientError::InvalidInput);
@@ -180,7 +140,7 @@ impl ExecutionConfig {
     }
 }
 
-impl Default for ExecutionConfig {
+impl Default for ExecutionConfig<'_> {
     fn default() -> Self {
         ExecutionConfig {
             verify_input_hash: true,
@@ -200,11 +160,60 @@ pub struct CallbackConfig {
     pub extra_accounts: Vec<AccountMeta>,
 }
 
+
+pub struct InputRef<'a> {
+    pub input_type: InputType,
+    pub data: &'a [u8],
+}
+
+impl<'a> InputRef<'a> {
+    pub fn new(input_type: InputType, data: &'a [u8]) -> Self {
+        Self { input_type, data }
+    }
+
+    pub fn public(data: &'a [u8]) -> Self {
+        Self {
+            input_type: InputType::PublicData,
+            data
+        }
+    }
+    pub fn private(data: &'a [u8]) -> Self {
+        Self {
+            input_type: InputType::Private,
+            data
+        }
+    }
+    pub fn public_proof(data: &'a [u8]) -> Self {
+        Self {
+            input_type: InputType::PublicProof,
+            data
+        }
+    }
+    pub fn url(data: &'a [u8]) -> Self {
+        Self {
+            input_type: InputType::PublicUrl,
+            data
+        }
+    }
+    pub fn input_set(data: &'a [u8]) -> Self {
+        Self {
+            input_type: InputType::InputSet,
+            data
+        }
+    }
+    pub fn public_account(data: &'a [u8]) -> Self {
+        Self {
+            input_type: InputType::PublicAccountData,
+            data
+        }
+    }
+}
+
 pub fn execute_v1(
     signer: &Pubkey,
     image_id: &str,
     execution_id: &str,
-    inputs: Vec<InputT>,
+    inputs: Vec<InputRef>,
     tip: u64,
     expiration: u64,
     config: ExecutionConfig,
@@ -248,8 +257,7 @@ pub fn execute_v1(
     for input in inputs {
         match input.input_type {
             InputType::InputSet => {
-                let pk = input.data.ok_or(ClientError::InvalidInputSetAddress)?;
-                let input_set_pubkey = Pubkey::try_from(pk.as_slice())
+                let input_set_pubkey = Pubkey::try_from(input.data)
                     .map_err(|_| ClientError::InvalidInputSetAddress)?;
                 accounts.push(AccountMeta::new_readonly(input_set_pubkey, false));
                 let data_off = fbb.create_vector(&[(accounts.len() - 1) as u8]);
@@ -260,8 +268,7 @@ pub fn execute_v1(
                 inputs_vec.push(input_set);
             }
             _ => {
-                let data = input.data.ok_or(ClientError::InvalidInput)?;
-                let data_off = fbb.create_vector(data.as_slice());
+                let data_off = fbb.create_vector(input.data);
                 let mut ibb = InputBuilder::new(&mut fbb);
                 ibb.add_data(data_off);
                 ibb.add_input_type(input.input_type);
@@ -275,7 +282,7 @@ pub fn execute_v1(
     let execution_id = fbb.create_string(execution_id);
 
     let input_digest = if let Some(ih) = config.input_hash {
-        Some(fbb.create_vector(ih.as_slice()))
+        Some(fbb.create_vector(ih))
     } else {
         None
     };

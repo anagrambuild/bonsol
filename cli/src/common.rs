@@ -1,6 +1,4 @@
 use anyhow::Result;
-use base64::engine::general_purpose;
-use base64::Engine as _;
 use bonsol_prover::input_resolver::{ProgramInput, ResolvedInput};
 use bonsol_sdk::instructions::{CallbackConfig, ExecutionConfig};
 use bonsol_sdk::{InputT, InputType, ProgramInputType};
@@ -91,12 +89,30 @@ impl FromStr for CliInputType {
 #[serde(rename_all = "camelCase")]
 pub struct ExecutionRequestFile {
     pub image_id: Option<String>,
-    pub execution_config: ExecutionConfig,
+    pub execution_config: CliExecutionConfig,
     pub execution_id: Option<String>,
     pub tip: Option<u64>,
     pub expiry: Option<u64>,
     pub inputs: Option<Vec<CliInput>>,
     pub callback_config: Option<CliCallbackConfig>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CliExecutionConfig {
+    pub verify_input_hash: Option<bool>,
+    pub input_hash: Option<String>,
+    pub forward_output: Option<bool>,
+}
+
+impl From<CliExecutionConfig> for ExecutionConfig {
+    fn from(val: CliExecutionConfig) -> Self {
+        ExecutionConfig {
+            verify_input_hash: val.verify_input_hash.unwrap_or(true),
+            input_hash: val.input_hash.map(|v| bs58::decode(v).into_vec().unwrap()),
+            forward_output: val.forward_output.unwrap_or(false),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]

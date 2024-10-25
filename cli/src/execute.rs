@@ -117,7 +117,7 @@ pub async fn execute(
         .or(execution_request_file.expiry)
         .ok_or(anyhow::anyhow!("Expiry not provided"))?;
     let callback_config = execution_request_file.callback_config;
-    let mut execution_config = execution_request_file.execution_config;
+    let mut execution_config: ExecutionConfig = execution_request_file.execution_config.into();
     let signer = keypair.pubkey();
     let transformed_inputs = execute_transform_cli_inputs(inputs)?;
     let hash_inputs = execution_config.verify_input_hash
@@ -144,7 +144,7 @@ pub async fn execute(
             }
         }
         let digest = hash.finalize();
-        execution_config.input_hash = Some(digest.to_vec());
+        execution_config.input_hash = Some(&digest);
     }
     let current_block = sdk.get_current_slot().await?;
     let expiry = expiry + current_block;
