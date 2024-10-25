@@ -13,9 +13,9 @@ use solana_program::system_instruction;
 use solana_program::clock::Clock;
 use solana_program::sysvar::Sysvar;
 use solana_program::instruction::AccountMeta;
-use solana_program::program::invoke;
 use solana_program::program::invoke_signed;
 use std::str::from_utf8;
+
 declare_id!("exay1T7QqsJPNcwzMiWubR6vZnqrgM16jZRraHgqBGG");
 const SIMPLE_IMAGE_ID: &str = "68f4b0c5f9ce034aa60ceb264a18d6c410a3af68fafd931bcfd9ebe7c1e42960";
 
@@ -28,12 +28,13 @@ fn main<'a>(_program_id: &Pubkey, accounts: &'a [AccountInfo<'a>], instruction_d
     let (ix, data) = instruction_data.split_at(1);
     match ix[0] {
         0 => {
-            let payer = &accounts[0];
+            let payer = &accounts[0]; //any feepayer
             let execution_id = from_utf8(&data[0..16]).map_err(|_| ProgramError::InvalidInstructionData)?;
             let input_hash = &data[16..48];
             let private_input_url = &data[48..];
-            let requester = &accounts[1];
+            let requester = &accounts[1]; //pda of this program
             let system = &accounts[2];
+            let execution_account = &accounts[3]; //the pda of bonsol that represents the execution request
             create_program_account(requester, &[b"test"], 32, payer, system, None)?;
 
             let tip = 1000;
@@ -57,21 +58,31 @@ fn main<'a>(_program_id: &Pubkey, accounts: &'a [AccountInfo<'a>], instruction_d
                     program_id: crate::id(),
                     instruction_prefix: vec![1],
                     extra_accounts: vec![
+                        AccountMeta::new(*requester.key, false),
+                        AccountMeta::new(EA1, false),
                         AccountMeta::new(EA1, false),
                         AccountMeta::new(EA2, false),
                         AccountMeta::new(EA3, false),
                     ],
                 }),
             ).map_err(|_| ProgramError::InvalidInstructionData)?;
-            invoke(
+            invoke_signed(
                 &ix, 
                 accounts,
+                &[&[b"test"]],
             )?;
+            let mut data = requester.try_borrow_mut_data()?;
+            data.copy_from_slice(
+                &execution_account.key.to_bytes()
+            );
             Ok(())
         }
         1 => {
-            let execution_account = accounts[0].key; // in most cases you will store this somewhere else to ensure it matches with some user storage
-            let callback_output: BonsolCallback = handle_callback(SIMPLE_IMAGE_ID, execution_account, accounts, data)?;
+            let requester = &accounts[1];
+            let requester_data = requester.try_borrow_data()?;
+            let execution_account = Pubkey::try_from(&requester_data[0..32]).map_err(|_| ProgramError::InvalidInstructionData)?;
+            
+            let callback_output: BonsolCallback = handle_callback(SIMPLE_IMAGE_ID, &execution_account, accounts, data)?;
             if sol_memcmp(accounts[1].key.as_ref(), EA1.as_ref(), 32) != 0 {
                 return Err(ProgramError::InvalidInstructionData.into());
             }
