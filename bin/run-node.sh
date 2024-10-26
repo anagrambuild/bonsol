@@ -1,9 +1,5 @@
 #!/usr/bin/env bash
 
-if [ -x "$(command -v zsh)" ]; then
-    exec zsh "$0" "$@"
-fi
-
 set -e
 
 NKP=node_keypair.json
@@ -36,7 +32,6 @@ solana -u http://localhost:8899 airdrop 1 --keypair node_keypair.json
 solana -u http://localhost:8899 airdrop 1
 ulimit -s unlimited
 
-(cd node;
 if [[ "$OSTYPE" == "linux-gnu"* ]]; then
     if [ "$USE_CUDA" = true ]; then
         cargo run --release -p bonsol-node --features cuda -- -f ./Node.toml
@@ -55,4 +50,3 @@ else
     echo "Unsupported operating system"
     exit 1
 fi
-)
