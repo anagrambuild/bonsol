@@ -26,6 +26,7 @@ pub enum MetricEvents {
     ProofSegments,
     BonsolStartup,
     SignaturesInFlight,
+    IncompatibleProverVersion,
 }
 
 macro_rules! emit_event {

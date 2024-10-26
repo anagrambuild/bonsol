@@ -1,5 +1,6 @@
 use crate::common::*;
 use anyhow::Result;
+use bonsol_interface::prover_version::ProverVersion;
 use bonsol_prover::input_resolver::{DefaultInputResolver, InputResolver, ProgramInput};
 use bonsol_sdk::instructions::{ExecutionConfig, InputRef};
 use bonsol_sdk::{BonsolClient, ExecutionAccountStatus, InputType};
@@ -171,7 +172,7 @@ pub async fn execute(
     println!("Execution expiry {}", expiry);
     println!("current block {}", current_block);
     indicator.set_message("Building transaction");
-
+    let prover_version = ProverVersion::default();
     let ixs = sdk
         .execute_v1(
             &signer,
@@ -190,6 +191,7 @@ pub async fn execute(
             expiry,
             execution_config,
             callback_config.map(|c| c.into()),
+            Some(prover_version),
         )
         .await?;
     indicator.finish_with_message("Sending transaction");

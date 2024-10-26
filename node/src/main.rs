@@ -19,7 +19,7 @@ use {
     rlimit::Resource,
     solana_rpc_client::nonblocking::rpc_client::RpcClient,
     solana_sdk::{pubkey::Pubkey, signature::read_keypair_file, signer::Signer},
-    std::{path::Path, str::FromStr, sync::Arc},
+    std::{str::FromStr, sync::Arc},
     thiserror::Error,
     tokio::{select, signal},
     tracing::{error, info},

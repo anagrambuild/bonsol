@@ -1,7 +1,7 @@
 use bonsol_schema::{
     Account, ChannelInstruction, ChannelInstructionArgs, ChannelInstructionIxType, DeployV1,
     DeployV1Args, ExecutionRequestV1, ExecutionRequestV1Args, InputBuilder, InputT, InputType,
-    ProgramInputType,
+    ProgramInputType, ProverVersion,
 };
 use flatbuffers::{FlatBufferBuilder, WIPOffset};
 
@@ -220,6 +220,7 @@ pub fn execute_v1<'a>(
     expiration: u64,
     config: ExecutionConfig<'a>,
     callback: Option<CallbackConfig>,
+    prover_version: Option<ProverVersion>,
 ) -> Result<Instruction, ClientError> {
     let (execution_account, _) = execution_address(requester, execution_id.as_bytes());
     let (deployment_account, _) = deployment_address(image_id);
@@ -235,6 +236,7 @@ pub fn execute_v1<'a>(
         expiration,
         config,
         callback,
+        prover_version,
     )
 }
 /// Executes a bonsol program with the provided accounts
@@ -252,6 +254,7 @@ pub fn execute_v1_with_accounts<'a>(
     expiration: u64,
     config: ExecutionConfig,
     callback: Option<CallbackConfig>,
+    prover_version: Option<ProverVersion>,
 ) -> Result<Instruction, ClientError> {
     config.validate()?;
     let mut fbb = FlatBufferBuilder::new();
@@ -318,6 +321,10 @@ pub fn execute_v1_with_accounts<'a>(
     } else {
         None
     };
+
+    let prover_version = prover_version.or(Some(ProverVersion::default()));
+    let prover_version = prover_version.unwrap();
+
     let fbb_execute = ExecutionRequestV1::create(
         &mut fbb,
         &ExecutionRequestV1Args {
@@ -332,6 +339,7 @@ pub fn execute_v1_with_accounts<'a>(
             max_block_height: expiration,
             input_digest,
             callback_extra_accounts: extra_accounts,
+            prover_version,
         },
     );
     fbb.finish(fbb_execute, None);

@@ -1,4 +1,6 @@
 mod utils;
+pub mod verify_prover_version;
+
 use {solana_sdk::instruction::AccountMeta, utils::check_stark_compression_tools_path};
 
 use {
@@ -9,7 +11,10 @@ use {
         prover::utils::async_to_json,
         MissingImageStrategy,
     },
-    bonsol_interface::bonsol_schema::{ClaimV1, DeployV1, ExecutionRequestV1},
+    bonsol_interface::{
+        bonsol_schema::{ClaimV1, DeployV1, ExecutionRequestV1},
+        prover_version::{ProverVersion, VERSION_V1_0_1},
+    },
     dashmap::DashMap,
     risc0_binfmt::MemoryImage,
     risc0_zkvm::{ExitCode, Journal, SuccinctReceipt},
@@ -46,8 +51,12 @@ use {
     tokio::{
         fs::File, io::AsyncReadExt, process::Command, sync::mpsc::UnboundedSender, task::JoinHandle,
     },
-    tracing::{error, info},
+    tracing::{error, info, warn},
 };
+
+use verify_prover_version::verify_prover_version;
+
+const REQUIRED_PROVER: ProverVersion = VERSION_V1_0_1;
 
 #[derive(Debug, Error)]
 pub enum Risc0RunnerError {
@@ -143,6 +152,8 @@ impl Risc0Runner {
     // Break into Image handling, Input handling, Execution Request
     // Inputs and Image should be service used by this prover.
     pub fn start(&mut self) -> Result<UnboundedSender<BonsolInstruction>> {
+        verify_prover_version(REQUIRED_PROVER)
+            .expect("Bonsol build conflict: prover version is not supported");
         let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel::<BonsolInstruction>();
         let loaded_images = self.loaded_images.clone();
         // TODO: move image handling out of prover
@@ -402,6 +413,15 @@ async fn handle_execution_request<'a>(
     exec: ExecutionRequestV1<'a>,
     accounts: &[Pubkey],
 ) -> Result<()> {
+    if !can_execute(exec) {
+        warn!(
+            "Execution request for incompatible prover version: {:?}",
+            exec.prover_version()
+        );
+        emit_event!(MetricEvents::IncompatibleProverVersion, execution_id => exec.execution_id().unwrap_or_default());
+        return Ok(());
+    }
+
     // current naive implementation is to accept everything we have pending capacity for on this node, but this needs work
     let inflight = in_flight_proofs.len();
     emit_event!(MetricEvents::ExecutionRequest, execution_id => exec.execution_id().unwrap_or_default());
@@ -683,5 +703,18 @@ async fn risc0_compress_proof(
         })
     } else {
         Err(Risc0RunnerError::ProofCompressionError.into())
+    }
+}
+
+fn can_execute(exec: ExecutionRequestV1) -> bool {
+    let version = exec.prover_version().try_into();
+    if version.is_ok() {
+        let is_matching = match version.unwrap() {
+            REQUIRED_PROVER => true,
+            _ => false,
+        };
+        is_matching
+    } else {
+        false
     }
 }
