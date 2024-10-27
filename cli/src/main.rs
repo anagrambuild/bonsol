@@ -4,7 +4,6 @@ use std::path::Path;
 use atty::Stream;
 use bonsol_sdk::BonsolClient;
 use clap::Parser;
-use shadow_drive_sdk::Keypair;
 use solana_sdk::signature::read_keypair_file;
 use solana_sdk::signer::Signer;
 
