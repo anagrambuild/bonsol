@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 * **Breaking**: Changes flatbuffer `Account` struct to have 8 byte alignment due a possible bug in the flatbufers compiler. [https://github.com/google/flatbuffers/pull/8398](Bug Here)
 * **Breaking**: Flatbuffers was upgraded to `24.3.25`
 * `bonsol` cli option requirements and error messages updated for added clarity
++ `bonsol deploy` `-t` (`--deploy-type`) option is no longer necessary in order to specify a deployment type. The deployment type is now a subcommand, eg. `bonsol deploy s3`.
 
 ### Fixed
 * `risc0-groth16-prover` binaries (rapidsnark & stark-verify) are available to the nix store, partially unblocking NixOS support.

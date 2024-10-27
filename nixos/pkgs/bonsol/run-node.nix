@@ -10,7 +10,7 @@ let
   # This also avoids unnecessary build times.
   from = [ "cargo run --release -p bonsol-node --" "cargo run --release -p bonsol-node --features metal --" ];
   to = [ node_path node_path ];
-  contents = (builtins.readFile ../../../${name});
+  contents = (builtins.readFile ../../../bin/${name});
 in
 writeShellScriptBin name (
   if use-nix then

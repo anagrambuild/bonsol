@@ -1,4 +1,3 @@
-use std::env;
 use std::fs::{self, File};
 use std::path::Path;
 use std::str::FromStr;
@@ -16,84 +15,88 @@ use solana_sdk::commitment_config::CommitmentConfig;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::read_keypair_file;
 
-use crate::command::{DeployType, S3UploadDestination, ShadowDriveUpload, UrlUploadDestination};
+use crate::command::{DeployType, S3UploadDestination};
 use crate::common::ZkProgramManifest;
+use crate::error::{BonsolCliError, S3ClientError, ZkManifestError};
 
 pub async fn deploy(
-    rpc: String,
+    rpc_url: String,
     signer: &impl shadow_drive_sdk::Signer,
     manifest_path: String,
-    s3_upload: S3UploadDestination,
-    shadow_drive_upload: ShadowDriveUpload,
-    url_upload: UrlUploadDestination,
     auto_confirm: bool,
-    deploy_type: Option<DeployType>,
+    deploy_type: DeployType,
 ) -> Result<()> {
     let bar = ProgressBar::new_spinner();
-    let rpc_url = rpc.clone();
-    let rpc_client = RpcClient::new_with_commitment(rpc, CommitmentConfig::confirmed());
-    let manifest_path = Path::new(&manifest_path);
-    let manifest_file = File::open(manifest_path)
-        .map_err(|e| anyhow::anyhow!("Error opening manifest file: {:?}", e))?;
+    let rpc_client = RpcClient::new_with_commitment(rpc_url.clone(), CommitmentConfig::confirmed());
+    let manifest_file = File::open(Path::new(&manifest_path)).map_err(|err| {
+        BonsolCliError::ZkManifestError(ZkManifestError::FailedToOpen {
+            manifest_path: manifest_path.clone(),
+            err,
+        })
+    })?;
 
-    let manifest: ZkProgramManifest = serde_json::from_reader(manifest_file)
-        .map_err(|e| anyhow::anyhow!("Error parsing manifest file: {:?}", e))?;
-    let loaded_binary = fs::read(&manifest.binary_path)
-        .map_err(|e| anyhow::anyhow!("Error loading binary: {:?}", e))?;
+    let manifest: ZkProgramManifest = serde_json::from_reader(manifest_file).map_err(|err| {
+        BonsolCliError::ZkManifestError(ZkManifestError::FailedDeserialization {
+            manifest_path,
+            err,
+        })
+    })?;
+    let loaded_binary = fs::read(&manifest.binary_path).map_err(|err| {
+        BonsolCliError::ZkManifestError(ZkManifestError::FailedToLoad {
+            binary_path: manifest.binary_path,
+            err,
+        })
+    })?;
     let url: String = match deploy_type {
-        Some(DeployType::S3) => {
-            let bucket = s3_upload
-                .bucket
-                .ok_or(anyhow::anyhow!("Please provide a bucket name"))?;
-            let region = s3_upload.region.or_else(|| env::var("AWS_REGION").ok());
-            let access_key = s3_upload
-                .access_key
-                .or_else(|| env::var("AWS_ACCESS_KEY_ID").ok());
-            let secret_key = s3_upload
-                .secret_key
-                .or_else(|| env::var("AWS_SECRET_ACCESS_KEY").ok());
-            if region.is_none() || access_key.is_none() || secret_key.is_none() {
-                bar.finish_and_clear();
-                return Err(anyhow::anyhow!("Invalid AWS credentials"));
-            }
-            let region = region.unwrap();
-            let access_key = access_key.unwrap();
-            let secret_key = secret_key.unwrap();
-            if bucket.is_empty() {
-                bar.finish_and_clear();
-                return Err(anyhow::anyhow!("Please provide a bucket name"));
-            }
+        DeployType::S3(s3_upload) => {
+            let S3UploadDestination {
+                bucket,
+                access_key,
+                secret_key,
+                region,
+            } = s3_upload;
+
             let s3_client = AmazonS3Builder::new()
-                .with_bucket_name(bucket.clone())
+                .with_bucket_name(&bucket)
                 .with_region(&region)
                 .with_access_key_id(&access_key)
                 .with_secret_access_key(&secret_key)
                 .build()
-                .map_err(|e| anyhow::anyhow!("Error creating S3 client: {:?}", e))?;
+                .map_err(|err| {
+                    BonsolCliError::S3ClientError(S3ClientError::FailedToBuildClient {
+                        args: vec![
+                            format!("bucket: {bucket}"),
+                            format!("access_key: {access_key}"),
+                            format!(
+                                "secret_key: {}..{}",
+                                &secret_key[..4],
+                                &secret_key[secret_key.len() - 4..]
+                            ),
+                            format!("region: {region}"),
+                        ],
+                        err,
+                    })
+                })?;
+
             let dest =
                 object_store::path::Path::from(format!("{}-{}", manifest.name, manifest.image_id));
-            let destc = dest.clone();
-            //get the file to see if it exists
-            let exists = s3_client.head(&destc).await.is_ok();
             let url = format!("https://{}.s3.{}.amazonaws.com/{}", bucket, region, dest);
-            if exists {
+            // get the file to see if it exists
+            if s3_client.head(&dest).await.is_ok() {
                 bar.set_message("File already exists, skipping upload");
-                Ok::<_, anyhow::Error>(url)
             } else {
-                let upload = s3_client.put(&destc, loaded_binary.into()).await;
-                match upload {
-                    Ok(_) => {
-                        bar.finish_and_clear();
-                        Ok::<_, anyhow::Error>(url)
-                    }
-                    Err(e) => {
-                        bar.finish_and_clear();
-                        anyhow::bail!("Error uploading to {} {:?}", dest.to_string(), e)
-                    }
-                }
+                s3_client
+                    .put(&dest, loaded_binary.into())
+                    .await
+                    .map_err(|err| {
+                        BonsolCliError::S3ClientError(S3ClientError::UploadFailed { dest, err })
+                    })?;
             }
+
+            bar.finish_and_clear();
+            Ok(url)
         }
-        Some(DeployType::ShadowDrive) => {
+        DeployType::ShadowDrive(shadow_drive_upload) => {
             let storage_account = shadow_drive_upload
                 .storage_account
                 .ok_or(anyhow::anyhow!("Please provide a storage account"))?;
@@ -169,7 +172,7 @@ pub async fn deploy(
             println!("Uploaded to shadow drive");
             Ok::<_, anyhow::Error>(resp.message)
         }
-        Some(DeployType::Url) => {
+        DeployType::Url(url_upload) => {
             let req = reqwest::get(&url_upload.url).await?;
             let bytes = req.bytes().await?;
             if bytes != loaded_binary {
@@ -177,10 +180,6 @@ pub async fn deploy(
             }
             bar.finish_and_clear();
             Ok(url_upload.url)
-        }
-        _ => {
-            bar.finish_and_clear();
-            return Err(anyhow::anyhow!("Please provide an upload config"));
         }
     }?;
 

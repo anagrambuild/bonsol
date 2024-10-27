@@ -1,3 +1,6 @@
+use object_store::Error as S3Error;
+use serde_json::Error as SerdeJsonError;
+use std::io::Error as IoError;
 use thiserror::Error as DeriveError;
 
 pub(crate) const DEFAULT_SOLANA_CONFIG_PATH: &str = ".config/solana/cli/config.yml";
@@ -14,6 +17,12 @@ pub enum BonsolCliError {
 
     #[error("Account '{0}' does not have any SOL to pay for the transaction(s)")]
     InsufficientFundsForTransactions(String),
+
+    #[error(transparent)]
+    ZkManifestError(#[from] ZkManifestError),
+
+    #[error(transparent)]
+    S3ClientError(#[from] S3ClientError),
 }
 
 #[derive(Debug, DeriveError, Clone)]
@@ -72,4 +81,31 @@ For more information on the solana cli config see: {}",
             Self::Uninitialized => unreachable!(),
         }
     }
+}
+
+#[derive(Debug, DeriveError)]
+pub enum ZkManifestError {
+    #[error("Failed to open manifest at '{manifest_path}': {err:?}")]
+    FailedToOpen { manifest_path: String, err: IoError },
+
+    #[error("Failed to deserialize json manifest at '{manifest_path}': {err:?}")]
+    FailedDeserialization {
+        manifest_path: String,
+        err: SerdeJsonError,
+    },
+
+    #[error("Failed to load binary from manifest at '{binary_path}': {err:?}")]
+    FailedToLoad { binary_path: String, err: IoError },
+}
+
+#[derive(Debug, DeriveError)]
+pub enum S3ClientError {
+    #[error("Failed to build S3 client with the following args:\n{}\n\n{err:?}", args.join(",\n"))]
+    FailedToBuildClient { args: Vec<String>, err: S3Error },
+
+    #[error("Failed to upload to '{dest}': {err:?}")]
+    UploadFailed {
+        dest: object_store::path::Path,
+        err: S3Error,
+    },
 }

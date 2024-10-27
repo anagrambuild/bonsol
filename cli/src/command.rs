@@ -1,4 +1,4 @@
-use clap::{command, ArgGroup, Args, Parser, Subcommand, ValueEnum};
+use clap::{command, ArgGroup, Args, Parser, Subcommand};
 
 #[derive(Parser, Debug)]
 #[command(version)]
@@ -24,18 +24,43 @@ pub struct BonsolCli {
 
 #[derive(Debug, Clone, Args)]
 pub struct S3UploadDestination {
-    #[arg(long)]
-    pub bucket: Option<String>,
-    #[arg(long)]
-    pub access_key: Option<String>,
-    #[arg(long)]
-    pub secret_key: Option<String>,
-    #[arg(long)]
-    pub region: Option<String>,
+    #[arg(
+        help = "Specify the S3 bucket name",
+        long,
+        required = true,
+        value_parser = |s: &str| {
+            if s.trim().is_empty() {
+                anyhow::bail!("expected a non-empty string")
+            }
+            Ok(s.to_string())
+        }
+    )]
+    pub bucket: String,
+    #[arg(
+        help = "Specify the AWS access key ID",
+        long,
+        required = true,
+        env = "AWS_ACCESS_KEY_ID"
+    )]
+    pub access_key: String,
+    #[arg(
+        help = "Specify the AWS secret access key",
+        long,
+        required = true,
+        env = "AWS_SECRET_ACCESS_KEY"
+    )]
+    pub secret_key: String,
+    #[arg(
+        help = "Specify the AWS region",
+        long,
+        required = true,
+        env = "AWS_REGION"
+    )]
+    pub region: String,
 }
 
 #[derive(Debug, Clone, Args)]
-pub struct ShadowDriveUpload {
+pub struct ShadowDriveUploadDestination {
     #[arg(long)]
     pub storage_account: Option<String>,
     #[arg(long)]
@@ -48,30 +73,24 @@ pub struct ShadowDriveUpload {
 
 #[derive(Debug, Clone, Args)]
 pub struct UrlUploadDestination {
-    #[arg(long)]
+    #[arg(value_name = "URL", index = 1, required = true)]
     pub url: String,
 }
 
-#[derive(Debug, Clone, ValueEnum)]
+#[derive(Debug, Clone, Subcommand)]
 pub enum DeployType {
-    S3,
-    ShadowDrive,
-    Url,
+    S3(S3UploadDestination),
+    ShadowDrive(ShadowDriveUploadDestination),
+    Url(UrlUploadDestination),
 }
 
 #[derive(Subcommand, Debug)]
 pub enum Command {
     Deploy {
+        #[clap(subcommand)]
+        deploy_type: DeployType,
         #[arg(short = 'm', long)]
         manifest_path: String,
-        #[arg(short = 't', long)]
-        deploy_type: Option<DeployType>,
-        #[clap(flatten)]
-        s3_upload: S3UploadDestination,
-        #[clap(flatten)]
-        shadow_drive_upload: ShadowDriveUpload,
-        #[clap(flatten)]
-        url_upload: UrlUploadDestination,
         #[arg(short = 'y', long)]
         auto_confirm: bool,
     },

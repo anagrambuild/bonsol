@@ -23,7 +23,7 @@ bs58 = "0.4.0"
 byte-unit = "4.0.19"
 bytes = "1.4.0"
 cargo_toml = "0.20.3"
-clap = { version = "4.4.2", features = ["derive"] }
+clap = { version = "4.4.2", features = ["derive", "env"] }
 indicatif = "0.17.8"
 num-traits = "0.2.15"
 object_store = { version = "0.9.1", features = ["aws"] }

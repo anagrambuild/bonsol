@@ -55,11 +55,8 @@ async fn main() -> anyhow::Result<()> {
         }
         Command::Deploy {
             manifest_path,
-            s3_upload,
-            shadow_drive_upload,
             auto_confirm,
             deploy_type,
-            url_upload,
         } => {
             if !sol_check(rpc.clone(), keypair.pubkey()).await {
                 return Err(BonsolCliError::InsufficientFundsForTransactions(
@@ -67,17 +64,7 @@ async fn main() -> anyhow::Result<()> {
                 )
                 .into());
             }
-            deploy::deploy(
-                rpc,
-                &keypair,
-                manifest_path,
-                s3_upload,
-                shadow_drive_upload,
-                url_upload,
-                auto_confirm,
-                deploy_type,
-            )
-            .await
+            deploy::deploy(rpc, &keypair, manifest_path, auto_confirm, deploy_type).await
         }
         Command::Execute {
             execution_request_file,
