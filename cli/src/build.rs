@@ -14,14 +14,12 @@ pub fn build(keypair: &impl Signer, zk_program_path: String) -> Result<()> {
     bar.enable_steady_tick(Duration::from_millis(100));
     let image_path = Path::new(&zk_program_path);
     // ensure cargo risc0 is installed and has the plugin
-    if !cargo_has_plugin("risczero") || !cargo_has_plugin("binstall") || !has_executable("docker") {
+    if !cargo_has_plugin("risczero") || !has_executable("docker") {
         bar.finish_and_clear();
-        return Err(anyhow::anyhow!(
-            "Please install cargo-risczero and cargo-binstall and docker"
-        ));
+        return Err(anyhow::anyhow!("Please install cargo-risczero and docker"));
     }
 
-    let build_result = build_maifest(image_path, &keypair);
+    let build_result = build_manifest(image_path, &keypair);
     let manifest_path = image_path.join("manifest.json");
     match build_result {
         Err(e) => {
@@ -36,7 +34,7 @@ pub fn build(keypair: &impl Signer, zk_program_path: String) -> Result<()> {
     }
 }
 
-fn build_maifest(
+fn build_manifest(
     image_path: &Path,
     keypair: &impl Signer,
 ) -> Result<ZkProgramManifest, std::io::Error> {
@@ -48,7 +46,7 @@ fn build_maifest(
         .map(|p| &p.name)
         .ok_or(std::io::Error::new(
             std::io::ErrorKind::Other,
-            "Invalid Cargo.toml",
+            "Invalid Cargo.toml, missing package name",
         ))?;
     let meta = manifest.package.as_ref().and_then(|p| p.metadata.as_ref());
     if meta.is_none() {
@@ -85,8 +83,9 @@ fn build_maifest(
 
     if output.status.success() {
         let elf_contents = fs::read(&binary_path)?;
-        let image_id = compute_image_id(&elf_contents)
-            .map_err(|_| std::io::Error::new(std::io::ErrorKind::Other, "Invalid image"))?;
+        let image_id = compute_image_id(&elf_contents).map_err(|err| {
+            std::io::Error::new(std::io::ErrorKind::Other, format!("Invalid image: {err:?}"))
+        })?;
         let signature = keypair.sign_message(elf_contents.as_slice());
         let manifest = ZkProgramManifest {
             name: package.to_string(),
