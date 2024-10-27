@@ -4,6 +4,7 @@ use std::path::Path;
 use atty::Stream;
 use bonsol_sdk::BonsolClient;
 use clap::Parser;
+use shadow_drive_sdk::Keypair;
 use solana_sdk::signature::read_keypair_file;
 use solana_sdk::signer::Signer;
 
@@ -64,7 +65,7 @@ async fn main() -> anyhow::Result<()> {
                 )
                 .into());
             }
-            deploy::deploy(rpc, &keypair, manifest_path, auto_confirm, deploy_type).await
+            deploy::deploy(rpc, keypair, manifest_path, auto_confirm, deploy_type).await
         }
         Command::Execute {
             execution_request_file,

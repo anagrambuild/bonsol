@@ -12,11 +12,25 @@ use clap::{command, ArgGroup, Args, Parser, Subcommand};
         .multiple(false)
 ))]
 pub struct BonsolCli {
-    #[arg(short = 'c', long)]
+    #[arg(
+        help = "The path to a Solana CLI config [Default: '~/.config/solana/cli/config.yml']",
+        short = 'c',
+        long
+    )]
     pub config: Option<String>,
-    #[arg(short = 'k', long, requires = "rpc_url")]
+    #[arg(
+        help = "The path to a Solana keypair file [Default: '~/.config/solana/id.json']",
+        short = 'k',
+        long,
+        requires = "rpc_url"
+    )]
     pub keypair: Option<String>,
-    #[arg(short = 'u', long, requires = "keypair")]
+    #[arg(
+        help = "The Solana cluster the Solana CLI will make requests to",
+        short = 'u',
+        long,
+        requires = "keypair"
+    )]
     pub rpc_url: Option<String>,
     #[command(subcommand)]
     pub command: Command,
@@ -30,7 +44,7 @@ pub struct S3UploadDestination {
         required = true,
         value_parser = |s: &str| {
             if s.trim().is_empty() {
-                anyhow::bail!("expected a non-empty string")
+                anyhow::bail!("expected a non-empty string representation of an S3 bucket name")
             }
             Ok(s.to_string())
         }
@@ -60,38 +74,68 @@ pub struct S3UploadDestination {
 }
 
 #[derive(Debug, Clone, Args)]
+#[command(group(
+    // If creating a new account, there's no reason to pass an already existing pubkey
+    ArgGroup::new("create_group")
+        .required(true) // Ensures that either `create` or `storage_account` is specified
+        .args(&["create", "storage_account"])
+))]
 pub struct ShadowDriveUploadDestination {
-    #[arg(long)]
-    pub storage_account: Option<String>,
-    #[arg(long)]
+    #[arg(help = "Specify a storage account public key", long)]
+    pub storage_account: String,
+    #[arg(help = "Specify the size of the storage account in MB", long)]
     pub storage_account_size_mb: Option<u64>,
-    #[arg(long)]
+    #[arg(help = "Specify the name of the storage account", long)]
     pub storage_account_name: Option<String>,
-    #[arg(long)]
-    pub alternate_keypair: Option<String>, // for testing on devnet but deploying to shadow drive
+    #[arg(
+        help = "Specify an alternate keypair for testing on devnet, but deploying to shadow drive",
+        long
+    )]
+    pub alternate_keypair: Option<String>,
+    #[arg(help = "Create a new storage account", long)]
+    pub create: bool,
 }
 
 #[derive(Debug, Clone, Args)]
 pub struct UrlUploadDestination {
-    #[arg(value_name = "URL", index = 1, required = true)]
+    #[arg(
+        help = "Specify a URL endpoint to deploy to",
+        value_name = "URL",
+        index = 1,
+        required = true
+    )]
     pub url: String,
 }
 
 #[derive(Debug, Clone, Subcommand)]
 pub enum DeployType {
+    #[command(about = "Deploy a program using an AWS S3 bucket")]
     S3(S3UploadDestination),
+    #[command(about = "Deploy a program using Shadow Drive")]
     ShadowDrive(ShadowDriveUploadDestination),
+    #[command(about = "Deploy a program with a URL")]
     Url(UrlUploadDestination),
 }
 
 #[derive(Subcommand, Debug)]
 pub enum Command {
+    #[command(
+        about = "Deploy a program with various storage options, such as S3, ShadowDrive, or a URL"
+    )]
     Deploy {
         #[clap(subcommand)]
         deploy_type: DeployType,
-        #[arg(short = 'm', long)]
+        #[arg(
+            help = "The path to the program's manifest file (manifest.json)",
+            short = 'm',
+            long
+        )]
         manifest_path: String,
-        #[arg(short = 'y', long)]
+        #[arg(
+            help = "Whether to automatically confirm deployment",
+            short = 'y',
+            long
+        )]
         auto_confirm: bool,
     },
     Build {
