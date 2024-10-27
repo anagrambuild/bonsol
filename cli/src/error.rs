@@ -1,7 +1,8 @@
 use byte_unit::ByteError;
 use object_store::Error as S3Error;
 use serde_json::Error as SerdeJsonError;
-use shadow_drive_sdk::{error::Error as ShdwDriveError, Pubkey};
+use shadow_drive_sdk::error::Error as ShdwDriveError;
+use shadow_drive_sdk::Pubkey;
 use std::io::Error as IoError;
 use thiserror::Error as DeriveError;
 

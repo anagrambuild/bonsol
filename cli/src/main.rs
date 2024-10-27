@@ -7,11 +7,9 @@ use clap::Parser;
 use solana_sdk::signature::read_keypair_file;
 use solana_sdk::signer::Signer;
 
-use crate::{
-    command::{BonsolCli, Command},
-    common::{sol_check, try_load_from_config},
-    error::BonsolCliError,
-};
+use crate::command::{BonsolCli, Command};
+use crate::common::{sol_check, try_load_from_config};
+use crate::error::BonsolCliError;
 
 mod build;
 mod deploy;
