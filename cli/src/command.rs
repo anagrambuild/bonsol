@@ -139,7 +139,11 @@ pub enum Command {
         auto_confirm: bool,
     },
     Build {
-        #[arg(short = 'z', long)]
+        #[arg(
+            help = "The path to a ZK program folder containing a Cargo.toml",
+            short = 'z',
+            long
+        )]
         zk_program_path: String,
     },
     Execute {

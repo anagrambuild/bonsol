@@ -48,9 +48,7 @@ async fn main() -> anyhow::Result<()> {
     let sdk = BonsolClient::new(rpc.clone());
 
     match command {
-        Command::Build { zk_program_path } => {
-            build::build(&keypair, zk_program_path).and_then(|_| Ok(println!("Build complete")))
-        }
+        Command::Build { zk_program_path } => build::build(&keypair, zk_program_path),
         Command::Deploy {
             manifest_path,
             auto_confirm,

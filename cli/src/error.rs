@@ -1,9 +1,11 @@
+use std::io::Error as IoError;
+
 use byte_unit::ByteError;
+use cargo_toml::Error as CargoManifestError;
 use object_store::Error as S3Error;
 use serde_json::Error as SerdeJsonError;
 use shadow_drive_sdk::error::Error as ShdwDriveError;
 use shadow_drive_sdk::Pubkey;
-use std::io::Error as IoError;
 use thiserror::Error as DeriveError;
 
 pub(crate) const DEFAULT_SOLANA_CONFIG_PATH: &str = ".config/solana/cli/config.yml";
@@ -24,6 +26,15 @@ pub enum BonsolCliError {
     #[error(transparent)]
     ZkManifestError(#[from] ZkManifestError),
 
+    #[error("Build failed: the following errors were captured from stderr:\n\n{0}")]
+    BuildFailure(String),
+
+    #[error("Failed to compute an image ID from binary at path '{binary_path}': {err:?}")]
+    FailedToComputeImageId {
+        binary_path: String,
+        err: anyhow::Error,
+    },
+
     #[error(transparent)]
     S3ClientError(#[from] S3ClientError),
 
@@ -32,6 +43,9 @@ pub enum BonsolCliError {
 
     #[error("The binary uploaded does not match the local binary at path '{binary_path}', is the URL correct?\nupload_url: {url}")]
     OriginBinaryMismatch { url: String, binary_path: String },
+
+    #[error("The following build dependencies are missing: {}", missing_deps.join(", "))]
+    MissingBuildDependencies { missing_deps: Vec<String> },
 }
 
 #[derive(Debug, DeriveError, Clone)]
@@ -103,8 +117,55 @@ pub enum ZkManifestError {
         err: SerdeJsonError,
     },
 
+    #[error(
+        "Failed to produce zkprogram image binary path: Image binary path contains non-UTF8 encoded characters"
+    )]
+    InvalidBinaryPath,
+
     #[error("Failed to load binary from manifest at '{binary_path}': {err:?}")]
-    FailedToLoad { binary_path: String, err: IoError },
+    FailedToLoadBinary { binary_path: String, err: IoError },
+
+    #[error("Program path {0} does not contain a Cargo.toml")]
+    MissingManifest(String),
+
+    #[error("Failed to load manifest at '{manifest_path}': {err:?}")]
+    FailedToLoadManifest {
+        manifest_path: String,
+        err: CargoManifestError,
+    },
+
+    #[error("Expected '{name}' to be a table at '{manifest_path}'")]
+    ExpectedTable { manifest_path: String, name: String },
+
+    #[error("Expected '{name}' to be an array at '{manifest_path}'")]
+    ExpectedArray { manifest_path: String, name: String },
+
+    #[error("Manifest at '{0}' does not contain a package name")]
+    MissingPackageName(String),
+
+    #[error("Manifest at '{0}' does not contain a package metadata field")]
+    MissingPackageMetadata(String),
+
+    #[error("Manifest at '{manifest_path}' has a metadata table that is missing a zkprogram metadata key: meta: {meta:?}")]
+    MissingProgramMetadata {
+        manifest_path: String,
+        meta: cargo_toml::Value,
+    },
+
+    #[error("Manifest at '{manifest_path}' has a zkprogram metadata table that is missing a input_order key: zkprogram: {zkprogram:?}")]
+    MissingInputOrder {
+        manifest_path: String,
+        zkprogram: cargo_toml::Value,
+    },
+
+    #[error("Failed to parse input: Input contains non-UTF8 encoded characters: {0}")]
+    InvalidInput(cargo_toml::Value),
+
+    #[error("Failed to parse the following inputs at '{manifest_path}': {}", errs.join("\n"))]
+    InvalidInputs {
+        manifest_path: String,
+        errs: Vec<String>,
+    },
 }
 
 #[derive(Debug, DeriveError)]

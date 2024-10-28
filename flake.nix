@@ -342,9 +342,6 @@
               nodejs_22
               python3
               udev
-
-              # checked for at runtime but never used
-              cargo-binstall
             ] ++ [
               setup
               validator

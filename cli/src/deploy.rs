@@ -42,7 +42,7 @@ pub async fn deploy(
         })
     })?;
     let loaded_binary = fs::read(&manifest.binary_path).map_err(|err| {
-        BonsolCliError::ZkManifestError(ZkManifestError::FailedToLoad {
+        BonsolCliError::ZkManifestError(ZkManifestError::FailedToLoadBinary {
             binary_path: manifest.binary_path.clone(),
             err,
         })
