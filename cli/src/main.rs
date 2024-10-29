@@ -75,25 +75,13 @@ async fn main() -> anyhow::Result<()> {
         Commands::Deploy {
             manifest_path,
             s3_upload,
-            shadow_drive_upload,
+            compute_units,
             auto_confirm,
-            deploy_type,
-            url_upload,
         } => {
             if !sol_check(rpc.clone(), keypair.pubkey()).await {
                 anyhow::bail!(SOL_CHECK_MESSAGE);
             }
-            deploy::deploy(
-                rpc,
-                &keypair,
-                manifest_path,
-                s3_upload,
-                shadow_drive_upload,
-                url_upload,
-                auto_confirm,
-                deploy_type,
-            )
-            .await?;
+            deploy::deploy(rpc, manifest_path, s3_upload, compute_units, auto_confirm).await?;
         }
         Commands::Execute {
             execution_request_file,

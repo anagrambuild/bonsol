@@ -15,38 +15,13 @@ pub struct BonsolCli {
 #[derive(Debug, Clone, Args)]
 pub struct S3UploadDestination {
     #[arg(long)]
-    pub bucket: Option<String>,
+    pub bucket: String,
     #[arg(long)]
-    pub access_key: Option<String>,
+    pub access_key: String,
     #[arg(long)]
-    pub secret_key: Option<String>,
+    pub secret_key: String,
     #[arg(long)]
-    pub region: Option<String>,
-}
-
-#[derive(Debug, Clone, Args)]
-pub struct ShadowDriveUpload {
-    #[arg(long)]
-    pub storage_account: Option<String>,
-    #[arg(long)]
-    pub storage_account_size_mb: Option<u64>,
-    #[arg(long)]
-    pub storage_account_name: Option<String>,
-    #[arg(long)]
-    pub alternate_keypair: Option<String>, // for testing on devnet but deploying to shadow drive
-}
-
-#[derive(Debug, Clone, Args)]
-pub struct UrlUploadDestination {
-    #[arg(long)]
-    pub url: String,
-}
-
-#[derive(Debug, Clone, ValueEnum)]
-pub enum DeployType {
-    S3,
-    ShadowDrive,
-    Url,
+    pub region: String,
 }
 
 #[derive(Subcommand, Debug)]
@@ -54,14 +29,10 @@ pub enum Commands {
     Deploy {
         #[arg(short = 'm', long)]
         manifest_path: String,
-        #[arg(short = 't', long)]
-        deploy_type: Option<DeployType>,
         #[clap(flatten)]
         s3_upload: S3UploadDestination,
-        #[clap(flatten)]
-        shadow_drive_upload: ShadowDriveUpload,
-        #[clap(flatten)]
-        url_upload: UrlUploadDestination,
+        #[arg(short = 'b', long)]
+        compute_units: Option<u32>,
         #[arg(short = 'y', long)]
         auto_confirm: bool,
     },
