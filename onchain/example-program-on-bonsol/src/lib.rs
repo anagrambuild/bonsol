@@ -94,7 +94,6 @@ fn main<'a>(
             invoke_signed(&ix, accounts, &[&[execution_id.as_bytes(), &[bump]]])?;
             let mut data = requester.try_borrow_mut_data()?;
             data.copy_from_slice(&execution_account.key.to_bytes());
-
             Ok(())
         }
         1 => {
@@ -130,10 +129,10 @@ fn main<'a>(
             if sol_memcmp(accounts[1].key.as_ref(), EA1.as_ref(), 32) != 0 {
                 return Err(ProgramError::InvalidInstructionData.into());
             }
-            if sol_memcmp(accounts[2].key.as_ref(), EA2.as_ref(), 32) != 0 {
+            if sol_memcmp(accounts[3].key.as_ref(), EA2.as_ref(), 32) != 0 {
                 return Err(ProgramError::InvalidInstructionData.into());
             }
-            if sol_memcmp(accounts[3].key.as_ref(), EA3.as_ref(), 32) != 0 {
+            if sol_memcmp(accounts[4].key.as_ref(), EA3.as_ref(), 32) != 0 {
                 return Err(ProgramError::InvalidInstructionData.into());
             }
             if !accounts[1].is_writable {

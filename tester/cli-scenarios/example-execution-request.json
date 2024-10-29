@@ -1,0 +1,42 @@
+{
+  "imageId": "68f4b0c5f9ce034aa60ceb264a18d6c410a3af68fafd931bcfd9ebe7c1e42960",
+  "executionConfig": {
+    "verifyInputHash": false,
+    "forwardOutput": true
+  },
+  "inputs": [
+    {
+      "inputType": "PublicData",
+      "data": "{\"attestation\":\"test\"}"
+    },
+    {
+      "inputType": "Private",
+      "data": "https://echoserver.dev/server?response=N4IgFgpghgJhBOBnEAuA2mkBjA9gOwBcJCBaAgTwAcIQAaEIgDwIHpKAbKASzxAF0+9AEY4Y5VKArVUDCMzogYUAlBlFEBEAF96G5QFdkKAEwAGU1qA"
+    }
+  ],
+  "tip": 12000,
+  "expiry": 100,
+  "callbackConfig": {
+    "programId": "exay1T7QqsJPNcwzMiWubR6vZnqrgM16jZRraHgqBGG",
+    "instructionPrefix": [
+      1
+    ],
+    "extraAccounts": [
+      {
+        "pubkey": "3b6DR2gbTJwrrX27VLEZ2FJcHrDvTSLKEcTLVhdxCoaf",
+        "isSigner": false,
+        "isWritable": false
+      },
+      {
+        "pubkey": "g7dD1FHSemkUQrX1Eak37wzvDjscgBW2pFCENwjLdMX",
+        "isSigner": false,
+        "isWritable": true
+      },
+      {
+        "pubkey": "FHab8zDcP1DooZqXHWQowikqtXJb1eNHc46FEh1KejmX",
+        "isSigner": false,
+        "isWritable": false
+      }
+    ]
+  }
+}
