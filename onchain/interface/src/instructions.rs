@@ -160,7 +160,6 @@ pub struct CallbackConfig {
     pub extra_accounts: Vec<AccountMeta>,
 }
 
-
 pub struct InputRef<'a> {
     pub input_type: InputType,
     pub data: &'a [u8],
@@ -174,41 +173,40 @@ impl<'a> InputRef<'a> {
     pub fn public(data: &'a [u8]) -> Self {
         Self {
             input_type: InputType::PublicData,
-            data
+            data,
         }
     }
     pub fn private(data: &'a [u8]) -> Self {
         Self {
             input_type: InputType::Private,
-            data
+            data,
         }
     }
     pub fn public_proof(data: &'a [u8]) -> Self {
         Self {
             input_type: InputType::PublicProof,
-            data
+            data,
         }
     }
     pub fn url(data: &'a [u8]) -> Self {
         Self {
             input_type: InputType::PublicUrl,
-            data
+            data,
         }
     }
     pub fn input_set(data: &'a [u8]) -> Self {
         Self {
             input_type: InputType::InputSet,
-            data
+            data,
         }
     }
     pub fn public_account(data: &'a [u8]) -> Self {
         Self {
             input_type: InputType::PublicAccountData,
-            data
+            data,
         }
     }
 }
-
 
 /// Executes a bonsol program.
 /// This sends and instruction to the bonsol program which requests execution from the bonsol network
@@ -352,4 +350,3 @@ pub fn execute_v1_with_accounts<'a>(
     let ix_data = fbb.finished_data();
     Ok(Instruction::new_with_bytes(crate::ID, ix_data, accounts))
 }
-

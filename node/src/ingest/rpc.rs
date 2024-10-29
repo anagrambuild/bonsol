@@ -11,7 +11,8 @@ use {
     solana_transaction_status::{
         EncodedTransactionWithStatusMeta, UiInnerInstructions, UiInstruction, UiTransactionEncoding,
     },
-    tokio::{sync::mpsc::UnboundedSender, task::JoinHandle}, tracing::error,
+    tokio::{sync::mpsc::UnboundedSender, task::JoinHandle},
+    tracing::error,
 };
 
 use futures_util::StreamExt;

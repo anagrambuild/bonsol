@@ -299,7 +299,9 @@ impl BonsolClient {
             if now.elapsed().as_secs() > timeout.unwrap_or(0) {
                 return Err(anyhow::anyhow!("Timeout"));
             }
-            let status = self.get_execution_request_v1(&requester, execution_id).await;
+            let status = self
+                .get_execution_request_v1(&requester, execution_id)
+                .await;
             match status {
                 Ok(ExecutionAccountStatus::Pending(req)) => {
                     if req.max_block_height < expiry {

@@ -48,7 +48,11 @@ impl<'a, 'b> ClaimAccounts<'a, 'b> {
             check_writable_signer(ca.claimer, ChannelError::InvalidClaimerAccount)?;
             check_writeable(ca.exec_claim, ChannelError::InvalidClaimAccount)?;
             check_writeable(ca.exec, ChannelError::InvalidExecutionAccount)?;
-            check_owner(ca.exec, &crate::ID, ChannelError::InvalidExecutionAccountOwner)?;
+            check_owner(
+                ca.exec,
+                &crate::ID,
+                ChannelError::InvalidExecutionAccountOwner,
+            )?;
             let exec_seeds = execution_address_seeds(ca.requester.key, executionid.as_bytes());
             check_pda(
                 &exec_seeds,

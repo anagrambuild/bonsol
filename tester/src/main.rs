@@ -1,23 +1,19 @@
 use anyhow::Result;
-use bonsol_sdk::{
-    deployment_address, execution_address,
-    instructions::{CallbackConfig, ExecutionConfig, InputRef},
-    BonsolClient, ExitCode, InputType,
-};
-use rand::{distributions::Alphanumeric, Rng};
+use bonsol_sdk::instructions::{CallbackConfig, ExecutionConfig, InputRef};
+use bonsol_sdk::{deployment_address, execution_address, BonsolClient, ExitCode, InputType};
+use rand::distributions::Alphanumeric;
+use rand::Rng;
 use solana_rpc_client::nonblocking::rpc_client::RpcClient;
 use solana_rpc_client_api::config::RpcSendTransactionConfig;
-use solana_sdk::{
-    commitment_config::CommitmentConfig,
-    hash::hashv,
-    instruction::{AccountMeta, Instruction},
-    message::{v0, VersionedMessage},
-    pubkey::Pubkey,
-    signature::Keypair,
-    signer::Signer,
-    system_program,
-    transaction::VersionedTransaction,
-};
+use solana_sdk::commitment_config::CommitmentConfig;
+use solana_sdk::hash::hashv;
+use solana_sdk::instruction::{AccountMeta, Instruction};
+use solana_sdk::message::{v0, VersionedMessage};
+use solana_sdk::pubkey::Pubkey;
+use solana_sdk::signature::Keypair;
+use solana_sdk::signer::Signer;
+use solana_sdk::system_program;
+use solana_sdk::transaction::VersionedTransaction;
 use std::str::FromStr;
 
 #[tokio::main]

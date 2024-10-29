@@ -119,16 +119,21 @@ pub async fn execute(
         .or(execution_request_file.expiry)
         .ok_or(anyhow::anyhow!("Expiry not provided"))?;
     let callback_config = execution_request_file.callback_config;
-    let mut input_hash = if let Some(input_hash) = execution_request_file.execution_config.input_hash {
-        let input_hash = Base64::decode_vec(&input_hash).map_err(|_| anyhow::anyhow!("Invalid input hash, must be base64 encoded"))?;
-        input_hash
-    } else {
-        vec![]
-    };
-    
+    let mut input_hash =
+        if let Some(input_hash) = execution_request_file.execution_config.input_hash {
+            let input_hash = Base64::decode_vec(&input_hash)
+                .map_err(|_| anyhow::anyhow!("Invalid input hash, must be base64 encoded"))?;
+            input_hash
+        } else {
+            vec![]
+        };
+
     let signer = keypair.pubkey();
     let transformed_inputs = execute_transform_cli_inputs(inputs)?;
-    let verify_input_hash = execution_request_file.execution_config.verify_input_hash.unwrap_or(false);
+    let verify_input_hash = execution_request_file
+        .execution_config
+        .verify_input_hash
+        .unwrap_or(false);
     let hash_inputs = verify_input_hash
         // cannot auto hash private inputs since you need the claim from the prover to get the private inputs
         // if requester knows them they can send the hash in the request
@@ -154,10 +159,13 @@ pub async fn execute(
         }
         input_hash = hash.finalize().to_vec();
     }
-    let execution_config = ExecutionConfig{
+    let execution_config = ExecutionConfig {
         verify_input_hash: verify_input_hash,
         input_hash: Some(&input_hash),
-        forward_output: execution_request_file.execution_config.forward_output.unwrap_or(false),
+        forward_output: execution_request_file
+            .execution_config
+            .forward_output
+            .unwrap_or(false),
     };
     let current_block = sdk.get_current_slot().await?;
     let expiry = expiry + current_block;
@@ -170,7 +178,15 @@ pub async fn execute(
             &signer,
             &image_id,
             &execution_id,
-            transformed_inputs.iter().map(|i| InputRef::new(i.input_type, i.data.as_ref().map(|d| d.as_slice()).unwrap_or_default())).collect(),
+            transformed_inputs
+                .iter()
+                .map(|i| {
+                    InputRef::new(
+                        i.input_type,
+                        i.data.as_ref().map(|d| d.as_slice()).unwrap_or_default(),
+                    )
+                })
+                .collect(),
             tip,
             expiry,
             execution_config,
