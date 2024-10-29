@@ -34,7 +34,7 @@ Great! Our tools are there. Let's run the `simple` example already provided from
 #### Prerequisites
 If this is your first time running bonsol install the Risc0 Groth16 Prover:
 ```bash
-./bin/install_prover.sh --prefix /opt/risc0-prover
+./bin/install_prover.sh --prefix .
 ```
 
 The solona cli must be configured. This configuration is typically found in `${HOME}/.config/solana/cli/config.yml`
@@ -54,7 +54,7 @@ solana-keygen new -o ${HOME}/.config/solana/id.json
 
 1. Download and setup the system with the needed binaries and keys to run the groth16 prover over the risc0 FRI
 ```bash
-./bin/setup.sh --prefix /opt/risc0-prover
+./bin/setup.sh --prefix .
 ```
 2. Compile the 乃ㄖ几丂ㄖㄥ on chain program and start a localnet with the program loaded
 ```bash
