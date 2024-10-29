@@ -1,17 +1,13 @@
-#!/usr/bin/env zsh
+#!/usr/bin/env bash
 
 set -e
 
 INSTALL_PREFIX=
-DEFAULT_INSTALL_PREFIX="/opt/risc0-prover"
+DEFAULT_INSTALL_PREFIX="."
 
 function parse_arguments() {
     # Initialize variables with default values
-    PROVER_PROVIDER_URL="${DEFAULT_PROVER_PROVIDER_URL}"
     INSTALL_PREFIX="${DEFAULT_INSTALL_PREFIX}"
-    JOB_TIMEOUT="${DEFAULT_JOB_TIMEOUT}"
-    PROVER_VERSION="${DEFAULT_VERSION}"
-
     # Loop through all arguments
     while [[ "$#" -gt 0 ]]; do
         case "$1" in
@@ -43,6 +39,7 @@ function parse_arguments() {
     echo "INSTALL_PREFIX is set to '$INSTALL_PREFIX'"
 }
 
+parse_arguments "$@"
 
 if [ ! -f "${INSTALL_PREFIX}/stark/stark_verify" ]; then
     echo "Error: Bonsol default to checking for the groth16 compression tool to be located at ${INSTALL_PREFIX}/stark"
