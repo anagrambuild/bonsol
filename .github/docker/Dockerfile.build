@@ -1,5 +1,5 @@
 # Stage: Bonsol Test
-FROM ghcr.io/anagrambuild/risczero:latest
+FROM ghcr.io/anagrambuild/risczero:v1.0.3_2
 
 ENV USER=solana
 ARG SOLANA=1.18.22
@@ -18,10 +18,15 @@ RUN rustup component add \
 
 RUN rustup toolchain install nightly  && \
     rustup component add rustfmt --toolchain nightly
-
-COPY . .
-
-RUN /go/bin/yamlfmt -lint .github/workflows/*.yaml .github/workflows/*.yml .github/*.yaml .github/*.yml
-
-RUN cargo +nightly fmt --all -- --check
-RUN cargo test   
+COPY ci-entry.sh /usr/local/bin/ci-entry.sh
+RUN chmod +x /usr/local/bin/ci-entry.sh
+ENTRYPOINT ["/usr/local/bin/ci-entry.sh"]
+LABEL \
+    org.opencontainers.image.name="bonsol-ci-env" \
+    org.opencontainers.image.description="Bonsol CI Build Environment" \
+    org.opencontainers.image.url="https://github.com/anagrambuild/bonsol" \
+    org.opencontainers.image.source="https://github.com/anagrambuild/bonsol.git" \
+    org.opencontainers.image.vendor="anagram.xyz" \
+    org.opencontainers.image.created=$(date --rfc-3339=seconds) \
+    org.opencontainers.image.licenses="GNU-Affero" \
+    org.opencontainers.image.authors="Anagram Build <build@anagram.xyz>"
