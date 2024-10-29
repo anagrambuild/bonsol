@@ -6,14 +6,14 @@ use solana_program::program_error::ProgramError;
 use solana_program::pubkey;
 use solana_program::pubkey::Pubkey;
 
-use solana_program::program_memory::sol_memcmp;
-use solana_program::{declare_id, entrypoint, msg};
-use solana_program::rent::Rent;
-use solana_program::system_instruction;
 use solana_program::clock::Clock;
-use solana_program::sysvar::Sysvar;
 use solana_program::instruction::AccountMeta;
 use solana_program::program::invoke_signed;
+use solana_program::program_memory::sol_memcmp;
+use solana_program::rent::Rent;
+use solana_program::system_instruction;
+use solana_program::sysvar::Sysvar;
+use solana_program::{declare_id, entrypoint, msg};
 use std::str::from_utf8;
 
 declare_id!("exay1T7QqsJPNcwzMiWubR6vZnqrgM16jZRraHgqBGG");
@@ -24,27 +24,41 @@ static EA2: Pubkey = pubkey!("g7dD1FHSemkUQrX1Eak37wzvDjscgBW2pFCENwjLdMX");
 static EA3: Pubkey = pubkey!("FHab8zDcP1DooZqXHWQowikqtXJb1eNHc46FEh1KejmX");
 
 entrypoint!(main);
-fn main<'a>(_program_id: &Pubkey, accounts: &'a [AccountInfo<'a>], instruction_data: &[u8]) -> ProgramResult {
+fn main<'a>(
+    _program_id: &Pubkey,
+    accounts: &'a [AccountInfo<'a>],
+    instruction_data: &[u8],
+) -> ProgramResult {
     let (ix, data) = instruction_data.split_at(1);
     match ix[0] {
         0 => {
             let payer = &accounts[0]; //any feepayer
-            let execution_id = from_utf8(&data[0..16]).map_err(|_| ProgramError::InvalidInstructionData)?;
+            let execution_id =
+                from_utf8(&data[0..16]).map_err(|_| ProgramError::InvalidInstructionData)?;
             let input_hash = &data[16..48];
-            let private_input_url = &data[48..];
+            let expiration = u64::from_le_bytes(data[48..56].try_into().unwrap());
+            let bump = data[56];
+            let private_input_url = &data[57..];
             let requester = &accounts[1]; //pda of this program
             let system = &accounts[2];
             let execution_account = &accounts[3]; //the pda of bonsol that represents the execution request
-            create_program_account(requester, &[b"test"], 32, payer, system, None)?;
-
+            create_program_account(
+                requester,
+                &[execution_id.as_bytes(), &[bump]],
+                32,
+                payer,
+                system,
+                None,
+            )?;
             let tip = 1000;
-            let expiration = Clock::get()?.slot + 100;
+            let expiration = Clock::get()?.slot + expiration; //high experation since we run this on potatoes in CI
             let ix = execute_v1(
                 requester.key,
+                payer.key,
                 SIMPLE_IMAGE_ID,
                 &execution_id,
                 vec![
-                    InputRef::public("test".as_bytes()),
+                    InputRef::public("{\"attestation\":\"test\"}".as_bytes()),
                     InputRef::private(private_input_url),
                 ],
                 tip,
@@ -60,29 +74,45 @@ fn main<'a>(_program_id: &Pubkey, accounts: &'a [AccountInfo<'a>], instruction_d
                     extra_accounts: vec![
                         AccountMeta::new(*requester.key, false),
                         AccountMeta::new(EA1, false),
-                        AccountMeta::new(EA1, false),
-                        AccountMeta::new(EA2, false),
-                        AccountMeta::new(EA3, false),
+                        AccountMeta::new_readonly(EA2, false),
+                        AccountMeta::new_readonly(EA3, false),
                     ],
                 }),
-            ).map_err(|_| ProgramError::InvalidInstructionData)?;
-            invoke_signed(
-                &ix, 
-                accounts,
-                &[&[b"test"]],
-            )?;
+            )
+            .map_err(|_| ProgramError::InvalidInstructionData)?;
+            invoke_signed(&ix, accounts, &[&[execution_id.as_bytes(), &[bump]]])?;
             let mut data = requester.try_borrow_mut_data()?;
-            data.copy_from_slice(
-                &execution_account.key.to_bytes()
-            );
+            data.copy_from_slice(&execution_account.key.to_bytes());
             Ok(())
         }
         1 => {
             let requester = &accounts[1];
             let requester_data = requester.try_borrow_data()?;
-            let execution_account = Pubkey::try_from(&requester_data[0..32]).map_err(|_| ProgramError::InvalidInstructionData)?;
-            
-            let callback_output: BonsolCallback = handle_callback(SIMPLE_IMAGE_ID, &execution_account, accounts, data)?;
+            let execution_account = Pubkey::try_from(&requester_data[0..32])
+                .map_err(|_| ProgramError::InvalidInstructionData)?;
+            let callback_output: BonsolCallback =
+                handle_callback(SIMPLE_IMAGE_ID, &execution_account, accounts, data)?;
+            if sol_memcmp(accounts[2].key.as_ref(), EA1.as_ref(), 32) != 0 {
+                return Err(ProgramError::InvalidInstructionData.into());
+            }
+            if sol_memcmp(accounts[3].key.as_ref(), EA2.as_ref(), 32) != 0 {
+                return Err(ProgramError::InvalidInstructionData.into());
+            }
+            if sol_memcmp(accounts[4].key.as_ref(), EA3.as_ref(), 32) != 0 {
+                return Err(ProgramError::InvalidInstructionData.into());
+            }
+            assert!(accounts[2].is_writable, "Writable account not found");
+            if callback_output.committed_outputs.len() == 1
+                && callback_output.committed_outputs[0] == 1
+            {
+                msg!("Correct Json Attestation");
+            }
+            Ok(())
+        }
+        //only callback test
+        2 => {
+            let callback_output: BonsolCallback =
+                handle_callback(SIMPLE_IMAGE_ID, &accounts[0].key, accounts, data)?;
             if sol_memcmp(accounts[1].key.as_ref(), EA1.as_ref(), 32) != 0 {
                 return Err(ProgramError::InvalidInstructionData.into());
             }
@@ -92,12 +122,15 @@ fn main<'a>(_program_id: &Pubkey, accounts: &'a [AccountInfo<'a>], instruction_d
             if sol_memcmp(accounts[3].key.as_ref(), EA3.as_ref(), 32) != 0 {
                 return Err(ProgramError::InvalidInstructionData.into());
             }
-            assert!(accounts[2].is_writable, "Writable account not found");
-            if callback_output.committed_outputs.len() == 1 && callback_output.committed_outputs[0] == 1 {
+            assert!(accounts[1].is_writable, "Writable account not found");
+            if callback_output.committed_outputs.len() == 1
+                && callback_output.committed_outputs[0] == 1
+            {
                 msg!("Correct Json Attestation");
             }
             Ok(())
         }
+
         _ => return Err(ProgramError::InvalidInstructionData.into()),
     }
 }

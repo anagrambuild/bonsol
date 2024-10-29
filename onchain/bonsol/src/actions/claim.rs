@@ -48,7 +48,7 @@ impl<'a, 'b> ClaimAccounts<'a, 'b> {
             check_writable_signer(ca.claimer, ChannelError::InvalidClaimerAccount)?;
             check_writeable(ca.exec_claim, ChannelError::InvalidClaimAccount)?;
             check_writeable(ca.exec, ChannelError::InvalidExecutionAccount)?;
-            check_owner(ca.exec, &crate::ID, ChannelError::InvalidExecutionAccount)?;
+            check_owner(ca.exec, &crate::ID, ChannelError::InvalidExecutionAccountOwner)?;
             let exec_seeds = execution_address_seeds(ca.requester.key, executionid.as_bytes());
             check_pda(
                 &exec_seeds,
@@ -60,12 +60,12 @@ impl<'a, 'b> ClaimAccounts<'a, 'b> {
                 .try_borrow_data()
                 .map_err(|_| ChannelError::CannotBorrowData)?;
             let execution_request = root_as_execution_request_v1(&*exec_data)
-                .map_err(|_| ChannelError::InvalidExecutionAccount)?;
+                .map_err(|_| ChannelError::InvalidExecutionAccountData)?;
             let expected_eid = execution_request
                 .execution_id()
-                .ok_or(ChannelError::InvalidExecutionAccount)?;
+                .ok_or(ChannelError::InvalidExecutionAccountData)?;
             if expected_eid != executionid {
-                return Err(ChannelError::InvalidExecutionAccount);
+                return Err(ChannelError::InvalidExecutionId);
             }
             let tip = execution_request.tip();
             if ca.claimer.lamports() < tip {

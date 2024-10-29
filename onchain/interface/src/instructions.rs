@@ -209,9 +209,44 @@ impl<'a> InputRef<'a> {
     }
 }
 
-//TODO: allow developer to bypass the find program addresses for CU usage
-pub fn execute_v1(
-    signer: &Pubkey,
+
+/// Executes a bonsol program.
+/// This sends and instruction to the bonsol program which requests execution from the bonsol network
+pub fn execute_v1<'a>(
+    requester: &Pubkey,
+    payer: &Pubkey,
+    image_id: &str,
+    execution_id: &str,
+    inputs: Vec<InputRef<'a>>,
+    tip: u64,
+    expiration: u64,
+    config: ExecutionConfig<'a>,
+    callback: Option<CallbackConfig>,
+) -> Result<Instruction, ClientError> {
+    let (execution_account, _) = execution_address(requester, execution_id.as_bytes());
+    let (deployment_account, _) = deployment_address(image_id);
+    execute_v1_with_accounts(
+        requester,
+        payer,
+        &execution_account,
+        &deployment_account,
+        image_id,
+        execution_id,
+        inputs,
+        tip,
+        expiration,
+        config,
+        callback,
+    )
+}
+/// Executes a bonsol program with the provided accounts
+/// This is more efficient than using the execute_v1 function
+/// but requires the user to provide the accounts
+pub fn execute_v1_with_accounts<'a>(
+    requester: &Pubkey,
+    payer: &Pubkey,
+    execution_account: &Pubkey,
+    deployment_account: &Pubkey,
     image_id: &str,
     execution_id: &str,
     inputs: Vec<InputRef>,
@@ -221,8 +256,6 @@ pub fn execute_v1(
     callback: Option<CallbackConfig>,
 ) -> Result<Instruction, ClientError> {
     config.validate()?;
-    let (execution_account, _) = execution_address(signer, execution_id.as_bytes());
-    let (deployment_account, _) = deployment_address(image_id);
     let mut fbb = FlatBufferBuilder::new();
     let mut callback_pubkey = None; // aviod clone
     let (callback_program_id, callback_instruction_prefix, extra_accounts) =
@@ -246,10 +279,10 @@ pub fn execute_v1(
             (None, None, None)
         };
     let mut accounts = vec![
-        AccountMeta::new(signer.to_owned(), true),
-        AccountMeta::new(signer.to_owned(), true),
-        AccountMeta::new(execution_account, false),
-        AccountMeta::new(deployment_account, false),
+        AccountMeta::new(*requester, true),
+        AccountMeta::new(*payer, true),
+        AccountMeta::new(*execution_account, false),
+        AccountMeta::new_readonly(*deployment_account, false),
         AccountMeta::new_readonly(callback_pubkey.unwrap_or(crate::ID), false),
         AccountMeta::new_readonly(system_program::id(), false),
     ];
@@ -319,3 +352,4 @@ pub fn execute_v1(
     let ix_data = fbb.finished_data();
     Ok(Instruction::new_with_bytes(crate::ID, ix_data, accounts))
 }
+

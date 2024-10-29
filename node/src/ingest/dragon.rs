@@ -1,5 +1,7 @@
 use std::{collections::HashMap, time::Duration};
 
+use tracing::error;
+
 use {
     anyhow::anyhow,
     solana_sdk::{message::AccountKeys, transaction::VersionedTransaction},
@@ -107,10 +109,10 @@ async fn ingest(
         match message {
             Ok(msg) => {
                 if let Err(e) = handle_msg(msg, program, &txchan) {
-                    eprintln!("Error in stream: {e:?}")
+                    error!("Error in stream: {e:?}")
                 }
             }
-            Err(e) => eprintln!("Error in stream: {e:?}"),
+            Err(e) => error!("Error in stream: {e:?}"),
         }
     }
     Ok(())

@@ -100,7 +100,6 @@ impl<'a, 'b> ExecuteAccounts<'a, 'b> {
             if inputs.len() - num_sets + input_set != required_input_size {
                 return Err(ChannelError::InvalidInputs);
             }
-            //todo ensure inputs ar correct types/public private on chain, provers do this onsite so its low priority
             ea.exec_bump = Some(check_pda(
                 &execution_address_seeds(&ea.requester.key, evec.as_bytes()),
                 ea.exec.key,
@@ -141,7 +140,7 @@ impl<'a, 'b> ExecuteAccounts<'a, 'b> {
         Err(ChannelError::InvalidInstruction)
     }
 }
-//todo forward extra accounts
+
 pub fn process_execute_v1<'a>(
     accounts: &'a [AccountInfo<'a>],
     ix: ChannelInstruction<'a>,

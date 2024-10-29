@@ -12,6 +12,7 @@ members = [
   "cli",
   "sdk",
   "prover",
+  "tester",
 ]
 resolver = "2"
 # Only necessary for nix cargo workspace artifacts to build without warnings.
