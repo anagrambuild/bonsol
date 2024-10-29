@@ -11,10 +11,13 @@ use solana_program::instruction::AccountMeta;
 use solana_program::program::invoke_signed;
 use solana_program::program_memory::sol_memcmp;
 use solana_program::rent::Rent;
+<<<<<<< HEAD
 
 use solana_program::system_instruction;
+=======
+>>>>>>> 63ca406 (chore: fmt)
 use solana_program::sysvar::Sysvar;
-use solana_program::{declare_id, entrypoint, msg};
+use solana_program::{declare_id, entrypoint, msg, system_instruction};
 use std::str::from_utf8;
 
 declare_id!("exay1T7QqsJPNcwzMiWubR6vZnqrgM16jZRraHgqBGG");
