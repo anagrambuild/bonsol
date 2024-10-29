@@ -247,7 +247,13 @@ impl BonsolClient {
                     return Ok(());
                 }
                 Some(Err(e)) => {
-                    return Err(anyhow::anyhow!("Transaction Falure Cannot Recover {:?}", e));
+                    // Get error logs by simulating transaction
+                    let logs = self.rpc_client.simulate_transaction(&tx).await?.value.logs;
+                    return Err(anyhow::anyhow!(
+                        "Transaction Failure Cannot Recover {:?}\n Logs: {:#?}",
+                        e,
+                        logs
+                    ));
                 }
                 None => {
                     rt -= 1;
