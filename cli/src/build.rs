@@ -21,7 +21,7 @@ pub fn build(keypair: &impl Signer, zk_program_path: String) -> Result<()> {
         ));
     }
 
-    let build_result = build_maifest(image_path, &keypair);
+    let build_result = build_manifest(image_path, &keypair);
     let manifest_path = image_path.join("manifest.json");
     match build_result {
         Err(e) => {
@@ -36,7 +36,7 @@ pub fn build(keypair: &impl Signer, zk_program_path: String) -> Result<()> {
     }
 }
 
-fn build_maifest(
+fn build_manifest(
     image_path: &Path,
     keypair: &impl Signer,
 ) -> Result<ZkProgramManifest, std::io::Error> {
@@ -71,6 +71,7 @@ fn build_maifest(
         ))?;
 
     let binary_path = image_path
+        .canonicalize()?
         .join("target/riscv-guest/riscv32im-risc0-zkvm-elf/docker")
         .join(package)
         .join(package);
