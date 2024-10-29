@@ -152,12 +152,14 @@ impl BonsolClient {
         image_size: u64,
         program_name: &str,
         url: &str,
+        cus: Option<u32>,
         inputs: Vec<ProgramInputType>,
     ) -> Result<Vec<Instruction>> {
         let compute_price_val = self.get_fees(signer).await?;
         let instruction =
             instructions::deploy_v1(signer, image_id, image_size, program_name, url, inputs)?;
-        let compute = ComputeBudgetInstruction::set_compute_unit_limit(20_000);
+        let cus = cus.unwrap_or(20_000); // Keep 20,000 default but allow customization
+        let compute = ComputeBudgetInstruction::set_compute_unit_limit(cus);
         let compute_price = ComputeBudgetInstruction::set_compute_unit_price(compute_price_val);
         Ok(vec![compute, compute_price, instruction])
     }

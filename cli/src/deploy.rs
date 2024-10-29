@@ -212,6 +212,7 @@ pub async fn deploy(
                     manifest.size,
                     &manifest.name,
                     &url,
+                    Some(100_000),
                     manifest
                         .input_order
                         .iter()
