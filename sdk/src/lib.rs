@@ -211,6 +211,18 @@ impl BonsolClient {
             let message =
                 v0::Message::try_compile(&signer.pubkey(), &instructions, &[], blockhash)?;
             let tx = VersionedTransaction::try_new(VersionedMessage::V0(message), &[&signer])?;
+
+            // Simulate transaction first to send custom error message with logs
+            let sim_result = self.rpc_client.simulate_transaction(&tx).await?;
+            if let Some(err) = sim_result.value.err {
+                return Err(anyhow::anyhow!(
+                    "Transaction simulation failed: {:?}\nLogs: {:#?}",
+                    err,
+                    sim_result.value.logs
+                ));
+            }
+
+            // Should always succeed
             let sig = self
                 .rpc_client
                 .send_transaction_with_config(
@@ -222,7 +234,8 @@ impl BonsolClient {
                         ..Default::default()
                     },
                 )
-                .await?;
+                .await
+                .expect("to not fail");
 
             let now = Instant::now();
             let confirm_transaction_initial_timeout = Duration::from_secs(retry_timeout);
@@ -247,12 +260,9 @@ impl BonsolClient {
                     return Ok(());
                 }
                 Some(Err(e)) => {
-                    // Get error logs by simulating transaction
-                    let logs = self.rpc_client.simulate_transaction(&tx).await?.value.logs;
                     return Err(anyhow::anyhow!(
-                        "Transaction Failure Cannot Recover {:?}\n Logs: {:#?}",
-                        e,
-                        logs
+                        "Transaction Failure Cannot Recover {:?}",
+                        e
                     ));
                 }
                 None => {
