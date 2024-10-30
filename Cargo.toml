@@ -11,7 +11,7 @@ members = [
   "schemas-rust",
   "cli",
   "sdk",
-  "prover",
+  "prover"
 ]
 resolver = "2"
 # Only necessary for nix cargo workspace artifacts to build without warnings.

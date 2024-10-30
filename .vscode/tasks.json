@@ -6,7 +6,7 @@
         {
             "label": "fmt",
             "type": "shell",
-            "command": "cargo +nightly fmt --check",
+            "command": "cargo +nightly fmt --all -- --check",
             "options": {
                 "cwd": "${workspaceFolder}"
             },
