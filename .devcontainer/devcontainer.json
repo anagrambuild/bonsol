@@ -13,7 +13,8 @@
 			"extensions": [
 				"vadimcn.vscode-lldb",
 				"fill-labs.dependi",
-				"rust-lang.rust-analyzer"
+				"rust-lang.rust-analyzer",
+				"gaborv.flatbuffers"
 			]
 		}
 	},
