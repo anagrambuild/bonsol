@@ -1190,7 +1190,6 @@ version = "0.2.1"
 dependencies = [
  "anyhow",
  "atty",
- "base64ct",
  "bincode",
  "bonsol-prover",
  "bonsol-sdk",
@@ -1198,6 +1197,7 @@ dependencies = [
  "bytes",
  "cargo_toml 0.20.5",
  "clap 4.5.20",
+ "hex",
  "indicatif",
  "num-traits",
  "object_store",

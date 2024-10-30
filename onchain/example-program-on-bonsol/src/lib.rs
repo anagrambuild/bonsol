@@ -23,6 +23,8 @@ static EA2: Pubkey = pubkey!("g7dD1FHSemkUQrX1Eak37wzvDjscgBW2pFCENwjLdMX");
 static EA3: Pubkey = pubkey!("FHab8zDcP1DooZqXHWQowikqtXJb1eNHc46FEh1KejmX");
 
 entrypoint!(main);
+/// This program is used as a testbed for bonsol, to test various scenarios
+/// and to test the callback functionality
 fn main<'a>(
     _program_id: &Pubkey,
     accounts: &'a [AccountInfo<'a>],
@@ -32,10 +34,17 @@ fn main<'a>(
     match ix[0] {
         0 => {
             let payer = &accounts[0]; //any feepayer
+            if data.len() < 57 {
+                return Err(ProgramError::InvalidInstructionData.into());
+            }
             let execution_id =
                 from_utf8(&data[0..16]).map_err(|_| ProgramError::InvalidInstructionData)?;
             let input_hash = &data[16..48];
-            let expiration = u64::from_le_bytes(data[48..56].try_into().unwrap());
+            let expiration = u64::from_le_bytes(
+                data[48..56]
+                    .try_into()
+                    .map_err(|_| ProgramError::InvalidInstructionData)?,
+            );
             let bump = data[56];
             let private_input_url = &data[57..];
             let requester = &accounts[1]; //pda of this program
@@ -100,7 +109,9 @@ fn main<'a>(
             if sol_memcmp(accounts[4].key.as_ref(), EA3.as_ref(), 32) != 0 {
                 return Err(ProgramError::InvalidInstructionData.into());
             }
-            assert!(accounts[2].is_writable, "Writable account not found");
+            if !accounts[2].is_writable {
+                return Err(ProgramError::InvalidInstructionData.into());
+            }
             if callback_output.committed_outputs.len() == 1
                 && callback_output.committed_outputs[0] == 1
             {
@@ -142,8 +153,7 @@ pub fn create_program_account<'a>(
     system: &'a AccountInfo<'a>,
     additional_lamports: Option<u64>,
 ) -> Result<(), ProgramError> {
-    let lamports =
-        Rent::default().minimum_balance(space as usize) + additional_lamports.unwrap_or(0);
+    let lamports = Rent::get()?.minimum_balance(space as usize) + additional_lamports.unwrap_or(0);
     let create_pda_account_ix =
         system_instruction::create_account(&payer.key, &account.key, lamports, space, &crate::id());
     invoke_signed(

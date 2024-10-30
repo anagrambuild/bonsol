@@ -38,9 +38,9 @@ async fn example_sdk_test(
     signer: &dyn Signer,
 ) -> Result<()> {
     println!("Running sdk test");
-    let EA1 = Pubkey::from_str("3b6DR2gbTJwrrX27VLEZ2FJcHrDvTSLKEcTLVhdxCoaf")?;
-    let EA2 = Pubkey::from_str("g7dD1FHSemkUQrX1Eak37wzvDjscgBW2pFCENwjLdMX")?;
-    let EA3 = Pubkey::from_str("FHab8zDcP1DooZqXHWQowikqtXJb1eNHc46FEh1KejmX")?;
+    let ea1 = Pubkey::from_str("3b6DR2gbTJwrrX27VLEZ2FJcHrDvTSLKEcTLVhdxCoaf")?;
+    let ea2 = Pubkey::from_str("g7dD1FHSemkUQrX1Eak37wzvDjscgBW2pFCENwjLdMX")?;
+    let ea3 = Pubkey::from_str("FHab8zDcP1DooZqXHWQowikqtXJb1eNHc46FEh1KejmX")?;
     let example_program = Pubkey::from_str("exay1T7QqsJPNcwzMiWubR6vZnqrgM16jZRraHgqBGG")?;
     let expiration: u64 = 1000;
     let execution_id = rand_id(16);
@@ -67,9 +67,9 @@ async fn example_sdk_test(
                 program_id: example_program,
                 instruction_prefix: vec![2],
                 extra_accounts: vec![
-                    AccountMeta::new(EA1, false),
-                    AccountMeta::new_readonly(EA2, false),
-                    AccountMeta::new_readonly(EA3, false),
+                    AccountMeta::new(ea1, false),
+                    AccountMeta::new_readonly(ea2, false),
+                    AccountMeta::new_readonly(ea3, false),
                 ],
             }),
         )

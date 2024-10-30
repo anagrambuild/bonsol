@@ -1,6 +1,5 @@
 use crate::common::*;
 use anyhow::Result;
-use base64ct::{Base64, Encoding};
 use bonsol_prover::input_resolver::{DefaultInputResolver, InputResolver, ProgramInput};
 use bonsol_sdk::instructions::{ExecutionConfig, InputRef};
 use bonsol_sdk::{BonsolClient, ExecutionAccountStatus, InputType};
@@ -121,8 +120,8 @@ pub async fn execute(
     let callback_config = execution_request_file.callback_config;
     let mut input_hash =
         if let Some(input_hash) = execution_request_file.execution_config.input_hash {
-            let input_hash = Base64::decode_vec(&input_hash)
-                .map_err(|_| anyhow::anyhow!("Invalid input hash, must be base64 encoded"))?;
+            let input_hash = hex::decode(&input_hash)
+                .map_err(|_| anyhow::anyhow!("Invalid input hash, must be hex encoded"))?;
             input_hash
         } else {
             vec![]
