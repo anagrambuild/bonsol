@@ -6,11 +6,12 @@ on:
   push:
     branches:
       - "ci-rework"
-permissions:
-  contents: read
-  packages: write
+
 jobs:
   build:
+    permissions:
+      contents: read
+      packages: write
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
