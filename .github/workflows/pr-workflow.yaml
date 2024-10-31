@@ -4,7 +4,8 @@ on:
     branches:
       - main
 jobs:
-  lint:
+  lint: 
+    name: Lint
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/anagrambuild/bonsol-ci-env:latest
@@ -18,6 +19,7 @@ jobs:
       # - name: Check Clippy
       #   uses: ./.github/tasks/check-clippy
   build:
+    name: Check
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/anagrambuild/bonsol-ci-env:latest
@@ -27,8 +29,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Build 
-        run: cargo build -p bonsol-cli
+        run: cargo check
   test:
+    name: Unit Test
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/anagrambuild/bonsol-ci-env:latest
@@ -40,7 +43,7 @@ jobs:
       - name: Test
         run: cargo test
   e2e-test:
-    
+    name: E2E Test
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/anagrambuild/bonsol-ci-env:latest

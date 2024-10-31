@@ -37,11 +37,9 @@ ENV CARGO_HOME=/usr/local/cargo
 ENV RUSTUP_HOME=/usr/local/rustup
 ENV PATH=${PATH}:/usr/local/cargo/bin:/go/bin:/home/${USER}/.local/share/solana/install/releases/${SOLANA}/bin
 
-# Set user and working directory
+# Set working directory
 ARG PACKAGE=bonsol
 WORKDIR /workspaces/${PACKAGE}
-USER solana
-
 # Install Rust components
 RUN rustup component add \
     clippy
