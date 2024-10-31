@@ -24,7 +24,7 @@ pub fn parse_ix_data<'a>(ix_data: &'a [u8]) -> Result<ChannelInstruction, Channe
     Ok(instruction)
 }
 
-#[derive(ToPrimitive, FromPrimitive)]
+#[derive(ToPrimitive, FromPrimitive, PartialEq)]
 #[repr(u8)]
 pub enum ExitCode {
     Success = 0,

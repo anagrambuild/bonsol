@@ -1,0 +1,15 @@
+[package]
+name = "bonsol-tester"
+version.workspace = true
+edition = "2021"
+publish = false          # Exclude local crates from licensing checks
+
+[dependencies]
+bonsol-sdk = { path = "../sdk" }
+bonsol-cli = { path = "../cli" }
+solana-sdk = { workspace = true }
+solana-rpc-client = { workspace = true }
+solana-rpc-client-api = { workspace = true }
+anyhow = "1.0.91"
+rand = "0.8.5"
+tokio = "1.41.0"

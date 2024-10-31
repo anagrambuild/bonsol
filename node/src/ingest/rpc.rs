@@ -12,6 +12,7 @@ use {
         EncodedTransactionWithStatusMeta, UiInnerInstructions, UiInstruction, UiTransactionEncoding,
     },
     tokio::{sync::mpsc::UnboundedSender, task::JoinHandle},
+    tracing::error,
 };
 
 use futures_util::StreamExt;
@@ -74,9 +75,7 @@ fn filter_txs(
                                             last_known_block,
                                         });
                                     } else {
-                                        println!(
-                                            "Failed to decode bs58 data for bonsol instruction"
-                                        );
+                                        error!("Failed to decode bs58 data for bonsol instruction");
                                     }
                                 }
                             }
@@ -116,7 +115,6 @@ async fn ingest(
             code: IngestErrorType::RpcError,
             message: e.to_string(),
         })?;
-    eprintln!("Subscribed to {}", rpc_url);
     while let Some(msg) = stream.next().await {
         if let Some(blk) = msg.value.block {
             if let Some(txs) = blk.transactions {
@@ -143,7 +141,7 @@ impl Ingester for RpcIngester {
             loop {
                 let res = ingest(rpc_url.clone(), program, txchan.clone()).await;
                 if let Err(e) = res {
-                    eprintln!("Error in ingester: {:?} retrying ", e);
+                    error!("Error in ingester: {:?} retrying ", e);
                     tokio::time::sleep(tokio::time::Duration::from_secs(5)).await;
                     if retry == 0 {
                         break;

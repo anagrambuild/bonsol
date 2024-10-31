@@ -13,21 +13,21 @@ use tokio::task::{JoinHandle, JoinSet};
 
 use crate::util::get_body_max_size;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum ProgramInput {
     Empty,
     Resolved(ResolvedInput),
     Unresolved(UnresolvedInput),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct UnresolvedInput {
     pub index: u8,
     pub url: Url,
     pub input_type: ProgramInputType,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct ResolvedInput {
     pub index: u8,
     pub data: Vec<u8>,
