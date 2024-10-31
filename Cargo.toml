@@ -6,13 +6,16 @@ members = [
   "iop",
   "onchain/bonsol",
   "onchain/interface",
-  "onchain/example-callback-program",
+  "onchain/example-program-on-bonsol",
   "node",
   "schemas-rust",
   "cli",
   "sdk",
   "prover",
+  "tester",
 ]
+
+
 resolver = "2"
 # Only necessary for nix cargo workspace artifacts to build without warnings.
 # The actual crate derivations build using their individual manifest version.

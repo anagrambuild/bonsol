@@ -144,7 +144,6 @@ impl TransactionSender for RpcTransactionSender {
         block_commitment: u64,
     ) -> Result<Signature> {
         let (execution_claim_account, _) = execution_claim_address(&execution_account.as_ref());
-        eprintln!("{:?}", execution_account);
         let accounts = vec![
             AccountMeta::new(execution_account, false),
             AccountMeta::new_readonly(requester, false),

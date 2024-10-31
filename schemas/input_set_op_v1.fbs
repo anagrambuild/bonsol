@@ -1,4 +1,3 @@
-
 include "./input_type.fbs";
 
 enum InputSetOp: uint8 {

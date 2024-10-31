@@ -3,6 +3,7 @@ include "./status_v1.fbs";
 include "./deploy_v1.fbs";
 include "./claim_v1.fbs";
 include "./input_set_op_v1.fbs";
+
 enum ChannelInstructionIxType: uint8 {
   ExecuteV1 = 0,
   StatusV1 = 1,

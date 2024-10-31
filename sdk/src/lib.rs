@@ -3,6 +3,7 @@ use std::time::Duration;
 use anyhow::Result;
 use bonsol_interface::bonsol_schema::{root_as_deploy_v1, root_as_execution_request_v1};
 use bonsol_interface::claim_state::ClaimStateHolder;
+use bonsol_interface::instructions::InputRef;
 use bytes::Bytes;
 use futures_util::TryFutureExt;
 use instructions::{CallbackConfig, ExecutionConfig};
@@ -10,7 +11,7 @@ use num_traits::FromPrimitive;
 use solana_rpc_client::nonblocking::rpc_client::RpcClient;
 use solana_rpc_client_api::config::RpcSendTransactionConfig;
 use solana_sdk::account::Account;
-use solana_sdk::commitment_config::{CommitmentConfig, CommitmentLevel};
+use solana_sdk::commitment_config::CommitmentConfig;
 use solana_sdk::compute_budget::ComputeBudgetInstruction;
 use solana_sdk::instruction::Instruction;
 use solana_sdk::message::{v0, VersionedMessage};
@@ -162,19 +163,20 @@ impl BonsolClient {
         Ok(vec![compute, compute_price, instruction])
     }
 
-    pub async fn execute_v1(
+    pub async fn execute_v1<'a>(
         &self,
         signer: &Pubkey,
         image_id: &str,
         execution_id: &str,
-        inputs: Vec<InputT>,
+        inputs: Vec<InputRef<'a>>,
         tip: u64,
         expiration: u64,
-        config: ExecutionConfig,
+        config: ExecutionConfig<'a>,
         callback: Option<CallbackConfig>,
     ) -> Result<Vec<Instruction>> {
         let compute_price_val = self.get_fees(signer).await?;
         let instruction = instructions::execute_v1(
+            signer,
             signer,
             image_id,
             execution_id,
@@ -254,6 +256,63 @@ impl BonsolClient {
                     if rt == 0 {
                         return Err(anyhow::anyhow!("Timeout: Failed to confirm transaction"));
                     }
+                }
+            }
+        }
+    }
+
+    pub async fn wait_for_claim(
+        &self,
+        requester: Pubkey,
+        execution_id: &str,
+        timeout: Option<u64>,
+    ) -> Result<ClaimStateHolder> {
+        let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(1));
+        let now = Instant::now();
+        let mut end = false;
+        loop {
+            interval.tick().await;
+            if now.elapsed().as_secs() > timeout.unwrap_or(0) {
+                end = true;
+            }
+            if let Ok(claim_state) = self.get_claim_state_v1(&requester, execution_id).await {
+                return Ok(claim_state);
+            }
+            if end {
+                return Err(anyhow::anyhow!("Timeout"));
+            }
+        }
+    }
+
+    pub async fn wait_for_proof(
+        &self,
+        requester: Pubkey,
+        execution_id: &str,
+        timeout: Option<u64>,
+    ) -> Result<ExitCode> {
+        let current_block = self.get_current_slot().await?;
+        let expiry = current_block + 100;
+        let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(1));
+        let now = Instant::now();
+        loop {
+            interval.tick().await;
+            if now.elapsed().as_secs() > timeout.unwrap_or(0) {
+                return Err(anyhow::anyhow!("Timeout"));
+            }
+            let status = self
+                .get_execution_request_v1(&requester, execution_id)
+                .await;
+            match status {
+                Ok(ExecutionAccountStatus::Pending(req)) => {
+                    if req.max_block_height < expiry {
+                        return Err(anyhow::anyhow!("Expired"));
+                    }
+                }
+                Ok(ExecutionAccountStatus::Completed(s)) => {
+                    return Ok(s);
+                }
+                Err(e) => {
+                    return Err(e);
                 }
             }
         }
