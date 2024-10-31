@@ -47,7 +47,6 @@ RUN rustup component add \
 RUN rustup toolchain install nightly  && \
     rustup component add rustfmt --toolchain nightly
 COPY ci-entry.sh /usr/local/bin/ci-entry.sh
-USER solana
 ENTRYPOINT ["/usr/local/bin/ci-entry.sh"]
 LABEL \
     org.opencontainers.image.name="bonsol-ci-env" \
