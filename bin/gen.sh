@@ -1,5 +1,16 @@
 #!/bin/bash
-flatc --rust --gen-object-api --gen-mutable --reflect-names -o schemas-rust/src schemas/*.fbs
+
+
+if [ ! -d "schemas" ]; then
+  echo "No schemas directory found"
+  exit 1
+fi
+
+if [ ! -x $(which flatc) ]; then
+  echo "Flatbuffers compiler is required"
+  exit 1
+fi
+
 flatc --ts --gen-object-api --gen-mutable --reflect-names -o schemas-ts schemas/*.fbs
 sed -i.bak '
   /mutate_writable(value:boolean):boolean {/,/}/ {

@@ -14,3 +14,4 @@ relay/MyLogFile.log
 NodeDragon.toml
 images/**/manifest.json
 stark
+*_generated.rs
