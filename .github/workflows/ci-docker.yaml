@@ -25,5 +25,6 @@ jobs:
           file: .github/docker/Dockerfile.build
           platforms: linux/amd64
           push: true
+          tags: ghcr.io/anagrambuild/bonsol-ci-env:latest
           build-args: |
             VERSION=latest
