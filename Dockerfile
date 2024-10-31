@@ -3,12 +3,15 @@
 # Stage 1: Node setup
 FROM debian:stable-slim AS node-slim
 RUN export DEBIAN_FRONTEND=noninteractive && \
-    apt update && \
-    apt install -y -q --no-install-recommends \
-    build-essential git gnupg2 curl \
-    ca-certificates && \
-    apt clean && \
-    rm -rf /var/lib/apt/lists/*
+    apt-get update && \
+    apt-get install -y -q --no-install-recommends \
+    ca-certificates \
+    curl \
+    git \
+    gnupg2 \
+    && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 ENV NODE_VERSION=v22.3.0
 ENV NVM_DIR=/usr/local/nvm
@@ -17,8 +20,39 @@ RUN mkdir -p ${NVM_DIR}
 ADD https://raw.githubusercontent.com/creationix/nvm/master/install.sh /usr/local/etc/nvm/install.sh
 RUN bash /usr/local/etc/nvm/install.sh
 
+# Stage 2: flatc build
+FROM debian:stable-slim AS flatc-build
+RUN export DEBIAN_FRONTEND=noninteractive && \
+    apt-get update && \
+    apt-get install -y -q --no-install-recommends \
+    build-essential \
+    cmake \
+    ca-certificates \
+    curl \
+    git \
+    gnupg2 \
+    && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# flatc
+WORKDIR /flatbuffers
+ARG FLATC_VERSION=24.3.25
+ADD https://github.com/google/flatbuffers/archive/refs/tags/v${FLATC_VERSION}.tar.gz v${FLATC_VERSION}.tar.gz
+RUN tar -zxvf v${FLATC_VERSION}.tar.gz || { echo "Failed to extract tarball"; exit 1; }
+WORKDIR /flatbuffers/flatbuffers-${FLATC_VERSION}
+RUN cmake -G "Unix Makefiles" && make -j && make install
+RUN strip /usr/local/bin/flatc
+
 # Stage 2: Bonsol Dev
 FROM ghcr.io/anagrambuild/risczero:latest
+
+# flatbuffers
+COPY --from=flatc-build /usr/local/bin/flatc /usr/local/bin/flatc
+COPY --from=flatc-build /usr/local/include/flatbuffers /usr/local/include/flatbuffers
+COPY --from=flatc-build /usr/local/lib/libflatbuffers.a /usr/local/lib/libflatbuffers.a
+COPY --from=flatc-build /usr/local/lib/cmake/flatbuffers /usr/local/lib/cmake/flatbuffers
+COPY --from=flatc-build /usr/local/lib/pkgconfig/flatbuffers.pc /usr/local/lib/pkgconfig/flatbuffers.pc
 
 ENV USER=solana
 ARG SOLANA=1.18.22
@@ -47,6 +81,7 @@ ENV NODE_PATH ${NVM_NODE_PATH}/lib/node_modules
 ENV PATH      ${NVM_NODE_PATH}/bin:$PATH
 COPY --from=node-slim --chown=${USER}:${USER} /usr/local/nvm /usr/local/nvm
 RUN bash -c ". $NVM_DIR/nvm.sh && nvm install $NODE_VERSION && nvm alias default $NODE_VERSION && nvm use default"
+
 
 RUN npm install npm -g
 RUN npm install yarn -g
