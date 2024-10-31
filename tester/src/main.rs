@@ -60,11 +60,11 @@ async fn example_sdk_test(
                 InputRef::new(InputType::Private, input_2.as_bytes()),
             ],
             10000,
-            slot+expiration,
+            slot + expiration,
             ExecutionConfig {
                 verify_input_hash: true,
                 input_hash: Some(input_hash.as_ref()),
-                forward_output: true
+                forward_output: true,
             },
             Some(CallbackConfig {
                 program_id: example_program,
