@@ -79,10 +79,11 @@ pub struct S3UploadDestination {
     ArgGroup::new("create_group")
         .required(true) // Ensures that either `create` or `storage_account` is specified
         .args(&["create", "storage_account"])
+        .multiple(false)
 ))]
 pub struct ShadowDriveUploadDestination {
     #[arg(help = "Specify a storage account public key", long)]
-    pub storage_account: String,
+    pub storage_account: Option<String>,
     #[arg(help = "Specify the size of the storage account in MB", long)]
     pub storage_account_size_mb: Option<u64>,
     #[arg(help = "Specify the name of the storage account", long)]

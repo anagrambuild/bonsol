@@ -166,7 +166,9 @@ pub async fn deploy(
                 println!("Created new storage account with public key: {storage_account}");
                 storage_account
             } else {
-                storage_account.to_string() // cli parsing requirements prevent both `create` and `storage_account` to be passed simultaneously
+                // cli parsing prevents both `create` and `storage_account` to be passed simultaneously
+                // and require at least one or the other is passed, making this unwrap safe.
+                storage_account.unwrap().to_string()
             };
 
             let name = format!("{}-{}", manifest.name, manifest.image_id);

@@ -335,6 +335,15 @@
               nil # nix lsp
               nixpkgs-fmt # nix formatter
               rustup
+              (flatbuffers.overrideAttrs (old: rec {
+                version = "24.3.25";
+                src = fetchFromGitHub {
+                  owner = "google";
+                  repo = "flatbuffers";
+                  rev = "v${version}";
+                  hash = "sha256-uE9CQnhzVgOweYLhWPn2hvzXHyBbFiFVESJ1AEM3BmA=";
+                };
+              }))
 
               # `setup.sh` dependencies
               docker
