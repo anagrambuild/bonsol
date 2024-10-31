@@ -11,13 +11,9 @@ use solana_program::instruction::AccountMeta;
 use solana_program::program::invoke_signed;
 use solana_program::program_memory::sol_memcmp;
 use solana_program::rent::Rent;
-<<<<<<< HEAD
-
 use solana_program::system_instruction;
-=======
->>>>>>> 63ca406 (chore: fmt)
 use solana_program::sysvar::Sysvar;
-use solana_program::{declare_id, entrypoint, msg, system_instruction};
+use solana_program::{declare_id, entrypoint, msg};
 use std::str::from_utf8;
 
 declare_id!("exay1T7QqsJPNcwzMiWubR6vZnqrgM16jZRraHgqBGG");
@@ -132,10 +128,10 @@ fn main<'a>(
             if sol_memcmp(accounts[1].key.as_ref(), EA1.as_ref(), 32) != 0 {
                 return Err(ProgramError::InvalidInstructionData.into());
             }
-            if sol_memcmp(accounts[3].key.as_ref(), EA2.as_ref(), 32) != 0 {
+            if sol_memcmp(accounts[2].key.as_ref(), EA2.as_ref(), 32) != 0 {
                 return Err(ProgramError::InvalidInstructionData.into());
             }
-            if sol_memcmp(accounts[4].key.as_ref(), EA3.as_ref(), 32) != 0 {
+            if sol_memcmp(accounts[3].key.as_ref(), EA3.as_ref(), 32) != 0 {
                 return Err(ProgramError::InvalidInstructionData.into());
             }
             if !accounts[1].is_writable {

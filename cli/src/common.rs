@@ -199,9 +199,9 @@ pub fn execute_transform_cli_inputs(inputs: Vec<CliInput>) -> Result<Vec<InputT>
         let input_type = CliInputType::from_str(&input.input_type)?.0;
         match input_type {
             InputType::PublicData => {
-                let has_hex_prefix = input.data.starts_with("hex:");
+                let has_hex_prefix = input.data.starts_with("0x");
                 if has_hex_prefix {
-                    let (is_valid, data) = is_valid_hex(&input.data[4..]);
+                    let (is_valid, data) = is_valid_hex(&input.data[2..]);
                     if is_valid {
                         res.push(InputT::public(data));
                     }
@@ -285,9 +285,9 @@ fn proof_parse_entry(index: u8, s: &str) -> Result<ProgramInput> {
             input_type: ProgramInputType::Private,
         }));
     }
-    let has_hex_prefix = s.starts_with("hex:");
+    let has_hex_prefix = s.starts_with("0x");
     if has_hex_prefix {
-        let (is_valid, data) = is_valid_hex(&s[4..]);
+        let (is_valid, data) = is_valid_hex(&s[2..]);
         if is_valid {
             return Ok(ProgramInput::Resolved(ResolvedInput {
                 index,
@@ -364,7 +364,7 @@ mod test {
 
     #[test]
     fn test_proof_parse_stdin() {
-        let inputs = r#"1234567890abcdef hex:313233343536373839313061626364656667 2.1 2000 -2000 {"attestation":"test"}"#;
+        let inputs = r#"1234567890abcdef 0x313233343536373839313061626364656667 2.1 2000 -2000 {"attestation":"test"}"#;
         let inputs_parsed = proof_parse_stdin(&inputs).unwrap();
 
         let expected_inputs = vec![
@@ -427,7 +427,7 @@ mod test {
         };
         let hex_input = CliInput {
             input_type: "PublicData".to_string(),
-            data: "hex:313233343536373839313061626364656667".to_string(),
+            data: "0x313233343536373839313061626364656667".to_string(),
         };
         let hex_input2 = CliInput {
             input_type: "PublicData".to_string(),

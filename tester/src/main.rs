@@ -49,6 +49,7 @@ async fn example_sdk_test(
     let input_1 = "{\"attestation\":\"test\"}";
     let input_2 = "https://echoserver.dev/server?response=N4IgFgpghgJhBOBnEAuA2mkBjA9gOwBcJCBaAgTwAcIQAaEIgDwIHpKAbKASzxAF0+9AEY4Y5VKArVUDCMzogYUAlBlFEBEAF96G5QFdkKAEwAGU1qA";
     let input_hash = hashv(&[input_1.as_bytes(), input_2.as_bytes()]);
+    let slot = bonsol_client.get_current_slot().await?;
     let ixs = bonsol_client
         .execute_v1(
             &signer.pubkey(),
@@ -59,7 +60,7 @@ async fn example_sdk_test(
                 InputRef::new(InputType::Private, input_2.as_bytes()),
             ],
             10000,
-            expiration,
+            slot+expiration,
             ExecutionConfig {
                 verify_input_hash: true,
                 input_hash: Some(input_hash.as_ref()),
@@ -97,7 +98,7 @@ async fn example_sdk_test(
         .confirm_transaction_with_spinner(&signature, &bh, CommitmentConfig::confirmed())
         .await?;
     bonsol_client
-        .wait_for_claim(signer.pubkey(), &execution_id, Some(10))
+        .wait_for_claim(signer.pubkey(), &execution_id, Some(20))
         .await?;
     let status = bonsol_client
         .wait_for_proof(signer.pubkey(), &execution_id, Some(60))
@@ -168,7 +169,7 @@ async fn example_bonsol_program_test(
         .confirm_transaction_with_spinner(&signature, &bh, CommitmentConfig::confirmed())
         .await?;
     bonsol_client
-        .wait_for_claim(requester, &execution_id, Some(10))
+        .wait_for_claim(requester, &execution_id, Some(20))
         .await?;
     let status = bonsol_client
         .wait_for_proof(requester, &execution_id, Some(60))
