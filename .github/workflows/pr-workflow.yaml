@@ -39,7 +39,7 @@ jobs:
           template-variables: |
             {
               "outcontent": ${{ toJSON(env.OUT_FILE_CONTENT) }},
-              "outhash": ${{ hashFiles('cout.txt') }}
+              "outhash": ${{ toJSON(hashFiles('cout.txt')) }}
             }
       - name: Fmt
         shell: bash
@@ -64,7 +64,7 @@ jobs:
           template-variables: |
             {
               "outcontent": ${{ toJSON(env.OUT_FILE_CONTENT) }},
-              "outhash": ${{ hashFiles('fout.txt') }}
+              "outhash": ${{ toJSON(hashFiles('fout.txt')) }}
             }
   test:
     name: Unit Test
