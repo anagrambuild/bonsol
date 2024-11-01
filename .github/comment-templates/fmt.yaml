@@ -1,0 +1,20 @@
+comment:
+  on-update: recreate
+  header: |
+    Formatting Issues Found
+
+  footer: |
+    ---
+    This is an automated comment created by the Bonsol CI
+
+  snippets:
+    - id: outfiles_{{ outhash }}
+      files:
+        - 'out.txt'
+      body: |
+        ### Compilation or Formatting Issues Found
+        
+        {{ outcontent }}
+       
+        
+        
