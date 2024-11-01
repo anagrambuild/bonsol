@@ -48,7 +48,7 @@ RUN rustup toolchain install nightly  && \
     rustup component add rustfmt --toolchain nightly
 COPY ci-entry.sh /usr/local/bin/ci-entry.sh
 ENTRYPOINT ["/usr/local/bin/ci-entry.sh"]
-USER 1001:121
+USER root
 LABEL \
     org.opencontainers.image.name="bonsol-ci-env" \
     org.opencontainers.image.description="Bonsol CI Build Environment" \
