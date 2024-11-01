@@ -18,10 +18,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Build 
+        shell: bash
         run: |
           cargo check --quiet 2> >(tee out.txt)
           echo "OUT_FILE_CONTENT<<EOF" >> $GITHUB_ENV
-          cargo +nightly fmt --all -- --check 2> >(tee out.txt)
+          cargo +nightly fmt --all -- --check 1> >(tee out.txt)
           echo "OUT_FILE_CONTENT<<EOF" >> $GITHUB_ENV
       - uses: exercism/pr-commenter-action@v1.5.1
         with:
@@ -29,7 +30,7 @@ jobs:
           config-file: ".github/comment-templates/fmt.yaml"
           template-variables: |
             {
-              "outContent": ${{ toJSON(env.OUT_FILE_CONTENT) }},
+              "outcontent": ${{ toJSON(env.OUT_FILE_CONTENT) }},
               "outhash": ${{ hashFiles('out.txt') }}
             }
   test:
