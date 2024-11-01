@@ -17,13 +17,31 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      - name: Build 
+      - name: Check 
         shell: bash
         run: |
-          cargo check --quiet 2> >(tee out.txt)
+          cargo check --quiet 2> >(tee cout.txt)
+          OUT_FILE_CONTENT=$(cat cout.txt)
           echo "OUT_FILE_CONTENT<<EOF" >> $GITHUB_ENV
-          cargo +nightly fmt --all -- --check 1> >(tee out.txt)
+          echo "$OUT_FILE_CONTENT" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+      - uses: exercism/pr-commenter-action@v1.5.1
+        with:
+          github-token: "${{ github.token }}"
+          config-file: ".github/comment-templates/check.yaml"
+          template-variables: |
+            {
+              "outcontent": ${{ toJSON(env.OUT_FILE_CONTENT) }},
+              "outhash": ${{ hashFiles('cout.txt') }}
+            }
+      - name: Fmt
+        shell: bash
+        run: |
+          cargo +nightly fmt --all -- --check 1> >(tee fout.txt)
+          OUT_FILE_CONTENT=$(cat fout.txt)
           echo "OUT_FILE_CONTENT<<EOF" >> $GITHUB_ENV
+          echo "$OUT_FILE_CONTENT" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
       - uses: exercism/pr-commenter-action@v1.5.1
         with:
           github-token: "${{ github.token }}"
@@ -31,7 +49,7 @@ jobs:
           template-variables: |
             {
               "outcontent": ${{ toJSON(env.OUT_FILE_CONTENT) }},
-              "outhash": ${{ hashFiles('out.txt') }}
+              "outhash": ${{ hashFiles('fout.txt') }}
             }
   test:
     name: Unit Test

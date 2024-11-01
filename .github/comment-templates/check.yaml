@@ -1,7 +1,7 @@
 comment:
   on-update: recreate
   header: |
-    Formatting Issues Found
+    Compilation Issues Found
 
   footer: |
     ---
@@ -10,7 +10,7 @@ comment:
   snippets:
     - id: outfiles_{{ outhash }}
       files:
-        - 'fout.txt'
+        - 'cout.txt'
       body: |
         ```
         {{ outcontent }}
