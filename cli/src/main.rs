@@ -49,18 +49,14 @@ async fn main() -> anyhow::Result<()> {
 
     match command {
         Command::Build { zk_program_path } => build::build(&keypair, zk_program_path),
-        Command::Deploy {
-            manifest_path,
-            auto_confirm,
-            deploy_type,
-        } => {
+        Command::Deploy { deploy_args } => {
             if !sol_check(rpc.clone(), keypair.pubkey()).await {
                 return Err(BonsolCliError::InsufficientFundsForTransactions(
                     keypair.pubkey().to_string(),
                 )
                 .into());
             }
-            deploy::deploy(rpc, keypair, manifest_path, auto_confirm, deploy_type).await
+            deploy::deploy(rpc, keypair, deploy_args).await
         }
         Command::Execute {
             execution_request_file,

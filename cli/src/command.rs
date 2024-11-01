@@ -37,7 +37,7 @@ pub struct BonsolCli {
 }
 
 #[derive(Debug, Clone, Args)]
-pub struct S3UploadDestination {
+pub struct S3UploadArgs {
     #[arg(
         help = "Specify the S3 bucket name",
         long,
@@ -71,17 +71,19 @@ pub struct S3UploadDestination {
         env = "AWS_REGION"
     )]
     pub region: String,
+    #[command(flatten)]
+    pub shared_args: SharedDeployArgs,
 }
 
 #[derive(Debug, Clone, Args)]
-#[command(group(
+#[command(alias = "sd", group(
     // If creating a new account, there's no reason to pass an already existing pubkey
     ArgGroup::new("create_group")
         .required(true) // Ensures that either `create` or `storage_account` is specified
         .args(&["create", "storage_account"])
         .multiple(false)
 ))]
-pub struct ShadowDriveUploadDestination {
+pub struct ShadowDriveUploadArgs {
     #[arg(help = "Specify a storage account public key", long)]
     pub storage_account: Option<String>,
     #[arg(help = "Specify the size of the storage account in MB", long)]
@@ -95,10 +97,12 @@ pub struct ShadowDriveUploadDestination {
     pub alternate_keypair: Option<String>,
     #[arg(help = "Create a new storage account", long)]
     pub create: bool,
+    #[command(flatten)]
+    pub shared_args: SharedDeployArgs,
 }
 
 #[derive(Debug, Clone, Args)]
-pub struct UrlUploadDestination {
+pub struct UrlUploadArgs {
     #[arg(
         help = "Specify a URL endpoint to deploy to",
         value_name = "URL",
@@ -106,16 +110,43 @@ pub struct UrlUploadDestination {
         required = true
     )]
     pub url: String,
+    #[command(flatten)]
+    pub shared_args: SharedDeployArgs,
 }
 
 #[derive(Debug, Clone, Subcommand)]
-pub enum DeployType {
+pub enum DeployArgs {
     #[command(about = "Deploy a program using an AWS S3 bucket")]
-    S3(S3UploadDestination),
+    S3(S3UploadArgs),
     #[command(about = "Deploy a program using Shadow Drive")]
-    ShadowDrive(ShadowDriveUploadDestination),
-    #[command(about = "Deploy a program with a URL")]
-    Url(UrlUploadDestination),
+    ShadowDrive(ShadowDriveUploadArgs),
+    #[command(about = "Deploy a program manually with a URL")]
+    Url(UrlUploadArgs),
+}
+impl DeployArgs {
+    pub fn shared_args(&self) -> SharedDeployArgs {
+        match self {
+            Self::S3(s3) => s3.shared_args.clone(),
+            Self::ShadowDrive(sd) => sd.shared_args.clone(),
+            Self::Url(url) => url.shared_args.clone(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Args)]
+pub struct SharedDeployArgs {
+    #[arg(
+        help = "The path to the program's manifest file (manifest.json)",
+        short = 'm',
+        long
+    )]
+    pub manifest_path: String,
+    #[arg(
+        help = "Whether to automatically confirm deployment",
+        short = 'y',
+        long
+    )]
+    pub auto_confirm: bool,
 }
 
 #[derive(Subcommand, Debug)]
@@ -125,19 +156,7 @@ pub enum Command {
     )]
     Deploy {
         #[clap(subcommand)]
-        deploy_type: DeployType,
-        #[arg(
-            help = "The path to the program's manifest file (manifest.json)",
-            short = 'm',
-            long
-        )]
-        manifest_path: String,
-        #[arg(
-            help = "Whether to automatically confirm deployment",
-            short = 'y',
-            long
-        )]
-        auto_confirm: bool,
+        deploy_args: DeployArgs,
     },
     Build {
         #[arg(

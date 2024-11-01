@@ -15,26 +15,24 @@ use solana_sdk::commitment_config::CommitmentConfig;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::read_keypair_file;
 
-use crate::command::{DeployType, S3UploadDestination, ShadowDriveUploadDestination};
+use crate::command::{DeployArgs, S3UploadArgs, ShadowDriveUploadArgs, SharedDeployArgs};
 use crate::common::ZkProgramManifest;
 use crate::error::{BonsolCliError, S3ClientError, ShadowDriveClientError, ZkManifestError};
 
-pub async fn deploy(
-    rpc_url: String,
-    signer: Keypair,
-    manifest_path: String,
-    auto_confirm: bool,
-    deploy_type: DeployType,
-) -> Result<()> {
+pub async fn deploy(rpc_url: String, signer: Keypair, deploy_args: DeployArgs) -> Result<()> {
     let bar = ProgressBar::new_spinner();
     let rpc_client = RpcClient::new_with_commitment(rpc_url.clone(), CommitmentConfig::confirmed());
+    let SharedDeployArgs {
+        manifest_path,
+        auto_confirm,
+    } = deploy_args.shared_args();
+
     let manifest_file = File::open(Path::new(&manifest_path)).map_err(|err| {
         BonsolCliError::ZkManifestError(ZkManifestError::FailedToOpen {
             manifest_path: manifest_path.clone(),
             err,
         })
     })?;
-
     let manifest: ZkProgramManifest = serde_json::from_reader(manifest_file).map_err(|err| {
         BonsolCliError::ZkManifestError(ZkManifestError::FailedDeserialization {
             manifest_path,
@@ -47,13 +45,14 @@ pub async fn deploy(
             err,
         })
     })?;
-    let url: String = match deploy_type {
-        DeployType::S3(s3_upload) => {
-            let S3UploadDestination {
+    let url: String = match deploy_args {
+        DeployArgs::S3(s3_upload) => {
+            let S3UploadArgs {
                 bucket,
                 access_key,
                 secret_key,
                 region,
+                ..
             } = s3_upload;
 
             let s3_client = AmazonS3Builder::new()
@@ -96,13 +95,14 @@ pub async fn deploy(
             bar.finish_and_clear();
             url
         }
-        DeployType::ShadowDrive(shadow_drive_upload) => {
-            let ShadowDriveUploadDestination {
+        DeployArgs::ShadowDrive(shadow_drive_upload) => {
+            let ShadowDriveUploadArgs {
                 storage_account,
                 storage_account_size_mb,
                 storage_account_name,
                 alternate_keypair,
                 create,
+                ..
             } = shadow_drive_upload;
 
             let alternate_keypair = alternate_keypair
@@ -191,7 +191,7 @@ pub async fn deploy(
             println!("Uploaded to shadow drive");
             resp.message
         }
-        DeployType::Url(url_upload) => {
+        DeployArgs::Url(url_upload) => {
             let req = reqwest::get(&url_upload.url).await?;
             let bytes = req.bytes().await?;
             if bytes != loaded_binary {
