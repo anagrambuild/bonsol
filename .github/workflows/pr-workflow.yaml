@@ -56,7 +56,7 @@ jobs:
           echo "$OUT_FILE_CONTENT" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
       - uses: exercism/pr-commenter-action@v1.5.1
-        if: ${{ steps.fmt.outcome == 'failure' }}
+        if: ${{ steps.fmt.conclusion == 'failure' }}
         with:
           github-token: "${{ github.token }}"
           config-file: ".github/comment-templates/fmt.yaml"
@@ -79,7 +79,7 @@ jobs:
         run: cargo test
   e2e-test:
     name: E2E Test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-m
     container:
       image: ghcr.io/anagrambuild/bonsol-ci-env:latest
       volumes:
@@ -87,11 +87,20 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+      - uses: actions/cache@v4
+        id: cache
+        with:
+          path: stark
+          key: stark-v2024-05-17.1
+      - name: Setup Deps
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: ./bin/install_prover.sh --prefix . 
       - name: E2E Test
         run: |
           cargo build-sbf
           cargo build -p bonsol-node
           solana-test-validator \
+          --ledger-path ./ledger \
           --limit-ledger-size 0 \
           --bind-address 0.0.0.0 \
           --rpc-pubsub-enable-block-subscription \
