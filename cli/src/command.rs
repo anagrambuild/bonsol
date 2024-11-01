@@ -106,7 +106,6 @@ pub struct UrlUploadArgs {
     #[arg(
         help = "Specify a URL endpoint to deploy to",
         value_name = "URL",
-        index = 1,
         required = true
     )]
     pub url: String,
