@@ -43,6 +43,7 @@ jobs:
             }
       - name: Fmt
         shell: bash
+        if: ${{ steps.check.outcome == 'success' }}
         continue-on-error: true
         id: fmt
         run: |
@@ -56,7 +57,7 @@ jobs:
           echo "$OUT_FILE_CONTENT" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
       - uses: exercism/pr-commenter-action@v1.5.1
-        if: ${{ steps.fmt.conclusion == 'failure' }}
+        if: ${{ steps.fmt.outcome == 'failure' }}
         with:
           github-token: "${{ github.token }}"
           config-file: ".github/comment-templates/fmt.yaml"
@@ -100,7 +101,7 @@ jobs:
           cargo build-sbf
           cargo build -p bonsol-node
           solana-test-validator \
-          --ledger-path ./ledger \
+          --ledger ./ledger \
           --limit-ledger-size 0 \
           --bind-address 0.0.0.0 \
           --rpc-pubsub-enable-block-subscription \

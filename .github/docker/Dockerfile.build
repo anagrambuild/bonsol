@@ -35,6 +35,9 @@ COPY --from=flatc-build /usr/local/lib/pkgconfig/flatbuffers.pc /usr/local/lib/p
 USER root
 ENV USER=solana
 ARG SOLANA=1.18.22
+ARG RUST_VERSION=1.81.0
+RUN rustup toolchain install ${RUST_VERSION} && \
+    rustup default ${RUST_VERSION} && \
 ENV CARGO_HOME=/usr/local/cargo
 ENV RUSTUP_HOME=/usr/local/rustup
 ENV PATH=${PATH}:/usr/local/cargo/bin:/go/bin:/home/${USER}/.local/share/solana/install/releases/${SOLANA}/bin
