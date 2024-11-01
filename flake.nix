@@ -308,7 +308,7 @@
                 node_pid=$!
                 sleep 30
                 echo "node is running: PID $node_pid"
-                ${bonsol-cli}/bin/bonsol --keypair $HOME/.config/solana/id.json --rpc-url http://localhost:8899 deploy -m images/simple/manifest.json -t url --url https://bonsol-public-images.s3.amazonaws.com/simple-7cb4887749266c099ad1793e8a7d486a27ff1426d614ec0cc9ff50e686d17699 -y
+                ${bonsol-cli}/bin/bonsol --keypair $HOME/.config/solana/id.json --rpc-url http://localhost:8899 deploy url https://bonsol-public-images.s3.amazonaws.com/simple-7cb4887749266c099ad1793e8a7d486a27ff1426d614ec0cc9ff50e686d17699 -m images/simple/manifest.json -y
                 sleep 20
                 resp=$(${bonsol-cli}/bin/bonsol --keypair $HOME/.config/solana/id.json --rpc-url http://localhost:8899 execute -f testing-examples/example-execution-request.json -x 2000 -m 2000 -w)
                 echo "execution response was: $resp"
