@@ -30,9 +30,10 @@ async fn main() -> anyhow::Result<()> {
         command,
     } = BonsolCli::parse();
 
-    let (rpc, kpp) = rpc_url
-        .zip(keypair)
-        .unwrap_or(try_load_from_config(config)?);
+    let (rpc, kpp) = match rpc_url.zip(keypair) {
+        Some(conf) => conf,
+        None => try_load_from_config(config)?,
+    };
     let keypair =
         read_keypair_file(Path::new(&kpp)).map_err(|err| BonsolCliError::FailedToReadKeypair {
             file: kpp,

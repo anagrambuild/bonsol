@@ -43,6 +43,16 @@
             ./rust-toolchain.toml
             "sha256-VZZnlyP69+Y3crrLHQyJirqlHrTtGTsyiSnZB8jEvVo=";
           craneLib = (crane.mkLib pkgs).overrideToolchain rustToolchain.fenix-pkgs;
+          flatc = with pkgs;
+            (flatbuffers.overrideAttrs (old: rec {
+              version = "24.3.25";
+              src = fetchFromGitHub {
+                owner = "google";
+                repo = "flatbuffers";
+                rev = "v${version}";
+                hash = "sha256-uE9CQnhzVgOweYLhWPn2hvzXHyBbFiFVESJ1AEM3BmA=";
+              };
+            }));
           workspace = rec {
             root = ./.;
             src = craneLib.cleanCargoSource root;
@@ -92,6 +102,7 @@
               pkg-config
               perl
               autoPatchelfHook
+              flatc
             ];
 
             buildInputs = with pkgs; [
@@ -120,6 +131,7 @@
             fileset = lib.fileset.unions ([
               ./Cargo.toml
               ./Cargo.lock
+              ./schemas
               (workspace.canonicalizePath crate)
             ] ++ (workspace.canonicalizePaths deps));
           };
@@ -156,8 +168,8 @@
             });
 
           # The root Cargo.toml requires all of the workspace crates, otherwise this would be a bit neater.
-          bonsol-cli = mkCrateDrv "bonsol" "cli" [ "sdk" "onchain" "schemas-rust" "iop" "node" "prover" ];
-          bonsol-node = mkCrateDrv "bonsol-node" "node" [ "sdk" "onchain" "schemas-rust" "iop" "cli" "prover" ];
+          bonsol-cli = mkCrateDrv "bonsol" "cli" [ "sdk" "onchain" "schemas-rust" "iop" "node" "prover" "tester" ];
+          bonsol-node = mkCrateDrv "bonsol-node" "node" [ "sdk" "onchain" "schemas-rust" "iop" "cli" "prover" "tester" ];
 
           setup = pkgs.callPackage ./nixos/pkgs/bonsol/setup.nix { };
           validator = pkgs.callPackage ./nixos/pkgs/bonsol/validator.nix { };
@@ -285,10 +297,10 @@
               ] ++ [
                 r0vm
                 cargo-risczero
+                risc0-groth16-prover
                 solana-cli
                 bonsol-cli
                 bonsol-node
-                setup
                 validator
                 (run-node.override {
                   use-nix = true;
@@ -296,7 +308,6 @@
               ];
 
               text = ''
-                ${setup}/bin/setup.sh
                 ${bonsol-cli}/bin/bonsol --keypair $HOME/.config/solana/id.json --rpc-url http://localhost:8899 build -z images/simple
                 echo "building validator"
                 ${validator}/bin/validator.sh > /dev/null 2>&1 &
@@ -335,15 +346,7 @@
               nil # nix lsp
               nixpkgs-fmt # nix formatter
               rustup
-              (flatbuffers.overrideAttrs (old: rec {
-                version = "24.3.25";
-                src = fetchFromGitHub {
-                  owner = "google";
-                  repo = "flatbuffers";
-                  rev = "v${version}";
-                  hash = "sha256-uE9CQnhzVgOweYLhWPn2hvzXHyBbFiFVESJ1AEM3BmA=";
-                };
-              }))
+              flatc
 
               # `setup.sh` dependencies
               docker
