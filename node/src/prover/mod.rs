@@ -9,9 +9,8 @@ use {
         prover::utils::async_to_json,
         MissingImageStrategy,
     },
-    bonsol_interface::bonsol_schema::{ClaimV1, DeployV1, ExecutionRequestV1, ProgramInputType},
+    bonsol_interface::bonsol_schema::{ClaimV1, DeployV1, ExecutionRequestV1},
     dashmap::DashMap,
-    reqwest::Url,
     risc0_binfmt::MemoryImage,
     risc0_zkvm::{ExitCode, Journal, SuccinctReceipt},
     solana_sdk::{pubkey::Pubkey, signature::Signature},
@@ -28,7 +27,7 @@ use {
 
 use {
     crate::types::{BonsolInstruction, ProgramExec},
-    anyhow::{anyhow, Result},
+    anyhow::Result,
     bonsol_interface::bonsol_schema::{parse_ix_data, root_as_deploy_v1, ChannelInstructionIxType},
     bonsol_prover::{
         image::Image,
@@ -470,7 +469,7 @@ async fn handle_execution_request<'a>(
             }, execution_id => eid, stage => "public");
             input_staging_area.insert(eid.clone(), program_inputs);
             let sig = transaction_sender
-                .claim(&eid, accounts[1], accounts[2], computable_by)
+                .claim(&eid, accounts[0], accounts[2], computable_by)
                 .await
                 .map_err(|e| Risc0RunnerError::TransactionError(e.to_string()));
             match sig {

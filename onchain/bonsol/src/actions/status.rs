@@ -52,7 +52,7 @@ impl<'a, 'b> StatusAccounts<'a, 'b> {
             prover,
             extra_accounts: &accounts[4..],
             exec_bump: bmp,
-            eid: eid,
+            eid,
         };
         Ok(stat)
     }
@@ -79,7 +79,7 @@ pub fn process_status_v1<'a>(
     let input_digest_v = st.input_digest().map(|x| x.bytes());
     let assumption_digest_v = st.assumption_digest().map(|x| x.bytes());
     let committed_outputs_v = st.committed_outputs().map(|x| x.bytes());
-    if let (Some(proof), Some(exed), Some(asud), Some(input), Some(co)) = (
+    if let (Some(proof), Some(exed), Some(asud), Some(input_digest), Some(co)) = (
         pr_v,
         execution_digest_v,
         assumption_digest_v,
@@ -92,17 +92,17 @@ pub fn process_status_v1<'a>(
             .map_err(|_| ChannelError::InvalidInstruction)?;
         if er.verify_input_hash() {
             er.input_digest()
-                .map(|x| check_bytes_match(x.bytes(), input, ChannelError::InputsDontMatch));
+                .map(|x| check_bytes_match(x.bytes(), input_digest, ChannelError::InputsDontMatch));
         }
-        let output_digest = output_digest(input, co, asud);
-        let inputs = prepare_inputs(
+        let output_digest = output_digest(input_digest, co, asud);
+        let proof_inputs = prepare_inputs(
             er.image_id().unwrap(),
             exed,
             output_digest.as_ref(),
             st.exit_code_system(),
             st.exit_code_user(),
         )?;
-        let verified = verify_risc0(proof, &inputs)?;
+        let verified = verify_risc0(proof, &proof_inputs)?;
         let tip = er.tip();
         if verified {
             let callback_program_set =
@@ -154,6 +154,7 @@ pub fn process_status_v1<'a>(
                 let payload = if er.forward_output() && st.committed_outputs().is_some() {
                     [
                         er.callback_instruction_prefix().unwrap().bytes(),
+                        input_digest,
                         st.committed_outputs().unwrap().bytes(),
                     ]
                     .concat()

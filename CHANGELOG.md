@@ -7,14 +7,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## Unreleased
 
 ### Changed
-* **Breaking**: Changes flatbuffer `Account` struct to have 8 byte alignment due a possible bug in the flatbufers compiler. [https://github.com/google/flatbuffers/pull/8398](Bug Here)
-* **Breaking**: Flatbuffers was upgraded to `24.3.25`
 * `bonsol` cli option requirements and error messages updated for added clarity
 + `bonsol deploy` `-t` (`--deploy-type`) option is no longer necessary in order to specify a deployment type. The deployment type is now a subcommand, eg. `bonsol deploy s3`.
 
 ### Fixed
+* **Breaking**: `execute_v1` interface instruction now uses the new `InputRef` to improve CU usage.
+* Adds a callback struct to use the input_hash and committed_outputs from the callback program ergonomically.
+* Fixes requester/payer mismatch in the node account selection
+* **Breaking**: Forwards input hash to the callback program in all cases.
+* **Breaking**: Changes flatbuffer `Account` struct to have 8 byte alignment due a possible bug in the flatbufers compiler. [https://github.com/google/flatbuffers/pull/8398](Bug Here)
+* **Breaking**: Flatbuffers was upgraded to `24.3.25`
 * `risc0-groth16-prover` binaries (rapidsnark & stark-verify) are available to the nix store, partially unblocking NixOS support.
 * `flatbuffers` code is now dynamically generated at build time
+* Fixed alignment of `Account` struct in the schemas.
 
 ## [0.2.1] - 2024-10-13
 

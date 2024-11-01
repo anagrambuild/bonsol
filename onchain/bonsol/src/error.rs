@@ -77,6 +77,12 @@ pub enum ChannelError {
     InvalidInputType,
     #[error("Deployment Already Exists")]
     DeploymentAlreadyExists,
+    #[error("Invalid Execution Account Data")]
+    InvalidExecutionAccountData,
+    #[error("Invalid Execution Id")]
+    InvalidExecutionId,
+    #[error("Invalid Execution Account Owner")]
+    InvalidExecutionAccountOwner,
 }
 
 impl From<ChannelError> for ProgramError {

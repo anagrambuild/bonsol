@@ -47,7 +47,7 @@ async fn main() -> Result<()> {
     // Set the stack size to unlimited
     match rlimit::setrlimit(Resource::STACK, u64::MAX, u64::MAX) {
         Ok(_) => {}
-        Err(e) => eprintln!("Error setting rlimit: {}", e),
+        Err(e) => error!("Error setting rlimit: {}", e),
     }
     tracing_subscriber::fmt()
         .json()
