@@ -171,9 +171,10 @@
           bonsol-cli = mkCrateDrv "bonsol" "cli" [ "sdk" "onchain" "schemas-rust" "iop" "node" "prover" "tester" ];
           bonsol-node = mkCrateDrv "bonsol-node" "node" [ "sdk" "onchain" "schemas-rust" "iop" "cli" "prover" "tester" ];
 
+          node_toml = pkgs.callPackage ./nixos/pkgs/bonsol/Node.toml.nix { inherit risc0-groth16-prover; };
           setup = pkgs.callPackage ./nixos/pkgs/bonsol/setup.nix { };
           validator = pkgs.callPackage ./nixos/pkgs/bonsol/validator.nix { };
-          run-node = pkgs.callPackage ./nixos/pkgs/bonsol/run-node.nix { inherit bonsol-node; };
+          run-node = pkgs.callPackage ./nixos/pkgs/bonsol/run-node.nix { inherit bonsol-node node_toml; };
 
           # Internally managed versions of risc0 binaries that are pinned to
           # the version that bonsol relies on.
@@ -276,13 +277,16 @@
 
               setup
               validator
-              run-node
 
               cargo-risczero
               r0vm
               risc0-groth16-prover
               solana-cli
               solana-platform-tools;
+
+            run-node = (run-node.override {
+                use-nix = true;
+              });
 
             simple-e2e-script = pkgs.writeShellApplication {
               name = "simple-e2e-test";
@@ -319,7 +323,7 @@
                 node_pid=$!
                 sleep 30
                 echo "node is running: PID $node_pid"
-                ${bonsol-cli}/bin/bonsol --keypair $HOME/.config/solana/id.json --rpc-url http://localhost:8899 deploy url https://bonsol-public-images.s3.amazonaws.com/simple-7cb4887749266c099ad1793e8a7d486a27ff1426d614ec0cc9ff50e686d17699 -m images/simple/manifest.json -y
+                ${bonsol-cli}/bin/bonsol --keypair $HOME/.config/solana/id.json --rpc-url http://localhost:8899 deploy url https://bonsol-public-images.s3.amazonaws.com/simple-68f4b0c5f9ce034aa60ceb264a18d6c410a3af68fafd931bcfd9ebe7c1e42960 -m images/simple/manifest.json -y
                 sleep 20
                 resp=$(${bonsol-cli}/bin/bonsol --keypair $HOME/.config/solana/id.json --rpc-url http://localhost:8899 execute -f testing-examples/example-execution-request.json -x 2000 -m 2000 -w)
                 echo "execution response was: $resp"
