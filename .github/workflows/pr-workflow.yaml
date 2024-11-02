@@ -50,14 +50,14 @@ jobs:
           cargo +nightly fmt --all -- --check 1> >(tee fout.txt) 
       - name: store fmt output
         shell: bash
-        if: ${{ steps.fmt.outcome == 'failure' }}
+        if: ${{ steps.check.outcome == 'success' && steps.fmt.outcome == 'failure' }}
         run: |
           OUT_FILE_CONTENT=$(cat fout.txt)
           echo "OUT_FILE_CONTENT<<EOF" >> $GITHUB_ENV
           echo "$OUT_FILE_CONTENT" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
       - uses: exercism/pr-commenter-action@v1.5.1
-        if: ${{ steps.fmt.outcome == 'failure' }}
+        if: ${{ steps.check.outcome == 'success' && steps.fmt.outcome == 'failure' }}
         with:
           github-token: "${{ github.token }}"
           config-file: ".github/comment-templates/fmt.yaml"
@@ -66,6 +66,14 @@ jobs:
               "outcontent": ${{ toJSON(env.OUT_FILE_CONTENT) }},
               "outhash": ${{ toJSON(hashFiles('fout.txt')) }}
             }
+      - name: Check steps
+        run: |
+          if [[ "${{ steps.check.outcome }}" != "success" ]]; then
+            exit 1
+          fi
+          if [[ "${{ steps.fmt.outcome }}" != "success" ]]; then
+            exit 1
+          fi
   test:
     name: Unit Test
     runs-on: ubuntu-latest

@@ -8,7 +8,7 @@ comment:
     This is an automated comment created by the Bonsol CI
 
   snippets:
-    - id: outfiles_{{ outhash }}
+    - id: check_{{ outhash }}
       files:
         - 'cout.txt'
       body: |
