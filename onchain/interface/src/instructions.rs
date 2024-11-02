@@ -322,8 +322,7 @@ pub fn execute_v1_with_accounts<'a>(
         None
     };
 
-    let prover_version = prover_version.or(Some(ProverVersion::default()));
-    let prover_version = prover_version.unwrap();
+    let prover_version = prover_version.unwrap_or(ProverVersion::default());
 
     let fbb_execute = ExecutionRequestV1::create(
         &mut fbb,
