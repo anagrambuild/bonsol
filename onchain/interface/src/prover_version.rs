@@ -30,7 +30,7 @@ impl TryFrom<FBSProverVersion> for ProverVersion {
 
     fn try_from(prover_version: FBSProverVersion) -> Result<Self, Self::Error> {
         match prover_version {
-            FBSProverVersion::V1_0_1 => Ok(VERSION_V1_0_1),
+            FBSProverVersion::V1_0_1 | FBSProverVersion::DEFAULT => Ok(VERSION_V1_0_1),
             _ => Err(ProverVersionError::UnsupportedVersion),
         }
     }
@@ -104,5 +104,13 @@ mod tests {
             fbs_version.unwrap_err(),
             ProverVersionError::UnsupportedVersion
         );
+    }
+
+    #[test]
+    fn test_default_into_current_version() {
+        let default_version = FBSProverVersion::DEFAULT;
+        let version = ProverVersion::try_from(default_version);
+        assert!(version.is_ok());
+        assert_eq!(version.unwrap(), VERSION_V1_0_1);
     }
 }

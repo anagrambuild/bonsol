@@ -322,8 +322,9 @@ pub fn execute_v1_with_accounts<'a>(
         None
     };
 
+    // typically cli will pass None for the optional prover_version indicating bonsol should handle
+    // the default case here
     let prover_version = prover_version.unwrap_or(ProverVersion::default());
-
     let fbb_execute = ExecutionRequestV1::create(
         &mut fbb,
         &ExecutionRequestV1Args {
@@ -338,7 +339,7 @@ pub fn execute_v1_with_accounts<'a>(
             max_block_height: expiration,
             input_digest,
             callback_extra_accounts: extra_accounts,
-            prover_version,
+            prover_version: prover_version,
         },
     );
     fbb.finish(fbb_execute, None);
