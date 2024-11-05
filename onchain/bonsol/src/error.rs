@@ -83,6 +83,8 @@ pub enum ChannelError {
     InvalidExecutionId,
     #[error("Invalid Execution Account Owner")]
     InvalidExecutionAccountOwner,
+    #[error("Unexpected Proof System")]
+    UnexpectedProofSystem,
 }
 
 impl From<ChannelError> for ProgramError {

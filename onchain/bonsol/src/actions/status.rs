@@ -1,13 +1,18 @@
 use crate::{
     assertions::*,
     error::ChannelError,
-    proof_handling::{output_digest, prepare_inputs, verify_risc0},
+    proof_handling::{output_digest_v1_0_1, prepare_inputs_v1_0_1, verify_risc0_v1_0_1},
     utilities::*,
 };
+
 use bonsol_interface::{
-    bonsol_schema::{root_as_execution_request_v1, ChannelInstruction, ExitCode, StatusV1},
+    bonsol_schema::{
+        root_as_execution_request_v1, ChannelInstruction, ExecutionRequestV1, ExitCode, StatusV1,
+    },
+    prover_version::{ProverVersion, VERSION_V1_0_1},
     util::execution_address_seeds,
 };
+
 use solana_program::{
     account_info::AccountInfo,
     clock::Clock,
@@ -94,15 +99,7 @@ pub fn process_status_v1<'a>(
             er.input_digest()
                 .map(|x| check_bytes_match(x.bytes(), input_digest, ChannelError::InputsDontMatch));
         }
-        let output_digest = output_digest(input_digest, co, asud);
-        let proof_inputs = prepare_inputs(
-            er.image_id().unwrap(),
-            exed,
-            output_digest.as_ref(),
-            st.exit_code_system(),
-            st.exit_code_user(),
-        )?;
-        let verified = verify_risc0(proof, &proof_inputs)?;
+        let verified = verify_with_prover(input_digest, co, asud, er, exed, st, proof)?;
         let tip = er.tip();
         if verified {
             let callback_program_set =
@@ -184,4 +181,33 @@ pub fn process_status_v1<'a>(
         cleanup_execution_account(sa.exec, sa.requester, ExitCode::ProvingError as u8)?;
     }
     Ok(())
+}
+
+fn verify_with_prover(
+    input_digest: &[u8],
+    co: &[u8],
+    asud: &[u8],
+    er: ExecutionRequestV1,
+    exed: &[u8],
+    st: StatusV1,
+    proof: &[u8; 256],
+) -> Result<bool, ProgramError> {
+    let prover_version =
+        ProverVersion::try_from(er.prover_version()).unwrap_or(ProverVersion::default());
+
+    let verified = match prover_version {
+        VERSION_V1_0_1 => {
+            let output_digest = output_digest_v1_0_1(input_digest, co, asud);
+            let proof_inputs = prepare_inputs_v1_0_1(
+                er.image_id().unwrap(),
+                exed,
+                output_digest.as_ref(),
+                st.exit_code_system(),
+                st.exit_code_user(),
+            )?;
+            verify_risc0_v1_0_1(proof, &proof_inputs)?
+        }
+        _ => false,
+    };
+    Ok(verified)
 }
