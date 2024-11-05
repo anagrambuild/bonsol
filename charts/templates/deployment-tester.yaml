@@ -59,7 +59,7 @@ spec:
           - -c
           - |
             solana config set --keypair {{ .Values.signer.path }} -u $RPC_ENDPOINT
-            bonsol deploy -y -m {{ include "bonsol-tester.manifestPath" . }} -t url --url $SIMPLE_IMAGE 
+            bonsol deploy -y -m {{ include "bonsol-tester.manifestPath" . }} -t url --url $SIMPLE_IMAGE
             while :
             do
               bonsol execute -f {{ include "bonsol-tester.executionReqPath" . }} -x 1000 -m 10000 -w
