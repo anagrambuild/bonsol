@@ -24,14 +24,14 @@ pub fn verify_risc0(
 }
 
 pub fn verify_risc0_v1_0_1(proof: &[u8], inputs: &[u8]) -> Result<bool, ChannelError> {
-    let ace: Vec<u8> = change_endianness(&*[&proof[0..64], &[0u8][..]].concat());
+    let ace: Vec<u8> = toggle_endianness_256(&*[&proof[0..64], &[0u8][..]].concat());
     let proof_a: G1 = G1::deserialize_with_mode(&*ace, Compress::No, Validate::No).unwrap();
 
     let mut proof_a_neg = [0u8; 65];
     G1::serialize_with_mode(&proof_a.neg(), &mut proof_a_neg[..], Compress::No)
         .map_err(|_| ChannelError::InvalidInstruction)?;
 
-    let proof_a = change_endianness(&proof_a_neg[..64])
+    let proof_a = toggle_endianness_256(&proof_a_neg[..64])
         .try_into()
         .map_err(|_| ChannelError::InvalidInstruction)?;
 
@@ -152,9 +152,14 @@ fn sized_range<const N: usize>(slice: &[u8]) -> Result<[u8; N], ChannelError> {
         .map_err(|_| ChannelError::InvalidInstruction)
 }
 
-fn change_endianness(bytes: &[u8]) -> Vec<u8> {
+// hello ethereum! Toggle endianness of a slice of bytes assuming 256 bit word size
+fn toggle_endianness_256(bytes: &[u8]) -> Vec<u8> {
+    toggle_endianness::<32>(bytes)
+}
+
+fn toggle_endianness<const N: usize>(bytes: &[u8]) -> Vec<u8> {
     let mut vec = Vec::with_capacity(bytes.len());
-    let chunk_size = 32;
+    let chunk_size = N;
 
     for chunk in bytes.chunks(chunk_size) {
         // Reverse the chunk and extend the vector
@@ -163,29 +168,30 @@ fn change_endianness(bytes: &[u8]) -> Vec<u8> {
 
     vec
 }
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
-    fn test_change_endianness() {
+    fn test_toggle_endianness() {
         let bytes = [1u8, 2, 3, 4, 5, 6, 7, 8];
         let expected = [8u8, 7, 6, 5, 4, 3, 2, 1];
-        assert_eq!(change_endianness(&bytes), expected);
+        assert_eq!(toggle_endianness::<8>(&bytes), expected);
     }
 
     #[test]
-    fn test_change_endianness_odd() {
+    fn test_toggle_endianness_odd() {
         let bytes = [1u8, 2, 3, 4, 5, 6, 7];
         let expected = [7u8, 6, 5, 4, 3, 2, 1];
-        assert_eq!(change_endianness(&bytes), expected);
+        assert_eq!(toggle_endianness::<7>(&bytes), expected);
     }
 
     #[test]
-    fn test_change_endianness_double_word() {
+    fn test_toggle_endianness_quad_word() {
         let bytes = [1u8, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
-        let expected = [16u8, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
-        assert_eq!(change_endianness(&bytes), expected);
+        let expected = [16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
+        assert_eq!(toggle_endianness_256(&bytes), expected);
     }
 
     #[test]
