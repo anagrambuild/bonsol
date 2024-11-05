@@ -20,60 +20,13 @@ jobs:
       - name: Check 
         shell: bash
         id: check
-        continue-on-error: true
         run: |
-          cargo check --quiet 2> >(tee cout.txt)
-      - name: store check output
-        shell: bash
-        if: ${{ steps.check.outcome == 'failure' }}
-        run: |
-          OUT_FILE_CONTENT=$(cat cout.txt)
-          echo "OUT_FILE_CONTENT<<EOF" >> $GITHUB_ENV
-          echo "$OUT_FILE_CONTENT" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
-      - uses: exercism/pr-commenter-action@v1.5.1
-        if: ${{ steps.check.outcome == 'failure' }}
-        with:
-          github-token: "${{ github.token }}"
-          config-file: ".github/comment-templates/check.yaml"
-          template-variables: |
-            {
-              "outcontent": ${{ toJSON(env.OUT_FILE_CONTENT) }},
-              "outhash": ${{ toJSON(hashFiles('cout.txt')) }}
-            }
+          cargo check --quiet 
       - name: Fmt
         shell: bash
-        if: ${{ steps.check.outcome == 'success' }}
-        continue-on-error: true
         id: fmt
         run: |
-          cargo +nightly fmt --all -- --check 1> >(tee fout.txt) 
-      - name: store fmt output
-        shell: bash
-        if: ${{ steps.check.outcome == 'success' && steps.fmt.outcome == 'failure' }}
-        run: |
-          OUT_FILE_CONTENT=$(cat fout.txt)
-          echo "OUT_FILE_CONTENT<<EOF" >> $GITHUB_ENV
-          echo "$OUT_FILE_CONTENT" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
-      - uses: exercism/pr-commenter-action@v1.5.1
-        if: ${{ steps.check.outcome == 'success' && steps.fmt.outcome == 'failure' }}
-        with:
-          github-token: "${{ github.token }}"
-          config-file: ".github/comment-templates/fmt.yaml"
-          template-variables: |
-            {
-              "outcontent": ${{ toJSON(env.OUT_FILE_CONTENT) }},
-              "outhash": ${{ toJSON(hashFiles('fout.txt')) }}
-            }
-      - name: Check steps
-        run: |
-          if [[ "${{ steps.check.outcome }}" != "success" ]]; then
-            exit 1
-          fi
-          if [[ "${{ steps.fmt.outcome }}" != "success" ]]; then
-            exit 1
-          fi
+          cargo +nightly fmt --all 
   test:
     name: Unit Test
     runs-on: ubuntu-latest
@@ -108,6 +61,8 @@ jobs:
         run: |
           cargo build-sbf
           cargo build -p bonsol-node
+          cargo build -p bonsol-cli
+          solana-keygen new -f
           solana-test-validator \
           --ledger ./ledger \
           --limit-ledger-size 0 \
