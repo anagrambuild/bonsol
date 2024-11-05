@@ -8,7 +8,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 * `bonsol` cli option requirements and error messages updated for added clarity
-+ `bonsol deploy` `-t` (`--deploy-type`) option is no longer necessary in order to specify a deployment type. The deployment type is now a subcommand, eg. `bonsol deploy s3`.
 
 ### Fixed
 * **Breaking**: `execute_v1` interface instruction now uses the new `InputRef` to improve CU usage.

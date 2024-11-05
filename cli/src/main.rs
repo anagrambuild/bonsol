@@ -7,7 +7,7 @@ use clap::Parser;
 use solana_sdk::signature::read_keypair_file;
 use solana_sdk::signer::Signer;
 
-use crate::command::{BonsolCli, Command};
+use crate::command::{BonsolCli, ParsedBonsolCli, ParsedCommand};
 use crate::common::{sol_check, try_load_from_config};
 use crate::error::BonsolCliError;
 
@@ -23,12 +23,12 @@ pub(crate) mod error;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let BonsolCli {
+    let ParsedBonsolCli {
         config,
         keypair,
         rpc_url,
         command,
-    } = BonsolCli::parse();
+    } = BonsolCli::parse().try_into()?;
 
     let (rpc, kpp) = match rpc_url.zip(keypair) {
         Some(conf) => conf,
@@ -49,8 +49,8 @@ async fn main() -> anyhow::Result<()> {
     let sdk = BonsolClient::new(rpc.clone());
 
     match command {
-        Command::Build { zk_program_path } => build::build(&keypair, zk_program_path),
-        Command::Deploy { deploy_args } => {
+        ParsedCommand::Build { zk_program_path } => build::build(&keypair, zk_program_path),
+        ParsedCommand::Deploy { deploy_args } => {
             if !sol_check(rpc.clone(), keypair.pubkey()).await {
                 return Err(BonsolCliError::InsufficientFundsForTransactions(
                     keypair.pubkey().to_string(),
@@ -59,7 +59,7 @@ async fn main() -> anyhow::Result<()> {
             }
             deploy::deploy(rpc, keypair, deploy_args).await
         }
-        Command::Execute {
+        ParsedCommand::Execute {
             execution_request_file,
             program_id,
             execution_id,
@@ -91,7 +91,7 @@ async fn main() -> anyhow::Result<()> {
             )
             .await
         }
-        Command::Prove {
+        ParsedCommand::Prove {
             manifest_path,
             program_id,
             input_file,
@@ -109,6 +109,6 @@ async fn main() -> anyhow::Result<()> {
             )
             .await
         }
-        Command::Init { project_name, dir } => init::init_project(&project_name, dir),
+        ParsedCommand::Init { project_name, dir } => init::init_project(&project_name, dir),
     }
 }
