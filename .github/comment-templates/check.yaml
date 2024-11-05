@@ -10,7 +10,7 @@ comment:
   snippets:
     - id: check_{{ outhash }}
       files:
-        - 'cout.txt'
+        - '*.txt'
       body: |
         ```
         {{ outcontent }}

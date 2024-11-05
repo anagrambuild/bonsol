@@ -10,7 +10,7 @@ comment:
   snippets:
     - id: fmt_{{ outhash }}
       files:
-        - 'fout.txt'
+        - '*.txt'
       body: |
         ```
         {{ outcontent }}

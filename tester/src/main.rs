@@ -16,6 +16,7 @@ use solana_sdk::signer::Signer;
 use solana_sdk::system_program;
 use solana_sdk::transaction::VersionedTransaction;
 
+use std::env;
 use std::str::FromStr;
 
 #[tokio::main]
@@ -24,11 +25,13 @@ async fn main() -> Result<()> {
     let rpc_client = RpcClient::new(rpc_url.clone());
     let bonsol_client = BonsolClient::new(rpc_url);
     let signer = Keypair::new();
+    let args: Vec<String> = env::args().collect();
     rpc_client
         .request_airdrop(&signer.pubkey(), 100_000_000_000)
         .await?;
-    example_bonsol_program_test(&bonsol_client, &rpc_client, &signer).await?;
-    example_sdk_test(&bonsol_client, &rpc_client, &signer).await?;
+    let timeout = args.get(1).map(|s| s.parse::<u64>().unwrap()).unwrap_or(60);
+    example_bonsol_program_test(&bonsol_client, &rpc_client, &signer, timeout).await?;
+    example_sdk_test(&bonsol_client, &rpc_client, &signer, timeout).await?;
     Ok(())
 }
 
@@ -38,6 +41,7 @@ async fn example_sdk_test(
     bonsol_client: &BonsolClient,
     client: &RpcClient,
     signer: &dyn Signer,
+    timeout: u64,
 ) -> Result<()> {
     println!("Running sdk test");
     let ea1 = Pubkey::from_str("3b6DR2gbTJwrrX27VLEZ2FJcHrDvTSLKEcTLVhdxCoaf")?;
@@ -98,10 +102,10 @@ async fn example_sdk_test(
         .confirm_transaction_with_spinner(&signature, &bh, CommitmentConfig::confirmed())
         .await?;
     bonsol_client
-        .wait_for_claim(signer.pubkey(), &execution_id, Some(20))
+        .wait_for_claim(signer.pubkey(), &execution_id, Some(timeout))
         .await?;
     let status = bonsol_client
-        .wait_for_proof(signer.pubkey(), &execution_id, Some(60))
+        .wait_for_proof(signer.pubkey(), &execution_id, Some(timeout))
         .await?;
     if status != ExitCode::Success {
         return Err(anyhow::anyhow!("Execution failed"));
@@ -114,6 +118,7 @@ async fn example_bonsol_program_test(
     bonsol_client: &BonsolClient,
     client: &RpcClient,
     signer: &dyn Signer,
+    timeout: u64,
 ) -> Result<()> {
     println!("Running Bonsol program test");
     let example_program = Pubkey::from_str("exay1T7QqsJPNcwzMiWubR6vZnqrgM16jZRraHgqBGG")?;
@@ -169,10 +174,10 @@ async fn example_bonsol_program_test(
         .confirm_transaction_with_spinner(&signature, &bh, CommitmentConfig::confirmed())
         .await?;
     bonsol_client
-        .wait_for_claim(requester, &execution_id, Some(20))
+        .wait_for_claim(requester, &execution_id, Some(timeout))
         .await?;
     let status = bonsol_client
-        .wait_for_proof(requester, &execution_id, Some(60))
+        .wait_for_proof(requester, &execution_id, Some(timeout))
         .await?;
     if status != ExitCode::Success {
         return Err(anyhow::anyhow!("Execution failed"));

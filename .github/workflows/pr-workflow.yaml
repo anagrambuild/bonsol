@@ -119,4 +119,5 @@ jobs:
           sleep 30
           ./bin/run-node.sh &
           sleep 15
-          cargo run -p bonsol-tester 
+          cargo run -p bonsol-cli deploy -m images/simple/manifest.json -t url --url https://bonsol-public-images.s3.amazonaws.com/simple-68f4b0c5f9ce034aa60ceb264a18d6c410a3af68fafd931bcfd9ebe7c1e42960 -y
+          cargo run -p bonsol-tester -- 300
