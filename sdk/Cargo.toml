@@ -8,7 +8,6 @@ publish = false          # Exclude local crates from licensing checks
 anyhow = "1.0.86"
 async-trait = "0.1.80"
 bincode = "1.3.3"
-bonsol-interface = { path = "../onchain/interface", features = ["default"] }
 bytes = "1.5.0"
 flatbuffers = { workspace = true }
 futures-util = "0.3.30"
@@ -27,3 +26,6 @@ solana-rpc-client = { workspace = true }
 solana-rpc-client-api = { workspace = true }
 solana-sdk = { workspace = true }
 tokio = "1.36.0"
+
+bonsol-interface.workspace = true
+bonsol-schema.workspace = true

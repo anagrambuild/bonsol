@@ -1,13 +1,11 @@
 use std::time::Duration;
 
 use anyhow::Result;
-use bonsol_interface::bonsol_schema::{root_as_deploy_v1, root_as_execution_request_v1};
-use bonsol_interface::claim_state::ClaimStateHolder;
-use bonsol_interface::instructions::InputRef;
+
 use bytes::Bytes;
 use futures_util::TryFutureExt;
-use instructions::{CallbackConfig, ExecutionConfig};
 use num_traits::FromPrimitive;
+
 use solana_rpc_client::nonblocking::rpc_client::RpcClient;
 use solana_rpc_client_api::config::RpcSendTransactionConfig;
 use solana_sdk::account::Account;
@@ -18,14 +16,20 @@ use solana_sdk::message::{v0, VersionedMessage};
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signer::Signer;
 use solana_sdk::transaction::VersionedTransaction;
+
 use tokio::time::Instant;
 
+use bonsol_interface::bonsol_schema::{root_as_deploy_v1, root_as_execution_request_v1};
 pub use bonsol_interface::bonsol_schema::{
     ClaimV1T, DeployV1T, ExecutionRequestV1T, ExitCode, InputSetT, InputT, InputType,
     ProgramInputType, StatusTypes,
 };
+use bonsol_interface::claim_state::ClaimStateHolder;
+use bonsol_interface::prover_version::ProverVersion;
 pub use bonsol_interface::util::*;
 pub use bonsol_interface::{instructions, ID};
+use instructions::{CallbackConfig, ExecutionConfig, InputRef};
+
 pub use flatbuffers;
 
 pub struct BonsolClient {
@@ -173,8 +177,18 @@ impl BonsolClient {
         expiration: u64,
         config: ExecutionConfig<'a>,
         callback: Option<CallbackConfig>,
+        prover_version: Option<ProverVersion>,
     ) -> Result<Vec<Instruction>> {
         let compute_price_val = self.get_fees(signer).await?;
+
+        let fbs_version_or_none = match prover_version {
+            Some(version) => {
+                let fbs_version = version.try_into().expect("Unknown prover version");
+                Some(fbs_version)
+            }
+            None => None,
+        };
+
         let instruction = instructions::execute_v1(
             signer,
             signer,
@@ -185,6 +199,7 @@ impl BonsolClient {
             expiration,
             config,
             callback,
+            fbs_version_or_none,
         )?;
         let compute = ComputeBudgetInstruction::set_compute_unit_limit(20_000);
         let compute_price = ComputeBudgetInstruction::set_compute_unit_price(compute_price_val);
