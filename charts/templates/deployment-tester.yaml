@@ -62,7 +62,9 @@ spec:
             bonsol deploy -y -m {{ include "bonsol-tester.manifestPath" . }} -t url --url $SIMPLE_IMAGE
             while :
             do
+              date '+%Y%m%d %H:%M:%s' 
               bonsol execute -f {{ include "bonsol-tester.executionReqPath" . }} -x 1000 -m 10000 -w
+              echo "Sleeping 300 seconds ..."
               sleep 300
             done
           {{- end }}
