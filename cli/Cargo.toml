@@ -22,7 +22,7 @@ hex = "0.4.3"
 byte-unit = "4.0.19"
 bytes = "1.4.0"
 cargo_toml = "0.20.3"
-clap = { version = "4.4.2", features = ["derive"] }
+clap = { version = "4.4.2", features = ["derive", "env"] }
 indicatif = "0.17.8"
 num-traits = "0.2.15"
 object_store = { version = "0.9.1", features = ["aws"] }
@@ -43,6 +43,7 @@ solana-cli-config = { workspace = true }
 solana-rpc-client = { workspace = true }
 solana-sdk = { workspace = true }
 tera = "1.17.1"
+thiserror = "1.0.65"
 tokio = { version = "1.38.0", features = ["full"] }
 
 bonsol-interface.workspace = true
