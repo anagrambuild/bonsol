@@ -171,7 +171,6 @@ pub async fn execute(
     println!("Execution expiry {}", expiry);
     println!("current block {}", current_block);
     indicator.set_message("Building transaction");
-
     let ixs = sdk
         .execute_v1(
             &signer,
@@ -190,6 +189,7 @@ pub async fn execute(
             expiry,
             execution_config,
             callback_config.map(|c| c.into()),
+            None, // A future cli change can implement prover version selection
         )
         .await?;
     indicator.finish_with_message("Sending transaction");

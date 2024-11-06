@@ -8,7 +8,6 @@ publish = false          # Exclude local crates from licensing checks
 anyhow = "1.0.86"
 async-trait = "0.1.80"
 bincode = "1.3.3"
-bonsol-schema = { path = "../schemas-rust" }
 bytes = "1.5.0"
 futures-util = "0.3.30"
 reqwest = { version = "0.11.26", features = [
@@ -25,6 +24,8 @@ solana-rpc-client = { workspace = true }
 solana-rpc-client-api = { workspace = true }
 solana-sdk = { workspace = true }
 tokio = "1.36.0"
+
+bonsol-schema.workspace = true
 
 [dev-dependencies]
 mockito = "1.5.0"

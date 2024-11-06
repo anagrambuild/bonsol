@@ -1,101 +1,65 @@
+use std::io::{self, Read};
+use std::path::Path;
+
+use atty::Stream;
+use bonsol_sdk::BonsolClient;
+use clap::Parser;
+use solana_sdk::signature::read_keypair_file;
+use solana_sdk::signer::Signer;
+
+use crate::command::{BonsolCli, ParsedBonsolCli, ParsedCommand};
+use crate::common::{sol_check, try_load_from_config};
+use crate::error::BonsolCliError;
+
 mod build;
 mod deploy;
 mod execute;
 mod init;
 mod prove;
 
-// mod execute;
 pub mod command;
 pub mod common;
-use anyhow::anyhow;
-use atty::Stream;
-use bonsol_sdk::BonsolClient;
-use clap::Parser;
-use command::{BonsolCli, Commands};
-use common::sol_check;
-use solana_cli_config::{Config, CONFIG_FILE};
-use solana_sdk::signature::read_keypair_file;
-use solana_sdk::signer::Signer;
-use std::io::{self, Read};
-use std::path::Path;
+pub(crate) mod error;
 
-const SOL_CHECK_MESSAGE: &str = "Your account needs to have some SOL to pay for the transactions";
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let cli = BonsolCli::parse();
-    let keypair = cli.keypair;
-    let config = cli.config;
-    let rpc_url = cli.rpc_url;
-    let (rpc, kpp) = match (rpc_url, keypair, config) {
-        (Some(rpc_url), Some(keypair), None) => (rpc_url, keypair),
-        (None, None, config) => {
-            let config_location = CONFIG_FILE
-                .clone()
-                .ok_or(anyhow!("Please provide a config file"))?;
-            let config = Config::load(&config.unwrap_or(config_location.clone()));
-            match config {
-                Ok(config) => (config.json_rpc_url, config.keypair_path),
-                Err(e) => {
-                    anyhow::bail!("Error loading config [{}]: {:?}", config_location, e);
-                }
-            }
-        }
-        _ => {
-            anyhow::bail!("Please provide a keypair and rpc or a solana config file");
-        }
-    };
+    let ParsedBonsolCli {
+        config,
+        keypair,
+        rpc_url,
+        command,
+    } = BonsolCli::parse().try_into()?;
 
-    let keypair = read_keypair_file(Path::new(&kpp));
-    if keypair.is_err() {
-        anyhow::bail!("Invalid keypair");
-    }
-    let command = cli.command;
-    let keypair = keypair.unwrap();
-    let stdin = if atty::isnt(Stream::Stdin) {
-        let mut buffer = String::new();
-        io::stdin().read_to_string(&mut buffer)?;
-        if buffer.trim().is_empty() {
-            None
-        } else {
-            Some(buffer)
-        }
-    } else {
-        None
+    let (rpc, kpp) = match rpc_url.zip(keypair) {
+        Some(conf) => conf,
+        None => try_load_from_config(config)?,
     };
+    let keypair =
+        read_keypair_file(Path::new(&kpp)).map_err(|err| BonsolCliError::FailedToReadKeypair {
+            file: kpp,
+            err: format!("{err:?}"),
+        })?;
+    let stdin = atty::isnt(Stream::Stdin)
+        .then(|| {
+            let mut buffer = String::new();
+            io::stdin().read_to_string(&mut buffer).ok()?;
+            (!buffer.trim().is_empty()).then_some(buffer)
+        })
+        .flatten();
     let sdk = BonsolClient::new(rpc.clone());
+
     match command {
-        Commands::Build { zk_program_path } => match build::build(&keypair, zk_program_path) {
-            Err(e) => {
-                anyhow::bail!(e);
-            }
-            Ok(_) => {
-                println!("Build complete");
-            }
-        },
-        Commands::Deploy {
-            manifest_path,
-            s3_upload,
-            shadow_drive_upload,
-            auto_confirm,
-            deploy_type,
-            url_upload,
-        } => {
+        ParsedCommand::Build { zk_program_path } => build::build(&keypair, zk_program_path),
+        ParsedCommand::Deploy { deploy_args } => {
             if !sol_check(rpc.clone(), keypair.pubkey()).await {
-                anyhow::bail!(SOL_CHECK_MESSAGE);
+                return Err(BonsolCliError::InsufficientFundsForTransactions(
+                    keypair.pubkey().to_string(),
+                )
+                .into());
             }
-            deploy::deploy(
-                rpc,
-                &keypair,
-                manifest_path,
-                s3_upload,
-                shadow_drive_upload,
-                url_upload,
-                auto_confirm,
-                deploy_type,
-            )
-            .await?;
+            deploy::deploy(rpc, keypair, deploy_args).await
         }
-        Commands::Execute {
+        ParsedCommand::Execute {
             execution_request_file,
             program_id,
             execution_id,
@@ -106,7 +70,10 @@ async fn main() -> anyhow::Result<()> {
             timeout,
         } => {
             if !sol_check(rpc.clone(), keypair.pubkey()).await {
-                anyhow::bail!(SOL_CHECK_MESSAGE);
+                return Err(BonsolCliError::InsufficientFundsForTransactions(
+                    keypair.pubkey().to_string(),
+                )
+                .into());
             }
             execute::execute(
                 &sdk,
@@ -122,9 +89,9 @@ async fn main() -> anyhow::Result<()> {
                 stdin,
                 wait,
             )
-            .await?;
+            .await
         }
-        Commands::Prove {
+        ParsedCommand::Prove {
             manifest_path,
             program_id,
             input_file,
@@ -140,11 +107,8 @@ async fn main() -> anyhow::Result<()> {
                 output_location,
                 stdin,
             )
-            .await?;
+            .await
         }
-        Commands::Init { project_name, dir } => {
-            init::init_project(&project_name, dir)?;
-        }
-    };
-    Ok(())
+        ParsedCommand::Init { project_name, dir } => init::init_project(&project_name, dir),
+    }
 }

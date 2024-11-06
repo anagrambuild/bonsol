@@ -1,9 +1,10 @@
+use std::str::FromStr;
+
 use anyhow::Result;
 
-use bonsol_sdk::instructions::{CallbackConfig, ExecutionConfig, InputRef};
-use bonsol_sdk::{deployment_address, execution_address, BonsolClient, ExitCode, InputType};
 use rand::distributions::Alphanumeric;
 use rand::Rng;
+
 use solana_rpc_client::nonblocking::rpc_client::RpcClient;
 use solana_rpc_client_api::config::RpcSendTransactionConfig;
 use solana_sdk::commitment_config::CommitmentConfig;
@@ -16,8 +17,12 @@ use solana_sdk::signer::Signer;
 use solana_sdk::system_program;
 use solana_sdk::transaction::VersionedTransaction;
 
+
 use std::env;
 use std::str::FromStr;
+use bonsol_interface::prover_version::ProverVersion;
+use bonsol_sdk::instructions::{CallbackConfig, ExecutionConfig, InputRef};
+use bonsol_sdk::{deployment_address, execution_address, BonsolClient, ExitCode, InputType};
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -79,6 +84,7 @@ async fn example_sdk_test(
                     AccountMeta::new_readonly(ea3, false),
                 ],
             }),
+            Some(ProverVersion::default()),
         )
         .await?;
     let bh = client.get_latest_blockhash().await?;

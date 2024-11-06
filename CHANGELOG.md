@@ -5,6 +5,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+
+### Changed
+* `bonsol` cli option requirements and error messages updated for added clarity
+
+### Fixed
 * **Breaking**: `execute_v1` interface instruction now uses the new `InputRef` to improve CU usage.
 * Adds a callback struct to use the input_hash and committed_outputs from the callback program ergonomically.
 * Fixes requester/payer mismatch in the node account selection
@@ -12,11 +17,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 * **Breaking**: Changes flatbuffer `Account` struct to have 8 byte alignment due a possible bug in the flatbufers compiler. [https://github.com/google/flatbuffers/pull/8398](Bug Here)
 * **Breaking**: Flatbuffers was upgraded to `24.3.25`
 * `risc0-groth16-prover` binaries (rapidsnark & stark-verify) are available to the nix store, partially unblocking NixOS support.
-* Fixed alignment of `Account` struct in the schemas.
 * `flatbuffers` code is now dynamically generated at build time
 * Fixed alignment of `Account` struct in the schemas.
-
-
 
 ## [0.2.1] - 2024-10-13
 
