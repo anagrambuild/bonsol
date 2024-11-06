@@ -17,12 +17,9 @@ use solana_sdk::signer::Signer;
 use solana_sdk::system_program;
 use solana_sdk::transaction::VersionedTransaction;
 
-
-use std::env;
-use std::str::FromStr;
-use bonsol_interface::prover_version::ProverVersion;
 use bonsol_sdk::instructions::{CallbackConfig, ExecutionConfig, InputRef};
 use bonsol_sdk::{deployment_address, execution_address, BonsolClient, ExitCode, InputType};
+use std::env;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -84,7 +81,7 @@ async fn example_sdk_test(
                     AccountMeta::new_readonly(ea3, false),
                 ],
             }),
-            Some(ProverVersion::default()),
+            None
         )
         .await?;
     let bh = client.get_latest_blockhash().await?;

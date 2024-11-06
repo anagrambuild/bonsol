@@ -16,7 +16,7 @@ pub enum IngestErrorType {
     #[error("RPC Error")]
     RpcError,
     #[error("I/O Error")]
-        IoError,
+    IoError,
 }
 
 #[derive(Debug, thiserror::Error)]
