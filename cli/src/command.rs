@@ -227,6 +227,7 @@ pub enum Command {
         )]
         auto_confirm: bool,
     },
+    #[command(about = "Build a ZK program")]
     Build {
         #[arg(
             help = "The path to a ZK program folder containing a Cargo.toml",
@@ -234,6 +235,24 @@ pub enum Command {
             long
         )]
         zk_program_path: String,
+    },
+    #[command(about = "Estimate the execution cost of a ZK RISC0 program")]
+    // TODO: Give the option to compile the program, or accept a pre-compiled binary
+    Estimate {
+        #[arg(
+            help = "The path to a ZK program folder containing a Cargo.toml",
+            short = 'z',
+            long
+        )]
+        zk_program_path: String,
+        #[arg(help = "Args to pass to the ZK program", short = 'a', long)]
+        runtime_args: Vec<AsRef<str>>,
+        #[arg(
+            help = "Whether to build the program before benchmarking",
+            short = 'b',
+            long
+        )]
+        build: bool,
     },
     Execute {
         #[arg(short = 'f', long)]
@@ -296,6 +315,11 @@ pub enum ParsedCommand {
     Build {
         zk_program_path: String,
     },
+    Estimate {
+        zk_program_path: String,
+        runtime_args: Vec<AsRef<str>>,
+        build: bool,
+    },
     Execute {
         execution_request_file: Option<String>,
 
@@ -351,6 +375,15 @@ impl TryFrom<Command> for ParsedCommand {
                 ),
             }),
             Command::Build { zk_program_path } => Ok(ParsedCommand::Build { zk_program_path }),
+            Command::Estimate {
+                zk_program_path,
+                runtime_args,
+                build,
+            } => Ok(ParsedCommand::Estimate {
+                zk_program_path,
+                runtime_args,
+                build,
+            }),
             Command::Execute {
                 execution_request_file,
                 program_id,

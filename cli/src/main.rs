@@ -13,6 +13,7 @@ use crate::error::BonsolCliError;
 
 mod build;
 mod deploy;
+mod estimate;
 mod execute;
 mod init;
 mod prove;
@@ -59,6 +60,11 @@ async fn main() -> anyhow::Result<()> {
             }
             deploy::deploy(rpc, keypair, deploy_args).await
         }
+        ParsedCommand::Estimate {
+            zk_program_path,
+            runtime_args,
+            build,
+        } => estimate::estimate(&keypair, zk_program_path, &runtime_args, build),
         ParsedCommand::Execute {
             execution_request_file,
             program_id,
