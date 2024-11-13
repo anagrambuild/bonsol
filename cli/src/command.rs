@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use clap::{command, ArgGroup, Args, Parser, Subcommand, ValueEnum};
 
 #[derive(Parser, Debug)]
@@ -237,22 +239,18 @@ pub enum Command {
         zk_program_path: String,
     },
     #[command(about = "Estimate the execution cost of a ZK RISC0 program")]
-    // TODO: Give the option to compile the program, or accept a pre-compiled binary
     Estimate {
         #[arg(
-            help = "The path to a ZK program folder containing a Cargo.toml",
-            short = 'z',
-            long
+            help = "Specify the path to the RISC0 ELF",
+            long, 
+            value_parser = |s: &str| {
+                if !PathBuf::from(s).exists() {
+                    anyhow::bail!("elf file path does not exist: '{s}'")
+                }
+                Ok(s.to_string())
+            }
         )]
-        zk_program_path: String,
-        #[arg(help = "Args to pass to the ZK program", short = 'a', long)]
-        runtime_args: Vec<AsRef<str>>,
-        #[arg(
-            help = "Whether to build the program before benchmarking",
-            short = 'b',
-            long
-        )]
-        build: bool,
+        elf: String,
     },
     Execute {
         #[arg(short = 'f', long)]
@@ -316,9 +314,7 @@ pub enum ParsedCommand {
         zk_program_path: String,
     },
     Estimate {
-        zk_program_path: String,
-        runtime_args: Vec<AsRef<str>>,
-        build: bool,
+        elf: PathBuf,
     },
     Execute {
         execution_request_file: Option<String>,
@@ -375,15 +371,7 @@ impl TryFrom<Command> for ParsedCommand {
                 ),
             }),
             Command::Build { zk_program_path } => Ok(ParsedCommand::Build { zk_program_path }),
-            Command::Estimate {
-                zk_program_path,
-                runtime_args,
-                build,
-            } => Ok(ParsedCommand::Estimate {
-                zk_program_path,
-                runtime_args,
-                build,
-            }),
+            Command::Estimate { elf } => Ok(ParsedCommand::Estimate { elf: PathBuf::from(elf) }),
             Command::Execute {
                 execution_request_file,
                 program_id,

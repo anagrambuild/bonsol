@@ -60,11 +60,7 @@ async fn main() -> anyhow::Result<()> {
             }
             deploy::deploy(rpc, keypair, deploy_args).await
         }
-        ParsedCommand::Estimate {
-            zk_program_path,
-            runtime_args,
-            build,
-        } => estimate::estimate(&keypair, zk_program_path, &runtime_args, build),
+        ParsedCommand::Estimate { elf } => estimate::estimate(elf),
         ParsedCommand::Execute {
             execution_request_file,
             program_id,

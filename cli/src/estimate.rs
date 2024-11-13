@@ -1,35 +1,37 @@
-use std::io;
-use std::process;
+//! Bare bones upper bound estimator that uses the rv32im
+//! emulation utils for fast lookups in the opcode list
+//! to extract the cycle count from an elf.
+//!
+//! This can be extended in a similar fashion to target
+//! specific functions as sov-cycle-tracer does and the
+//! defaults made into command line args.
+
+use std::{fs, path::PathBuf};
 
 use anyhow::Result;
-use solana_sdk::signer::Signer;
-use sov_cycle_macros::cycle_tracker as risc0_cycle_tracker;
+use risc0_circuit_rv32im::prove::emu::{
+    exec::{execute_elf, DEFAULT_SEGMENT_LIMIT_PO2},
+    testutil::{NullSyscall, DEFAULT_SESSION_LIMIT},
+};
 
-use crate::build;
+pub fn estimate(elf: PathBuf) -> Result<()> {
+    // TODO: We probably want to be able to let the user decide some of this
+    let cycles: usize = execute_elf(
+        &fs::read(elf)?,
+        DEFAULT_SEGMENT_LIMIT_PO2,
+        DEFAULT_SESSION_LIMIT,
+        &NullSyscall::default(),
+        None,
+    )?
+    .segments
+    .iter()
+    .try_fold(0, |acc, s| -> Result<usize> {
+        let trace = s.preflight()?;
+        let segment_cycles = trace.pre.cycles.len() + trace.body.cycles.len();
+        Ok(acc + segment_cycles)
+    })?;
 
-// 1. user gives a path to a manifest
-// 2. we compile it with bonsol build
-// 3. we wrap the compiled bin in a function which has the macro applied to it
-// 4. we call the function which runs the program and tracks the cycles, probably get the cycle count from stdout
-// 5. apply a function which gets the upper bound of the cycles
-// 6. return the estimate to the user
-pub fn estimate(
-    keypair: &impl Signer,
-    zk_program_path: String,
-    runtime_args: &[AsRef<str>],
-    build: bool,
-) -> Result<()> {
-    if let Some(Err(err)) = build.then(|| build::build(keypair, zk_program_path)) {
-        anyhow::bail!("failed to build zk program: {err:?}")
-    }
+    println!("number of cycles: {cycles}");
 
-    let command = todo!();
-    let _output = program_entrypoint(command, runtime_args)?;
     Ok(())
-}
-
-/// Run the program with the cycle_tracker and return the output
-#[cfg_attr(all(target_os = "zkvm"), risc0_cycle_tracker)]
-fn program_entrypoint(command: String, runtime_args: &[AsRef<str>]) -> io::Result<process::Output> {
-    process::Command::new(command).args(runtime_args).output()
 }
