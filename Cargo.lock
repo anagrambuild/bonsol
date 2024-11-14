@@ -1195,6 +1195,7 @@ dependencies = [
  "bonsol-prover",
  "bonsol-sdk",
  "byte-unit",
+ "bytemuck",
  "bytes",
  "cargo_toml 0.20.5",
  "clap 4.5.20",

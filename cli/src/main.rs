@@ -1,3 +1,4 @@
+use std::fs;
 use std::io::{self, Read};
 use std::path::Path;
 
@@ -60,7 +61,11 @@ async fn main() -> anyhow::Result<()> {
             }
             deploy::deploy(rpc, keypair, deploy_args).await
         }
-        ParsedCommand::Estimate { elf } => estimate::estimate(elf),
+        ParsedCommand::Estimate {
+            elf,
+            segment_limit_po2,
+            max_cycles,
+        } => estimate::estimate(fs::read(elf)?.as_slice(), segment_limit_po2, max_cycles),
         ParsedCommand::Execute {
             execution_request_file,
             program_id,

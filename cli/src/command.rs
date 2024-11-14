@@ -251,6 +251,16 @@ pub enum Command {
             }
         )]
         elf: String,
+
+        #[arg(
+            help = "Define the maximum number of cycles a single segment can take as a power of two, must be between 13 and 24 [default: 20usize]",
+            short = 's',
+            long,
+        )]
+        segment_limit_po2: Option<usize>,
+
+        #[arg(help = "Set the maximum number of cycles [default: 16777216u64]", short = 'm', long)]
+        max_cycles: Option<u64>,
     },
     Execute {
         #[arg(short = 'f', long)]
@@ -315,6 +325,8 @@ pub enum ParsedCommand {
     },
     Estimate {
         elf: PathBuf,
+        segment_limit_po2: Option<usize>,
+        max_cycles: Option<u64>,
     },
     Execute {
         execution_request_file: Option<String>,
@@ -371,7 +383,7 @@ impl TryFrom<Command> for ParsedCommand {
                 ),
             }),
             Command::Build { zk_program_path } => Ok(ParsedCommand::Build { zk_program_path }),
-            Command::Estimate { elf } => Ok(ParsedCommand::Estimate { elf: PathBuf::from(elf) }),
+            Command::Estimate { elf, segment_limit_po2, max_cycles } => Ok(ParsedCommand::Estimate { elf: PathBuf::from(elf), segment_limit_po2, max_cycles }),
             Command::Execute {
                 execution_request_file,
                 program_id,
