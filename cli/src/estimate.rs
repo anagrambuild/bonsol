@@ -1,13 +1,9 @@
 //! Bare bones upper bound estimator that uses the rv32im
 //! emulation utils for fast lookups in the opcode list
 //! to extract the cycle count from an elf.
-//!
-//! This can be extended in a similar fashion to target
-//! specific functions as sov-cycle-tracer does and the
-//! defaults made into command line args.
 
 use anyhow::Result;
-use indicatif::{ProgressIterator, ProgressStyle};
+use indicatif::ProgressIterator;
 use risc0_binfmt::{MemoryImage, Program};
 use risc0_circuit_rv32im::prove::emu::{
     exec::{execute, DEFAULT_SEGMENT_LIMIT_PO2},
@@ -60,6 +56,17 @@ pub trait MkImage {
 impl<'a> MkImage for &'a [u8] {
     fn mk_image(self) -> Result<MemoryImage> {
         let program = Program::load_elf(self, GUEST_MAX_MEM as u32)?;
+        dbg!(&program.entry);
+        // dbg!(&program.image);
+        program
+            .image
+            .keys()
+            .zip(program.image.values())
+            .for_each(|(k, v)| {
+                if v == &31 {
+                    eprintln!("found invalid guest address for key: {}", k);
+                }
+            });
         MemoryImage::new(&program, PAGE_SIZE as u32)
     }
 }
