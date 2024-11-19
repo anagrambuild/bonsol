@@ -48,17 +48,6 @@ pub trait MkImage {
 impl<'a> MkImage for &'a [u8] {
     fn mk_image(self) -> Result<MemoryImage> {
         let program = Program::load_elf(self, GUEST_MAX_MEM as u32)?;
-        dbg!(&program.entry);
-        // dbg!(&program.image);
-        program
-            .image
-            .keys()
-            .zip(program.image.values())
-            .for_each(|(k, v)| {
-                if v == &31 {
-                    eprintln!("found invalid guest address for key: {}", k);
-                }
-            });
         MemoryImage::new(&program, PAGE_SIZE as u32)
     }
 }
@@ -124,7 +113,7 @@ mod estimate_tests {
     }
 
     #[test]
-    fn test_estimate() {
+    fn estimate_basic() {
         let program = basic_test_program();
         let image = MemoryImage::new(&program, PAGE_SIZE as u32)
             .expect("failed to create image from basic program");

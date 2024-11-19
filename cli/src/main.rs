@@ -20,6 +20,9 @@ mod execute;
 mod init;
 mod prove;
 
+#[cfg(test)]
+mod tests;
+
 pub mod command;
 pub mod common;
 pub(crate) mod error;
@@ -85,7 +88,6 @@ async fn main() -> anyhow::Result<()> {
                     err,
                 })
             })?;
-
             estimate::estimate(elf.as_slice(), max_cycles)
         }
         ParsedCommand::Execute {

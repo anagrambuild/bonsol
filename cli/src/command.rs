@@ -237,14 +237,6 @@ pub enum Command {
         zk_program_path: String,
     },
     #[command(about = "Estimate the execution cost of a ZK RISC0 program")]
-    #[command(group(
-        ArgGroup::new("elf_path")
-            .required(false)
-            .args(&["config"])
-            .conflicts_with("rpc_url")
-            .conflicts_with("keypair")
-            .multiple(false)
-    ))]
     Estimate {
         #[arg(
             help = "The path to the program's manifest file (manifest.json)",
@@ -255,7 +247,7 @@ pub enum Command {
 
         #[arg(
             help = "Set the maximum number of cycles [default: 16777216u64]",
-            short = 'm',
+            short = 'c',
             long
         )]
         max_cycles: Option<u64>,
