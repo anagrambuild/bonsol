@@ -1,5 +1,3 @@
-use std::path::PathBuf;
-
 use clap::{command, ArgGroup, Args, Parser, Subcommand, ValueEnum};
 
 #[derive(Parser, Debug)]
@@ -239,25 +237,21 @@ pub enum Command {
         zk_program_path: String,
     },
     #[command(about = "Estimate the execution cost of a ZK RISC0 program")]
+    #[command(group(
+        ArgGroup::new("elf_path")
+            .required(false)
+            .args(&["config"])
+            .conflicts_with("rpc_url")
+            .conflicts_with("keypair")
+            .multiple(false)
+    ))]
     Estimate {
         #[arg(
-            help = "Specify the path to the RISC0 ELF",
-            long,
-            value_parser = |s: &str| {
-                if !PathBuf::from(s).exists() {
-                    anyhow::bail!("elf file path does not exist: '{s}'")
-                }
-                Ok(s.to_string())
-            }
-        )]
-        elf: String,
-
-        #[arg(
-            help = "Define the maximum number of cycles a single segment can take as a power of two, must be between 13 and 24 [default: 20usize]",
-            short = 's',
+            help = "The path to the program's manifest file (manifest.json)",
+            short = 'm',
             long
         )]
-        segment_limit_po2: Option<usize>,
+        manifest_path: String,
 
         #[arg(
             help = "Set the maximum number of cycles [default: 16777216u64]",
@@ -328,8 +322,7 @@ pub enum ParsedCommand {
         zk_program_path: String,
     },
     Estimate {
-        elf: PathBuf,
-        segment_limit_po2: Option<usize>,
+        manifest_path: String,
         max_cycles: Option<u64>,
     },
     Execute {
@@ -388,12 +381,10 @@ impl TryFrom<Command> for ParsedCommand {
             }),
             Command::Build { zk_program_path } => Ok(ParsedCommand::Build { zk_program_path }),
             Command::Estimate {
-                elf,
-                segment_limit_po2,
+                manifest_path,
                 max_cycles,
             } => Ok(ParsedCommand::Estimate {
-                elf: PathBuf::from(elf),
-                segment_limit_po2,
+                manifest_path,
                 max_cycles,
             }),
             Command::Execute {

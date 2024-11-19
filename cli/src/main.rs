@@ -5,12 +5,13 @@ use std::path::Path;
 use atty::Stream;
 use bonsol_sdk::BonsolClient;
 use clap::Parser;
+use common::ZkProgramManifest;
 use solana_sdk::signature::read_keypair_file;
 use solana_sdk::signer::Signer;
 
 use crate::command::{BonsolCli, ParsedBonsolCli, ParsedCommand};
 use crate::common::{sol_check, try_load_from_config};
-use crate::error::BonsolCliError;
+use crate::error::{BonsolCliError, ZkManifestError};
 
 mod build;
 mod deploy;
@@ -62,10 +63,31 @@ async fn main() -> anyhow::Result<()> {
             deploy::deploy(rpc, keypair, deploy_args).await
         }
         ParsedCommand::Estimate {
-            elf,
-            segment_limit_po2,
+            manifest_path,
             max_cycles,
-        } => estimate::estimate(fs::read(elf)?.as_slice(), segment_limit_po2, max_cycles),
+        } => {
+            let manifest_file = fs::File::open(Path::new(&manifest_path)).map_err(|err| {
+                BonsolCliError::ZkManifestError(ZkManifestError::FailedToOpen {
+                    manifest_path: manifest_path.clone(),
+                    err,
+                })
+            })?;
+            let manifest: ZkProgramManifest =
+                serde_json::from_reader(manifest_file).map_err(|err| {
+                    BonsolCliError::ZkManifestError(ZkManifestError::FailedDeserialization {
+                        manifest_path,
+                        err,
+                    })
+                })?;
+            let elf = fs::read(&manifest.binary_path).map_err(|err| {
+                BonsolCliError::ZkManifestError(ZkManifestError::FailedToLoadBinary {
+                    binary_path: manifest.binary_path.clone(),
+                    err,
+                })
+            })?;
+
+            estimate::estimate(elf.as_slice(), max_cycles)
+        }
         ParsedCommand::Execute {
             execution_request_file,
             program_id,

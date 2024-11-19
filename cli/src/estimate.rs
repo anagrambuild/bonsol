@@ -14,12 +14,8 @@ use risc0_zkvm_platform::PAGE_SIZE;
 
 use self::emu_syscall::BasicSyscall;
 
-pub fn estimate<E: MkImage>(
-    elf: E,
-    segment_limit_po2: Option<usize>,
-    max_cycles: Option<u64>,
-) -> Result<()> {
-    let cycles: usize = get_cycle_count(elf, segment_limit_po2, max_cycles)?;
+pub fn estimate<E: MkImage>(elf: E, max_cycles: Option<u64>) -> Result<()> {
+    let cycles: usize = get_cycle_count(elf, max_cycles)?;
     println!("number of cycles: {cycles}");
 
     Ok(())
@@ -27,14 +23,10 @@ pub fn estimate<E: MkImage>(
 
 /// Get the total number of cycles by stepping through the ELF using emulation
 /// tools from the risc0_circuit_rv32im module.
-pub fn get_cycle_count<E: MkImage>(
-    elf: E,
-    segment_limit_po2: Option<usize>,
-    max_cycles: Option<u64>,
-) -> Result<usize> {
+pub fn get_cycle_count<E: MkImage>(elf: E, max_cycles: Option<u64>) -> Result<usize> {
     execute(
         elf.mk_image()?,
-        segment_limit_po2.unwrap_or(DEFAULT_SEGMENT_LIMIT_PO2),
+        DEFAULT_SEGMENT_LIMIT_PO2,
         max_cycles.or(DEFAULT_SESSION_LIMIT),
         &BasicSyscall::default(),
         None,
@@ -136,7 +128,7 @@ mod estimate_tests {
         let program = basic_test_program();
         let image = MemoryImage::new(&program, PAGE_SIZE as u32)
             .expect("failed to create image from basic program");
-        let res = estimate::get_cycle_count(image, None, None);
+        let res = estimate::get_cycle_count(image, None);
 
         assert_eq!(res.ok(), Some(15790));
     }
