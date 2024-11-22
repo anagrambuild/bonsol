@@ -6,4 +6,4 @@
 let
   name = "setup.sh";
 in
-writeShellScriptBin name (builtins.readFile ../../../${name})
+writeShellScriptBin name (builtins.readFile ../../../bin/${name})

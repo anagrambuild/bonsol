@@ -1,10 +1,12 @@
 use crate::common::*;
 use anyhow::Result;
-use bonsol_sdk::input_resolver::{DefaultInputResolver, InputResolver, ProgramInput};
+use bonsol_prover::input_resolver::{DefaultInputResolver, InputResolver, ProgramInput};
+use bonsol_sdk::instructions::{ExecutionConfig, InputRef};
 use bonsol_sdk::{BonsolClient, ExecutionAccountStatus, InputType};
 use indicatif::ProgressBar;
 use sha2::{Digest, Sha256};
 use solana_rpc_client::nonblocking::rpc_client::RpcClient;
+use solana_sdk::bs58;
 use solana_sdk::commitment_config::CommitmentConfig;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signer::Signer;
@@ -116,10 +118,22 @@ pub async fn execute(
         .or(execution_request_file.expiry)
         .ok_or(anyhow::anyhow!("Expiry not provided"))?;
     let callback_config = execution_request_file.callback_config;
-    let mut execution_config = execution_request_file.execution_config;
+    let mut input_hash =
+        if let Some(input_hash) = execution_request_file.execution_config.input_hash {
+            let input_hash = hex::decode(&input_hash)
+                .map_err(|_| anyhow::anyhow!("Invalid input hash, must be hex encoded"))?;
+            input_hash
+        } else {
+            vec![]
+        };
+
     let signer = keypair.pubkey();
     let transformed_inputs = execute_transform_cli_inputs(inputs)?;
-    let hash_inputs = execution_config.verify_input_hash
+    let verify_input_hash = execution_request_file
+        .execution_config
+        .verify_input_hash
+        .unwrap_or(false);
+    let hash_inputs = verify_input_hash
         // cannot auto hash private inputs since you need the claim from the prover to get the private inputs
         // if requester knows them they can send the hash in the request
         && transformed_inputs.iter().all(|i| i.input_type != InputType::Private);
@@ -142,9 +156,16 @@ pub async fn execute(
                 return Err(anyhow::anyhow!("Unresolved input"));
             }
         }
-        let digest = hash.finalize();
-        execution_config.input_hash = Some(digest.to_vec());
+        input_hash = hash.finalize().to_vec();
     }
+    let execution_config = ExecutionConfig {
+        verify_input_hash: verify_input_hash,
+        input_hash: Some(&input_hash),
+        forward_output: execution_request_file
+            .execution_config
+            .forward_output
+            .unwrap_or(false),
+    };
     let current_block = sdk.get_current_slot().await?;
     let expiry = expiry + current_block;
     println!("Execution expiry {}", expiry);
@@ -155,11 +176,20 @@ pub async fn execute(
             &signer,
             &image_id,
             &execution_id,
-            transformed_inputs,
+            transformed_inputs
+                .iter()
+                .map(|i| {
+                    InputRef::new(
+                        i.input_type,
+                        i.data.as_ref().map(|d| d.as_slice()).unwrap_or_default(),
+                    )
+                })
+                .collect(),
             tip,
             expiry,
             execution_config,
             callback_config.map(|c| c.into()),
+            None, // A future cli change can implement prover version selection
         )
         .await?;
     indicator.finish_with_message("Sending transaction");

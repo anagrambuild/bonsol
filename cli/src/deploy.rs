@@ -1,10 +1,7 @@
-use std::env;
 use std::fs::{self, File};
 use std::path::Path;
 use std::str::FromStr;
 
-use crate::command::{DeployType, S3UploadDestination, ShadowDriveUpload, UrlUploadDestination};
-use crate::common::ZkProgramManifest;
 use anyhow::Result;
 use bonsol_sdk::{BonsolClient, ProgramInputType};
 use byte_unit::{Byte, ByteUnit};
@@ -12,192 +9,227 @@ use indicatif::ProgressBar;
 use object_store::aws::AmazonS3Builder;
 use object_store::ObjectStore;
 use shadow_drive_sdk::models::ShadowFile;
-use shadow_drive_sdk::ShadowDriveClient;
+use shadow_drive_sdk::{Keypair, ShadowDriveClient, Signer};
 use solana_rpc_client::nonblocking::rpc_client::RpcClient;
 use solana_sdk::commitment_config::CommitmentConfig;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::read_keypair_file;
 
-pub async fn deploy(
-    rpc: String,
-    signer: &impl shadow_drive_sdk::Signer,
-    manifest_path: String,
-    s3_upload: S3UploadDestination,
-    shadow_drive_upload: ShadowDriveUpload,
-    url_upload: UrlUploadDestination,
-    auto_confirm: bool,
-    deploy_type: Option<DeployType>,
-) -> Result<()> {
-    let bar = ProgressBar::new_spinner();
-    let rpc_url = rpc.clone();
-    let rpc_client = RpcClient::new_with_commitment(rpc, CommitmentConfig::confirmed());
-    let manifest_path = Path::new(&manifest_path);
-    let manifest_file = File::open(manifest_path)
-        .map_err(|e| anyhow::anyhow!("Error opening manifest file: {:?}", e))?;
+use crate::command::{DeployArgs, DeployDestination, S3UploadArgs, ShadowDriveUploadArgs};
+use crate::common::ZkProgramManifest;
+use crate::error::{BonsolCliError, S3ClientError, ShadowDriveClientError, ZkManifestError};
 
-    let manifest: ZkProgramManifest = serde_json::from_reader(manifest_file)
-        .map_err(|e| anyhow::anyhow!("Error parsing manifest file: {:?}", e))?;
-    let loaded_binary = fs::read(&manifest.binary_path)
-        .map_err(|e| anyhow::anyhow!("Error loading binary: {:?}", e))?;
-    let url: String = match deploy_type {
-        Some(DeployType::S3) => {
-            let bucket = s3_upload
-                .bucket
-                .ok_or(anyhow::anyhow!("Please provide a bucket name"))?;
-            let region = s3_upload.region.or_else(|| env::var("AWS_REGION").ok());
-            let access_key = s3_upload
-                .access_key
-                .or_else(|| env::var("AWS_ACCESS_KEY_ID").ok());
-            let secret_key = s3_upload
-                .secret_key
-                .or_else(|| env::var("AWS_SECRET_ACCESS_KEY").ok());
-            if region.is_none() || access_key.is_none() || secret_key.is_none() {
-                bar.finish_and_clear();
-                return Err(anyhow::anyhow!("Invalid AWS credentials"));
-            }
-            let region = region.unwrap();
-            let access_key = access_key.unwrap();
-            let secret_key = secret_key.unwrap();
-            if bucket.is_empty() {
-                bar.finish_and_clear();
-                return Err(anyhow::anyhow!("Please provide a bucket name"));
-            }
+pub async fn deploy(rpc_url: String, signer: Keypair, deploy_args: DeployArgs) -> Result<()> {
+    let bar = ProgressBar::new_spinner();
+    let rpc_client = RpcClient::new_with_commitment(rpc_url.clone(), CommitmentConfig::confirmed());
+    let DeployArgs {
+        dest,
+        manifest_path,
+        auto_confirm,
+    } = deploy_args;
+
+    let manifest_file = File::open(Path::new(&manifest_path)).map_err(|err| {
+        BonsolCliError::ZkManifestError(ZkManifestError::FailedToOpen {
+            manifest_path: manifest_path.clone(),
+            err,
+        })
+    })?;
+    let manifest: ZkProgramManifest = serde_json::from_reader(manifest_file).map_err(|err| {
+        BonsolCliError::ZkManifestError(ZkManifestError::FailedDeserialization {
+            manifest_path,
+            err,
+        })
+    })?;
+    let loaded_binary = fs::read(&manifest.binary_path).map_err(|err| {
+        BonsolCliError::ZkManifestError(ZkManifestError::FailedToLoadBinary {
+            binary_path: manifest.binary_path.clone(),
+            err,
+        })
+    })?;
+    let url: String = match dest {
+        DeployDestination::S3(s3_upload) => {
+            let S3UploadArgs {
+                bucket,
+                access_key,
+                secret_key,
+                region,
+                ..
+            } = s3_upload;
+
             let s3_client = AmazonS3Builder::new()
-                .with_bucket_name(bucket.clone())
+                .with_bucket_name(&bucket)
                 .with_region(&region)
                 .with_access_key_id(&access_key)
                 .with_secret_access_key(&secret_key)
                 .build()
-                .map_err(|e| anyhow::anyhow!("Error creating S3 client: {:?}", e))?;
+                .map_err(|err| {
+                    BonsolCliError::S3ClientError(S3ClientError::FailedToBuildClient {
+                        args: vec![
+                            format!("bucket: {bucket}"),
+                            format!("access_key: {access_key}"),
+                            format!(
+                                "secret_key: {}..{}",
+                                &secret_key[..4],
+                                &secret_key[secret_key.len() - 4..]
+                            ),
+                            format!("region: {region}"),
+                        ],
+                        err,
+                    })
+                })?;
+
             let dest =
                 object_store::path::Path::from(format!("{}-{}", manifest.name, manifest.image_id));
-            let destc = dest.clone();
-            //get the file to see if it exists
-            let exists = s3_client.head(&destc).await.is_ok();
-            let url = format!(
-                "https://{}.s3.{}.amazonaws.com/{}",
-                bucket,
-                region,
-                dest
-            );
-            if exists {
+            let url = format!("https://{}.s3.{}.amazonaws.com/{}", bucket, region, dest);
+            // get the file to see if it exists
+            if s3_client.head(&dest).await.is_ok() {
                 bar.set_message("File already exists, skipping upload");
-                Ok::<_, anyhow::Error>(url)
             } else {
-                let upload = s3_client.put(&destc, loaded_binary.into()).await;
-                match upload {
-                    Ok(_) => {
-                        bar.finish_and_clear();
-                        Ok::<_, anyhow::Error>(url)
-                    }
-                    Err(e) => {
-                        bar.finish_and_clear();
-                        anyhow::bail!("Error uploading to {} {:?}", dest.to_string(), e)
-                    }
-                }
+                s3_client
+                    .put(&dest, loaded_binary.into())
+                    .await
+                    .map_err(|err| {
+                        BonsolCliError::S3ClientError(S3ClientError::UploadFailed { dest, err })
+                    })?;
             }
-        }
-        Some(DeployType::ShadowDrive) => {
-            let storage_account = shadow_drive_upload
-                .storage_account
-                .ok_or(anyhow::anyhow!("Please provide a storage account"))?;
-            let shadow_drive = ShadowDriveClient::new(signer, &rpc_url);
-            let alt_client = if let Some(alt_keypair) = shadow_drive_upload.alternate_keypair {
-                Some(ShadowDriveClient::new(
-                    read_keypair_file(Path::new(&alt_keypair))
-                        .map_err(|e| anyhow::anyhow!("Invalid keypair file: {:?}", e))?,
-                    &rpc_url,
-                ))
-            } else {
-                None
-            };
-            let sa = if storage_account == "create" {
-                let name = shadow_drive_upload
-                    .storage_account_name
-                    .unwrap_or(manifest.name.clone());
-                let min = std::cmp::max(((loaded_binary.len() as u64) / 1024 / 1024) * 2, 1);
-                let size = shadow_drive_upload.storage_account_size_mb.unwrap_or(min);
-                let res = if let Some(alt_client) = &alt_client {
-                    alt_client
-                        .create_storage_account(
-                            &name,
-                            Byte::from_unit(size as f64, ByteUnit::MB)
-                                .map_err(|e| anyhow::anyhow!("Invalid size: {:?}", e))?,
-                            shadow_drive_sdk::StorageAccountVersion::V2,
-                        )
-                        .await
-                        .map_err(|e| anyhow::anyhow!("Error creating storage account: {:?}", e))?
-                } else {
-                    println!(
-                        "Creating storage account with {}MB under the name {} with {}",
-                        size,
-                        &name,
-                        signer.pubkey()
-                    );
 
-                    shadow_drive
-                        .create_storage_account(
-                            &name,
-                            Byte::from_unit(size as f64, ByteUnit::MB)
-                                .map_err(|e| anyhow::anyhow!("Invalid size: {:?}", e))?,
-                            shadow_drive_sdk::StorageAccountVersion::V2,
+            bar.finish_and_clear();
+            url
+        }
+        DeployDestination::ShadowDrive(shadow_drive_upload) => {
+            let ShadowDriveUploadArgs {
+                storage_account,
+                storage_account_size_mb,
+                storage_account_name,
+                alternate_keypair,
+                create,
+                ..
+            } = shadow_drive_upload;
+
+            let alternate_keypair = alternate_keypair
+                .map(|alt_keypair| -> anyhow::Result<Keypair> {
+                    read_keypair_file(Path::new(&alt_keypair)).map_err(|err| {
+                        BonsolCliError::FailedToReadKeypair {
+                            file: alt_keypair,
+                            err: format!("{err:?}"),
+                        }
+                        .into()
+                    })
+                })
+                .transpose()?;
+            let wallet = alternate_keypair.as_ref().unwrap_or(&signer);
+            let wallet_pubkey = wallet.pubkey();
+
+            let client = ShadowDriveClient::new(wallet, &rpc_url);
+
+            let storage_account = if create {
+                let name = storage_account_name.unwrap_or(manifest.name.clone());
+                let min = std::cmp::max(((loaded_binary.len() as u64) / 1024 / 1024) * 2, 1);
+                let size = storage_account_size_mb.unwrap_or(min);
+
+                println!(
+                    "Creating storage account with {}MB under the name '{}' with signer pubkey {}",
+                    size, &name, wallet_pubkey
+                );
+                let storage_account = client
+                    .create_storage_account(
+                        &name,
+                        Byte::from_unit(size as f64, ByteUnit::MB).map_err(|err| {
+                            BonsolCliError::ShadowDriveClientError(
+                                ShadowDriveClientError::ByteError {
+                                    size: size as f64,
+                                    err,
+                                },
+                            )
+                        })?,
+                        shadow_drive_sdk::StorageAccountVersion::V2,
+                    )
+                    .await
+                    .map_err(|err| {
+                        BonsolCliError::ShadowDriveClientError(
+                            ShadowDriveClientError::StorageAccountCreationFailed {
+                                name: name.clone(),
+                                signer: wallet_pubkey,
+                                size,
+                                err,
+                            },
                         )
-                        .await
-                        .map_err(|e| anyhow::anyhow!("Error creating storage account: {:?}", e))?
-                };
-                res.shdw_bucket
-                    .ok_or(anyhow::anyhow!("Invalid storage account"))?
+                    })?
+                    .shdw_bucket
+                    .ok_or(BonsolCliError::ShadowDriveClientError(
+                        ShadowDriveClientError::InvalidStorageAccount {
+                            name,
+                            signer: wallet_pubkey,
+                            size,
+                        },
+                    ))?;
+
+                println!("Created new storage account with public key: {storage_account}");
+                storage_account
             } else {
-                storage_account.to_string()
+                // cli parsing prevents both `create` and `storage_account` to be passed simultaneously
+                // and require at least one or the other is passed, making this unwrap safe.
+                storage_account.unwrap().to_string()
             };
 
             let name = format!("{}-{}", manifest.name, manifest.image_id);
-            let resp = if let Some(alt_client) = alt_client {
-                alt_client
-                    .store_files(
-                        &Pubkey::from_str(&sa)?,
-                        vec![ShadowFile::bytes(name, loaded_binary)],
-                    )
-                    .await
-                    .map_err(|e| anyhow::anyhow!("Error uploading to shadow drive: {:?}", e))?
-            } else {
-                shadow_drive
-                    .store_files(
-                        &Pubkey::from_str(&sa)?,
-                        vec![ShadowFile::bytes(name, loaded_binary)],
-                    )
-                    .await
-                    .map_err(|e| anyhow::anyhow!("Error uploading to shadow drive: {:?}", e))?
-            };
+            let resp = client
+                .store_files(
+                    &Pubkey::from_str(&storage_account)?,
+                    vec![ShadowFile::bytes(name.clone(), loaded_binary)],
+                )
+                .await
+                .map_err(|err| {
+                    BonsolCliError::ShadowDriveClientError(ShadowDriveClientError::UploadFailed {
+                        storage_account,
+                        name: manifest.name.clone(),
+                        binary_path: manifest.binary_path,
+                        err,
+                    })
+                })?;
+
             bar.finish_and_clear();
             println!("Uploaded to shadow drive");
-            Ok::<_, anyhow::Error>(resp.message)
+            resp.message
         }
-        Some(DeployType::Url) => Ok(url_upload.url),
-        _ => {
+        DeployDestination::Url(url_upload) => {
+            let req = reqwest::get(&url_upload.url).await?;
+            let bytes = req.bytes().await?;
+            if bytes != loaded_binary {
+                return Err(BonsolCliError::OriginBinaryMismatch {
+                    url: url_upload.url,
+                    binary_path: manifest.binary_path,
+                }
+                .into());
+            }
+
             bar.finish_and_clear();
-            return Err(anyhow::anyhow!("Please provide an upload config"));
+            url_upload.url
         }
-    }?;
+    };
 
     if !auto_confirm {
         bar.finish_and_clear();
         println!("Deploying to Solana, which will cost real money. Are you sure you want to continue? (y/n)");
         let mut input = String::new();
         std::io::stdin().read_line(&mut input).unwrap();
-        if input.trim() != "y" {
+        let response = input.trim();
+        if response != "y" {
             bar.finish_and_clear();
-            println!("Aborting");
+            println!("Response: {response}\nAborting...");
             return Ok(());
         }
     }
     let bonsol_client = BonsolClient::with_rpc_client(rpc_client);
-    let image_id = manifest.image_id.clone();
+    let image_id = manifest.image_id;
     let deploy = bonsol_client.get_deployment(&image_id).await;
     match deploy {
-        Ok(Some(_)) => {
+        Ok(Some(account)) => {
             bar.finish_and_clear();
-            println!("Deployment already exists, deployments are immutable");
+            println!(
+                "Deployment for account '{}' already exists, deployments are immutable",
+                account.owner
+            );
             Ok(())
         }
         Ok(None) => {
@@ -219,16 +251,13 @@ pub async fn deploy(
                         .collect(),
                 )
                 .await?;
-            match bonsol_client.send_txn_standard(signer, deploy_txn).await {
-                Ok(_) => {
-                    bar.finish_and_clear();
-                    println!("{} deployed", image_id);
-                }
-                Err(e) => {
-                    bar.finish_and_clear();
-                    anyhow::bail!(e);
-                }
-            };
+            if let Err(err) = bonsol_client.send_txn_standard(signer, deploy_txn).await {
+                bar.finish_and_clear();
+                anyhow::bail!(err)
+            }
+
+            bar.finish_and_clear();
+            println!("{} deployed", image_id);
             Ok(())
         }
         Err(e) => {

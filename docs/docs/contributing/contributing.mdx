@@ -1,0 +1,217 @@
+import PrereqContrib from '../shared/prereq-contrib.mdx';
+
+# General Contributing Guide
+
+Welcome! We're glad you're here. Before we get started, let's make sure everyone is using the same tools.
+
+乃ㄖ几丂ㄖㄥ relies on multiple toolchains, and that can cause issues between developer environments. We recommend using Nix in order to alleviate the issue.
+The nix flake in the root of the project provides a layer of safety by locking in the versions of packages provided by solana, risc0, rust, node
+and any other tools that are necessary to build all of the goodness that is 乃ㄖ几丂ㄖㄥ.
+
+## Getting Started
+
+> NOTE: Currently only supported on `x86_64-linux` machines, this will eventually change to support other architectures.
+
+### Fork and Clone the Repo
+```bash
+git clone https://github.com/<your-fork>/bonsol.git
+cd bonsol
+```
+
+### Required Dependencies
+<PrereqContrib />
+
+### Testing Your Environment
+
+```bash
+solana --version
+cargo --version
+rustc --version
+```
+
+Great! Our tools are there. Let's run the `simple` example already provided from the README to make sure our environment is working properly.  
+
+#### Prerequisites
+If this is your first time running bonsol install the Risc0 Groth16 Prover:
+```bash
+./bin/install_prover.sh --prefix .
+```
+
+The solona cli must be configured. This configuration is typically found in `${HOME}/.config/solana/cli/config.yml`
+```bash
+cat >> ${HOME}/.config/solana/cli/config.yml <<EOF
+json_rpc_url: https://localhost:9900
+websocket_url: ""
+keypair_path: /home/solana/.config/solana/id.json
+commitment: confirmed
+EOF
+```
+
+A solana account is also required.  This can be generated easily.
+```bash
+solana-keygen new -o ${HOME}/.config/solana/id.json
+```
+
+1. Download and setup the system with the needed binaries and keys to run the groth16 prover over the risc0 FRI
+```bash
+./bin/setup.sh --prefix .
+```
+2. Compile the 乃ㄖ几丂ㄖㄥ on chain program and start a localnet with the program loaded
+```bash
+./bin/validator.sh -r
+```
+3. On a separate terminal, compile the 乃ㄖ几丂ㄖㄥ off-chain node and start it
+```bash
+./bin/run-node.sh
+```
+4. Build the image binary if it hasn't already been built, this will result in the binary's path being available in the `manifest.json` (in this case `images/simple/manifest.json`)
+```bash
+cargo run -p bonsol-cli build -z images/simple
+```
+5. Use the bonsol cli to deploy a zkprogram (here is a example already uploaded for you)
+```bash
+cargo run -p bonsol-cli deploy -m images/simple/manifest.json -t url --url https://bonsol-public-images.s3.us-east-1.amazonaws.com/simple-68f4b0c5f9ce034aa60ceb264a18d6c410a3af68fafd931bcfd9ebe7c1e42960
+```
+6. Use the bonsol cli to execute a zkprogram
+```bash
+cargo run -p bonsol-cli execute -f testing-examples/example-execution-request.json -x 2000 -m 2000 -w
+```
+
+## Installing Risc0 Groth16 Location
+
+The `install_prover.sh` script automates the installation of RISC Zero prover by downloading required files from a specified provider URL and saving them to a defined installation prefix.
+
+### Running the Script
+
+To use the script, run it with the following command:
+
+```bash
+./bin/install_prover.sh [OPTIONS]
+```
+
+### Available Options
+
+- `--prefix <install location>`: Specifies the directory where the RISC Zero prover technologies will be installed.  
+  **Default**: `/opt/risc0-prover`.
+
+- `--prover-provider-url <prover provider URL>`: URL from which the prover files will be downloaded.  
+  **Default**: `http://risc0-prover-us-east-1-041119533185.s3-website-us-east-1.amazonaws.com`.
+
+- `--job-timeout <timeout>`: Maximum time allowed for each download, in seconds.  
+  **Default**: 3600 seconds (1 hour).
+
+- `--version <prover version>`: Specifies the version of the prover to install.  
+  **Default**: `v2024-05-17.1`.
+
+- `--help`: Displays a help message with usage instructions.
+
+### Example
+
+To install the prover to /usr/local/risc0 with a custom prover provider URL and a timeout of 1800 seconds:
+
+```bash
+./install_prover.sh --prefix /usr/local/risc0 --prover-provider-url http://custom-url.com --job-timeout 1800
+```
+
+### Prerequisites
+
+	•	`curl`: Ensure that curl is installed on your system, as it is required for downloading the files. If curl is not available, the script will terminate with an error.
+
+### Installation Process
+
+The script will:
+
+	1.	Parse the provided arguments or use default values.
+	2.	Create the installation directory if it doesn’t exist.
+	3.	Download the necessary prover files (such as stark/rapidsnark and stark/stark_verify) from the prover provider URL.
+	4.	If the files already exist, they will be skipped to avoid redundant downloads.
+
+
+
+## Pull Requests
+
+Thank you for your hard work! It's well appreciated (: Most of our code quality standards can be kept up-to-code by running `nix flake check` and following the prompts.
+
+Otherwise refer to this checklist:
+
+- [] Before filing an issue, please check if an existing issue matches the description of the problem you are having or feature you'd like to see implemented.
+- [] Please ensure when upstreaming pull requests that the problem you are solving has a corresponding GitHub issue, and that the issue is linked in the PR description with closing keywords, eg. `Closes #1578`.
+- [] Add a clear and concise description of your changes in the PR description.
+- [] Add relevant tests that showcase the effectiveness of your changes, where applicable.
+- [] GitHub action CI will run the same checks in the nix sandbox that you can run locally on your machine with `nix flake check`, which may be helpful in diagnosing issues before pushing changes.
+- [] Please format your rust code with the cargo nightly formatter as some options require it: `cargo +nightly fmt`, and format toml files with `taplo fmt`.
+- [] When adding dependencies, please be cautious that the dependency is well maintained and does not create a security vulnerability. The flake checks will prevent this, and `cargo deny` can give other safe options to choose from.
+- [] Ensure your PR is not introducing new lints: `cargo clippy`.
+
+## Commit Message Guidelines
+
+We use **commitlint** to ensure that all commit messages follow a consistent style based on the [Conventional Commits](https://www.conventionalcommits.org) specification. This makes it easier to understand the history of the project and generate changelogs automatically.
+
+### Commit Message Format
+
+Each commit message must be structured as follows:
+#### Type
+
+The type must be one of the following:
+
+- **feat**: A new feature
+- **fix**: A bug fix
+- **docs**: Documentation only changes
+- **style**: Changes that do not affect the meaning of the code (white-space, formatting, missing semi-colons, etc.)
+- **refactor**: A code change that neither fixes a bug nor adds a feature
+- **perf**: A code change that improves performance
+- **test**: Adding missing or correcting existing tests
+- **build**: Changes that affect the build system or external dependencies (example scopes: gulp, npm)
+- **ci**: Changes to our CI configuration files and scripts (example scopes: Travis, Circle, BrowserStack, SauceLabs)
+- **chore**: Other changes that don't modify src or test files
+- **revert**: Reverts a previous commit
+
+#### Scope
+
+The scope is optional and provides additional context about what the commit affects (e.g., `api`, `cli`, `frontend`, etc.).
+
+#### Description
+
+The description is a short, imperative summary of the change. It should start with a verb and be written in the present tense (e.g., "add feature," "fix bug").
+
+#### Body (optional)
+
+The body of the commit message provides additional details about the change. Use this when the change is not trivial and requires more explanation.
+
+#### Footer (optional)
+
+The footer should contain any relevant information about breaking changes or issues being closed:
+
+- Breaking changes should start with the word `BREAKING CHANGE:`, followed by an explanation of what changed and why.
+- Issues should be referenced using the `Closes` keyword, like so: `Closes #123`.
+
+### Example Commit Messages
+
+```text
+feat(api): add user authentication
+```
+
+```text
+fix(auth): correct token expiration logic
+```
+
+```text
+docs: update README with new installation steps
+```
+
+```text
+chore: update dependencies
+```
+
+## Troubleshooting
+
+- Docker Permissions: Adding your user to the `docker` group may help -- https://docs.docker.com/engine/install/linux-postinstall/
+
+- Invalid Keypair: You need to generate a solana keypair, which you can check for at `~/.config/solana/id.json`. Generate a new keypair with `solana-keygen new` if it's missing.
+
+- Keypair Not Found: If your keypair isn't automatically found, you can pass the keypair and RPC URL to the `bonsol-cli` invocation like so:
+
+```bash
+cargo run -p bonsol-cli -- --keypair $HOME/.config/solana/id.json --rpc-url http://localhost:8899 build -z images/simple
+```
+

@@ -1,21 +1,17 @@
-name: Build and Publish Relay Images (CUDA & Standard)
+name: Build and Publish Node Images (CUDA & Standard)
 on:
   push:
-    branches:
-      - main
-      - helm
-
+    tags:
+      - "*"
 jobs:
   build-and-push:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-m
     strategy:
       matrix:
         flavor: [standard, cuda]
-
     permissions:
       contents: read
       packages: write
-
     steps:
       - name: Free Disk Space (Ubuntu)
         uses: jlumbroso/free-disk-space@main
@@ -24,21 +20,17 @@ jobs:
           docker-images: false
       - name: Checkout Code
         uses: actions/checkout@v3
-      
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
-
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Extract Version from Cargo.toml
-        run: echo "VERSION=${{ github.head_ref || github.ref_name }}-$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[] | select(.name == "relay") | .version')" >> $GITHUB_ENV
-        working-directory: ./relay  
-
+        run: echo "VERSION=${{ github.head_ref || github.ref_name }}-$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[] | select(.name == "bonsol-node") | .version')" >> $GITHUB_ENV
+        working-directory: ./node
       - name: Build and Push Docker Image
         uses: docker/build-push-action@v3
         with:
@@ -46,8 +38,8 @@ jobs:
           push: true
           file: Dockerfile.${{ matrix.flavor }}
           tags: |
-            ghcr.io/${{ github.repository_owner }}/bonsol-relay:${{ matrix.flavor }}-${{ env.VERSION }}
-            ghcr.io/${{ github.repository_owner }}/bonsol-relay:${{ matrix.flavor }}-${{ github.sha }}
-          platforms: linux/amd64 
+            ghcr.io/${{ github.repository_owner }}/bonsol-node:${{ matrix.flavor }}-${{ env.VERSION }}
+            ghcr.io/${{ github.repository_owner }}/bonsol-node:${{ matrix.flavor }}-${{ github.sha }}
+          platforms: linux/amd64
           cache-from: type=gha
           cache-to: type=gha,mode=max

@@ -1,0 +1,38 @@
+[package]
+name = "bonsol"
+version.workspace = true
+description = "Solana channel to bonsai"
+authors = ["anagram build team"]
+repository = "https://github.com/anagrambuild/bonsol"
+license = "MIT"
+edition = "2021"
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[features]
+no-entrypoint = []
+test-sbf = []
+
+[dependencies]
+ark-bn254 = "0.4.0"
+ark-serialize = "0.4.0"
+bonsol-interface = { path = "../interface", features = [
+  "on-chain",
+], default-features = false }
+flatbuffers = { workspace = true }
+groth16-solana = { version = "0.0.2" }
+hex = "0.4.2"
+hex-literal = "0.4.1"
+num-bigint = "0.4.4"
+solana-program = { workspace = true }
+thiserror = { workspace = true }
+
+[dev-dependencies]
+solana-program-test = { workspace = true }
+solana-sdk = { workspace = true }
+anyhow = { workspace = true }
+tokio-test = { workspace = true }

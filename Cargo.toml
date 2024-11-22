@@ -4,24 +4,27 @@ name = "bonsol"
 [workspace]
 members = [
   "iop",
-  "onchain/channel",
-  "onchain/channel-utils",
-  "onchain/channel-interface",
-  "onchain/example-callback-program",
-  "relay",
+  "onchain/bonsol",
+  "onchain/interface",
+  "onchain/example-program-on-bonsol",
+  "node",
   "schemas-rust",
   "cli",
   "sdk",
+  "prover",
+  "tester",
 ]
+
+
 resolver = "2"
 # Only necessary for nix cargo workspace artifacts to build without warnings.
 # The actual crate derivations build using their individual manifest version.
-package.version = "0.0.2"
+package.version = "0.2.1"
 
 [workspace.dependencies]
 solana-sdk = "=1.18.22"
 thiserror = "1.0.57"
-flatbuffers = "23.5.26"
+flatbuffers = "24.3.25"
 anyhow = "1.0.40"
 solana-program = "=1.18.22"
 solana-program-test = "=1.18.22"
@@ -42,6 +45,11 @@ risc0-binfmt = { git = "https://github.com/anagrambuild/risc0", branch = "v1.0.1
 risc0-circuit-recursion = { git = "https://github.com/anagrambuild/risc0", branch = "v1.0.1-bonsai-fix" }
 risc0-sys = { git = "https:m//github.com/anagrambuild/risc0", branch = "v1.0.1-bonsai-fix" }
 tokio-test = "0.4.3"
+
+bonsol-interface = { path = "./onchain/interface" }
+bonsol-schema = { path = "./schemas-rust" }
+bonsol-cli = { path = "./cli" }
+bonsol-sdk = { path = "./sdk" }
 
 [workspace.lints.clippy]
 clone_on_ref_ptr = "deny"

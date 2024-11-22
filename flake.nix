@@ -43,6 +43,16 @@
             ./rust-toolchain.toml
             "sha256-VZZnlyP69+Y3crrLHQyJirqlHrTtGTsyiSnZB8jEvVo=";
           craneLib = (crane.mkLib pkgs).overrideToolchain rustToolchain.fenix-pkgs;
+          flatc = with pkgs;
+            (flatbuffers.overrideAttrs (old: rec {
+              version = "24.3.25";
+              src = fetchFromGitHub {
+                owner = "google";
+                repo = "flatbuffers";
+                rev = "v${version}";
+                hash = "sha256-uE9CQnhzVgOweYLhWPn2hvzXHyBbFiFVESJ1AEM3BmA=";
+              };
+            }));
           workspace = rec {
             root = ./.;
             src = craneLib.cleanCargoSource root;
@@ -92,6 +102,7 @@
               pkg-config
               perl
               autoPatchelfHook
+              flatc
             ];
 
             buildInputs = with pkgs; [
@@ -109,7 +120,7 @@
 
           individualCrateArgs = commonArgs // {
             inherit cargoArtifacts;
-            inherit (craneLib.crateNameFromCargoToml { inherit src; }) version;
+            inherit (craneLib.crateNameFromCargoToml { inherit (workspace) src; }) version;
             doCheck = false;
           };
 
@@ -120,6 +131,7 @@
             fileset = lib.fileset.unions ([
               ./Cargo.toml
               ./Cargo.lock
+              ./schemas
               (workspace.canonicalizePath crate)
             ] ++ (workspace.canonicalizePaths deps));
           };
@@ -150,18 +162,19 @@
               };
             in
             craneLib.buildPackage (individualCrateArgs // {
-              inherit (manifest) version pname;
+              inherit (manifest) pname;
               cargoExtraArgs = "--locked --bin ${name}";
               src = fileSetForCrate crate deps;
             });
 
           # The root Cargo.toml requires all of the workspace crates, otherwise this would be a bit neater.
-          bonsol-cli = mkCrateDrv "bonsol" "cli" [ "sdk" "onchain" "schemas-rust" "iop" "relay" ];
-          bonsol-relay = mkCrateDrv "relay" "relay" [ "sdk" "onchain" "schemas-rust" "iop" "cli" ];
+          bonsol-cli = mkCrateDrv "bonsol" "cli" [ "sdk" "onchain" "schemas-rust" "iop" "node" "prover" "tester" ];
+          bonsol-node = mkCrateDrv "bonsol-node" "node" [ "sdk" "onchain" "schemas-rust" "iop" "cli" "prover" "tester" ];
 
+          node_toml = pkgs.callPackage ./nixos/pkgs/bonsol/Node.toml.nix { inherit risc0-groth16-prover; };
           setup = pkgs.callPackage ./nixos/pkgs/bonsol/setup.nix { };
           validator = pkgs.callPackage ./nixos/pkgs/bonsol/validator.nix { };
-          run-relay = pkgs.callPackage ./nixos/pkgs/bonsol/run-relay.nix { inherit bonsol-relay; };
+          run-node = pkgs.callPackage ./nixos/pkgs/bonsol/run-node.nix { inherit bonsol-node node_toml; };
 
           # Internally managed versions of risc0 binaries that are pinned to
           # the version that bonsol relies on.
@@ -171,6 +184,11 @@
           r0vm = pkgs.callPackage ./nixos/pkgs/risc0/r0vm {
             inherit risc0CircuitRecursionPatch;
           };
+          risc0-groth16-prover = pkgs.callPackage ./nixos/pkgs/risc0/groth16-prover {
+            imageDigest = "sha256:5a862bac2c5c070ec50ff615572a05d870c1372818cf0f5d8bb9effc101590c8";
+            sha256 = "sha256-SV8nUjtq6TheYW+vQltyApOa7/gxnBrWx4Y6fQ71LFg=";
+            finalImageTag = "v2024-05-17.1";
+          };
           solana-platform-tools = pkgs.callPackage ./nixos/pkgs/solana/platform-tools { };
           solana-cli = pkgs.callPackage ./nixos/pkgs/solana { inherit solana-platform-tools; };
         in
@@ -179,7 +197,7 @@
             # Build the crates as part of `nix flake check` for convenience
             inherit
               bonsol-cli
-              bonsol-relay
+              bonsol-node
               cargo-risczero
               r0vm;
 
@@ -255,16 +273,20 @@
           packages = {
             inherit
               bonsol-cli
-              bonsol-relay
+              bonsol-node
 
               setup
               validator
-              run-relay
 
               cargo-risczero
               r0vm
+              risc0-groth16-prover
               solana-cli
               solana-platform-tools;
+
+            run-node = (run-node.override {
+                use-nix = true;
+              });
 
             simple-e2e-script = pkgs.writeShellApplication {
               name = "simple-e2e-test";
@@ -279,35 +301,34 @@
               ] ++ [
                 r0vm
                 cargo-risczero
+                risc0-groth16-prover
                 solana-cli
                 bonsol-cli
-                bonsol-relay
-                setup
+                bonsol-node
                 validator
-                (run-relay.override {
+                (run-node.override {
                   use-nix = true;
                 })
               ];
 
               text = ''
-                ${setup}/bin/setup.sh
                 ${bonsol-cli}/bin/bonsol --keypair $HOME/.config/solana/id.json --rpc-url http://localhost:8899 build -z images/simple
                 echo "building validator"
                 ${validator}/bin/validator.sh > /dev/null 2>&1 &
                 validator_pid=$!
                 sleep 30
                 echo "validator is running: PID $validator_pid"
-                echo "building relay"
-                ${run-relay}/bin/run-relay.sh > /dev/null 2>&1 &
-                relay_pid=$!
+                echo "building node"
+                ${run-node}/bin/run-node.sh > /dev/null 2>&1 &
+                node_pid=$!
                 sleep 30
-                echo "relay is running: PID $relay_pid"
-                ${bonsol-cli}/bin/bonsol --keypair $HOME/.config/solana/id.json --rpc-url http://localhost:8899 deploy -m images/simple/manifest.json -t url --url https://bonsol-public-images.s3.amazonaws.com/simple-7cb4887749266c099ad1793e8a7d486a27ff1426d614ec0cc9ff50e686d17699 -y
+                echo "node is running: PID $node_pid"
+                ${bonsol-cli}/bin/bonsol --keypair $HOME/.config/solana/id.json --rpc-url http://localhost:8899 deploy url https://bonsol-public-images.s3.amazonaws.com/simple-68f4b0c5f9ce034aa60ceb264a18d6c410a3af68fafd931bcfd9ebe7c1e42960 -m images/simple/manifest.json -y
                 sleep 20
                 resp=$(${bonsol-cli}/bin/bonsol --keypair $HOME/.config/solana/id.json --rpc-url http://localhost:8899 execute -f testing-examples/example-execution-request.json -x 2000 -m 2000 -w)
                 echo "execution response was: $resp"
                 kill $validator_pid
-                kill $relay_pid
+                kill $node_pid
                 if [[ "$resp" =~ "Success" ]]; then
                   exit 0
                 else
@@ -329,6 +350,7 @@
               nil # nix lsp
               nixpkgs-fmt # nix formatter
               rustup
+              flatc
 
               # `setup.sh` dependencies
               docker
@@ -336,15 +358,13 @@
               nodejs_22
               python3
               udev
-
-              # checked for at runtime but never used
-              cargo-binstall
             ] ++ [
               setup
               validator
-              run-relay
+              run-node
               r0vm
               cargo-risczero
+              risc0-groth16-prover
               solana-cli
             ];
 

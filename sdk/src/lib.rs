@@ -1,16 +1,11 @@
-pub mod image;
-pub mod prover;
-pub mod util;
-
 use std::time::Duration;
 
 use anyhow::Result;
-use bonsol_channel_interface::claim_state::ClaimStateHolder;
-use bonsol_schema::{root_as_deploy_v1, root_as_execution_request_v1};
+
 use bytes::Bytes;
 use futures_util::TryFutureExt;
-use instructions::{CallbackConfig, ExecutionConfig};
 use num_traits::FromPrimitive;
+
 use solana_rpc_client::nonblocking::rpc_client::RpcClient;
 use solana_rpc_client_api::config::RpcSendTransactionConfig;
 use solana_sdk::account::Account;
@@ -22,15 +17,21 @@ use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signer::Signer;
 use solana_sdk::transaction::VersionedTransaction;
 
-pub use bonsol_channel_interface::{instructions, ID};
-pub use bonsol_channel_utils::*;
-pub use bonsol_schema::{
+use tokio::time::Instant;
+
+use bonsol_interface::bonsol_schema::{root_as_deploy_v1, root_as_execution_request_v1};
+pub use bonsol_interface::bonsol_schema::{
     ClaimV1T, DeployV1T, ExecutionRequestV1T, ExitCode, InputSetT, InputT, InputType,
     ProgramInputType, StatusTypes,
 };
+use bonsol_interface::claim_state::ClaimStateHolder;
+use bonsol_interface::prover_version::ProverVersion;
+pub use bonsol_interface::util::*;
+pub use bonsol_interface::{instructions, ID};
+use instructions::{CallbackConfig, ExecutionConfig, InputRef};
+
 pub use flatbuffers;
-use tokio::time::Instant;
-pub mod input_resolver;
+
 pub struct BonsolClient {
     rpc_client: RpcClient,
 }
@@ -137,7 +138,7 @@ impl BonsolClient {
     }
 
     pub async fn get_fees(&self, signer: &Pubkey) -> Result<u64> {
-        let fee_accounts = vec![signer.to_owned(), bonsol_channel_utils::ID];
+        let fee_accounts = vec![signer.to_owned(), bonsol_interface::ID];
         let compute_fees = self
             .rpc_client
             .get_recent_prioritization_fees(&fee_accounts)
@@ -166,19 +167,30 @@ impl BonsolClient {
         Ok(vec![compute, compute_price, instruction])
     }
 
-    pub async fn execute_v1(
+    pub async fn execute_v1<'a>(
         &self,
         signer: &Pubkey,
         image_id: &str,
         execution_id: &str,
-        inputs: Vec<InputT>,
+        inputs: Vec<InputRef<'a>>,
         tip: u64,
         expiration: u64,
-        config: ExecutionConfig,
+        config: ExecutionConfig<'a>,
         callback: Option<CallbackConfig>,
+        prover_version: Option<ProverVersion>,
     ) -> Result<Vec<Instruction>> {
         let compute_price_val = self.get_fees(signer).await?;
+
+        let fbs_version_or_none = match prover_version {
+            Some(version) => {
+                let fbs_version = version.try_into().expect("Unknown prover version");
+                Some(fbs_version)
+            }
+            None => None,
+        };
+
         let instruction = instructions::execute_v1(
+            signer,
             signer,
             image_id,
             execution_id,
@@ -187,6 +199,7 @@ impl BonsolClient {
             expiration,
             config,
             callback,
+            fbs_version_or_none,
         )?;
         let compute = ComputeBudgetInstruction::set_compute_unit_limit(20_000);
         let compute_price = ComputeBudgetInstruction::set_compute_unit_price(compute_price_val);
@@ -222,6 +235,7 @@ impl BonsolClient {
                     RpcSendTransactionConfig {
                         skip_preflight,
                         max_retries: Some(0),
+                        preflight_commitment: Some(self.rpc_client.commitment().commitment),
                         ..Default::default()
                     },
                 )
@@ -230,14 +244,11 @@ impl BonsolClient {
             let now = Instant::now();
             let confirm_transaction_initial_timeout = Duration::from_secs(retry_timeout);
             let (_, status) = loop {
-                let status = self
-                    .rpc_client
-                    .get_signature_status_with_commitment(&sig, CommitmentConfig::processed())
-                    .await?;
+                let status = self.rpc_client.get_signature_status(&sig).await?;
                 if status.is_none() {
                     let blockhash_not_found = !self
                         .rpc_client
-                        .is_blockhash_valid(&blockhash, CommitmentConfig::processed())
+                        .is_blockhash_valid(&blockhash, self.rpc_client.commitment())
                         .await?;
                     if blockhash_not_found && now.elapsed() >= confirm_transaction_initial_timeout {
                         break (sig, status);
@@ -260,6 +271,63 @@ impl BonsolClient {
                     if rt == 0 {
                         return Err(anyhow::anyhow!("Timeout: Failed to confirm transaction"));
                     }
+                }
+            }
+        }
+    }
+
+    pub async fn wait_for_claim(
+        &self,
+        requester: Pubkey,
+        execution_id: &str,
+        timeout: Option<u64>,
+    ) -> Result<ClaimStateHolder> {
+        let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(1));
+        let now = Instant::now();
+        let mut end = false;
+        loop {
+            interval.tick().await;
+            if now.elapsed().as_secs() > timeout.unwrap_or(0) {
+                end = true;
+            }
+            if let Ok(claim_state) = self.get_claim_state_v1(&requester, execution_id).await {
+                return Ok(claim_state);
+            }
+            if end {
+                return Err(anyhow::anyhow!("Timeout"));
+            }
+        }
+    }
+
+    pub async fn wait_for_proof(
+        &self,
+        requester: Pubkey,
+        execution_id: &str,
+        timeout: Option<u64>,
+    ) -> Result<ExitCode> {
+        let current_block = self.get_current_slot().await?;
+        let expiry = current_block + 100;
+        let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(1));
+        let now = Instant::now();
+        loop {
+            interval.tick().await;
+            if now.elapsed().as_secs() > timeout.unwrap_or(0) {
+                return Err(anyhow::anyhow!("Timeout"));
+            }
+            let status = self
+                .get_execution_request_v1(&requester, execution_id)
+                .await;
+            match status {
+                Ok(ExecutionAccountStatus::Pending(req)) => {
+                    if req.max_block_height < expiry {
+                        return Err(anyhow::anyhow!("Expired"));
+                    }
+                }
+                Ok(ExecutionAccountStatus::Completed(s)) => {
+                    return Ok(s);
+                }
+                Err(e) => {
+                    return Err(e);
                 }
             }
         }

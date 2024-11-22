@@ -1,20 +1,13 @@
 [package]
 name = "bonsol-sdk"
-version = "0.2.0"
+version.workspace = true
 edition = "2021"
-publish = false     # Exclude local crates from licensing checks
+publish = false          # Exclude local crates from licensing checks
 
 [dependencies]
 anyhow = "1.0.86"
 async-trait = "0.1.80"
 bincode = "1.3.3"
-bonsol-channel-interface = { path = "../onchain/channel-interface", features = [
-  "default",
-] }
-bonsol-channel-utils = { path = "../onchain/channel-utils", features = [
-  "default",
-] }
-bonsol-schema = { path = "../schemas-rust" }
 bytes = "1.5.0"
 flatbuffers = { workspace = true }
 futures-util = "0.3.30"
@@ -33,3 +26,6 @@ solana-rpc-client = { workspace = true }
 solana-rpc-client-api = { workspace = true }
 solana-sdk = { workspace = true }
 tokio = "1.36.0"
+
+bonsol-interface.workspace = true
+bonsol-schema.workspace = true

@@ -1,5 +1,6 @@
 .vscode
 .DS_Store
+.idea
 relaykp.json
 target
 result*
@@ -10,3 +11,9 @@ charts/bonsol-node/secret-values.yaml
 charts/bonsol-node/mainnet-values.yaml
 charts/bonsol-node/alloy.yaml
 relay/MyLogFile.log
+NodeDragon.toml
+images/**/manifest.json
+stark
+MyLogFile.log
+*_generated.rs
+.pnpm-store
