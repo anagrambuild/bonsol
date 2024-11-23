@@ -1,5 +1,7 @@
 use clap::{command, ArgGroup, Args, Parser, Subcommand, ValueEnum};
 
+use crate::common::CliInput;
+
 #[derive(Parser, Debug)]
 #[command(version)]
 #[command(group(
@@ -189,6 +191,24 @@ impl DeployArgs {
     }
 }
 
+#[derive(Debug, Clone)]
+pub enum InputSetAction {
+    Create {
+        #[arg(long)]
+        path: String,
+    },
+    Read {
+        #[arg(long)]
+        path: String,
+    },
+    Update {
+        #[arg(long)]
+        path: String,
+        #[arg(long)]
+        value: Vec<CliInput>,
+    },
+}
+
 #[derive(Subcommand, Debug)]
 pub enum Command {
     #[command(
@@ -286,6 +306,10 @@ pub enum Command {
         #[arg(short = 'n', long)]
         project_name: String,
     },
+    InputSet {
+        #[command(subcommand)]
+        input_set: InputSetAction,
+    },
 }
 
 #[derive(Debug)]
@@ -328,6 +352,9 @@ pub enum ParsedCommand {
         dir: Option<String>,
 
         project_name: String,
+    },
+    InputSet {
+        input_set: InputSetAction,
     },
 }
 
@@ -384,6 +411,7 @@ impl TryFrom<Command> for ParsedCommand {
                 output_location,
             }),
             Command::Init { dir, project_name } => Ok(ParsedCommand::Init { dir, project_name }),
+            Command::InputSet { input_set } => Ok(ParsedCommand::InputSet { input_set }),
         }
     }
 }
