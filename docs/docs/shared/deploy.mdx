@@ -22,8 +22,23 @@ bonsol deploy -m ./path-to-your-manifest.json -t {s3|shadow-drive|url}
 #### S3
 You can upload your program to s3 and have it be accessible by the relayer network. This is the recommended way to deploy your program.
 
+Upload your program to s3.
 ```bash
-bonsol deploy -m ./path-to-your-manifest.json -t s3 --access-key {your access key} --secret-key {your secret key}
+aws s3api create-bucket \
+    --bucket {bucket_name} \
+    --region {region} \
+    --create-bucket-configuration LocationConstraint={region}
+```
+
+```bash
+bonsol deploy \
+    --deploy-type s3 \
+    --bucket {bucket_name} \
+    --access-key {access-key} \
+    --secret-key {secret-key} \
+    --region {region} \
+    --manifest-path collatz/manifest.json \
+    --storage-account s3://{bucket_name}
 ```
 
 #### ShadowDrive

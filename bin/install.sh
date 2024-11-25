@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-cargo install cargo-binstall@1.0.1
+cargo install cargo-binstall
 cargo binstall cargo-risczero
 cargo risczero install
 
