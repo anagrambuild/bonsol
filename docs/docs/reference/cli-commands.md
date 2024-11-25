@@ -32,7 +32,7 @@ bonsol -k ./keypair.json -u http://localhost:8899 ...
 ```
 ### `init`: Starting a new bonsol program
 ```bash
-bonsol init nameofprogram
+bonsol init --project-name nameofprogram
 ```
 This command will create a new bonsol program in the current directory.
 
