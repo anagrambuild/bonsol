@@ -245,6 +245,9 @@ pub enum Command {
         )]
         manifest_path: String,
 
+        #[arg(help = "The path to the program input file", short = 'i', long)]
+        input_file: Option<String>,
+
         #[arg(
             help = "Set the maximum number of cycles [default: 16777216u64]",
             short = 'c',
@@ -315,6 +318,7 @@ pub enum ParsedCommand {
     },
     Estimate {
         manifest_path: String,
+        input_file: Option<String>,
         max_cycles: Option<u64>,
     },
     Execute {
@@ -374,9 +378,11 @@ impl TryFrom<Command> for ParsedCommand {
             Command::Build { zk_program_path } => Ok(ParsedCommand::Build { zk_program_path }),
             Command::Estimate {
                 manifest_path,
+                input_file,
                 max_cycles,
             } => Ok(ParsedCommand::Estimate {
                 manifest_path,
+                input_file,
                 max_cycles,
             }),
             Command::Execute {

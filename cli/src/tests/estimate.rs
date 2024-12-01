@@ -46,13 +46,20 @@ fn estimate_simple() {
         .join("simple");
 
     build_test_image(&image_path);
+    let input_file = bonsol_estimate
+        .get_current_dir()
+        .unwrap()
+        .join("testing-examples")
+        .join("example-input-file.json");
 
     bonsol_estimate.args(&[
         "--manifest-path",
         image_path.join("manifest.json").to_str().unwrap(),
+        "--input-file",
+        input_file.to_str().unwrap(),
     ]);
     bonsol_estimate
         .assert()
         .success()
-        .stdout(predicates::str::is_match(r##"number of cycles: "##).unwrap());
+        .stdout(predicates::str::is_match(r##"total cycles: 65536"##).unwrap());
 }

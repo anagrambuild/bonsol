@@ -5,7 +5,10 @@ use std::path::Path;
 use atty::Stream;
 use bonsol_sdk::BonsolClient;
 use clap::Parser;
-use common::ZkProgramManifest;
+use common::{execute_get_inputs, ZkProgramManifest};
+use risc0_circuit_rv32im::prove::emu::exec::DEFAULT_SEGMENT_LIMIT_PO2;
+use risc0_circuit_rv32im::prove::emu::testutil::DEFAULT_SESSION_LIMIT;
+use risc0_zkvm::ExecutorEnv;
 use solana_sdk::signature::read_keypair_file;
 use solana_sdk::signer::Signer;
 
@@ -67,6 +70,7 @@ async fn main() -> anyhow::Result<()> {
         }
         ParsedCommand::Estimate {
             manifest_path,
+            input_file,
             max_cycles,
         } => {
             let manifest_file = fs::File::open(Path::new(&manifest_path)).map_err(|err| {
@@ -88,7 +92,17 @@ async fn main() -> anyhow::Result<()> {
                     err,
                 })
             })?;
-            estimate::estimate(elf.as_slice(), max_cycles)
+            let mut env = &mut ExecutorEnv::builder();
+            env = env
+                .segment_limit_po2(DEFAULT_SEGMENT_LIMIT_PO2 as u32)
+                .session_limit(max_cycles.or(DEFAULT_SESSION_LIMIT));
+
+            if input_file.is_some() {
+                let inputs = execute_get_inputs(input_file, None)?;
+                let inputs: Vec<&str> = inputs.iter().map(|i| i.data.as_str()).collect();
+                env = env.write(&inputs.as_slice())?;
+            }
+            estimate::estimate(elf.as_slice(), env.build()?)
         }
         ParsedCommand::Execute {
             execution_request_file,
