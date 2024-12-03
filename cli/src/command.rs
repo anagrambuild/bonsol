@@ -1,5 +1,7 @@
 use clap::{command, ArgGroup, Args, Parser, Subcommand, ValueEnum};
 
+use crate::common::CliInput;
+
 #[derive(Parser, Debug)]
 #[command(version)]
 #[command(group(
@@ -189,6 +191,44 @@ impl DeployArgs {
     }
 }
 
+#[derive(Debug, Clone, Subcommand)]
+pub enum InputSetAction {
+    #[command(about = "Generate a new input set file")]
+    Create {
+        #[arg(help = "Specify the path to the input set file", long, short = 'p')]
+        path: String,
+
+        #[arg(help = "Optionally specify inputs to include in the newly created input set file", long = "input", short = 'i', name = "input", value_parser = parse_cli_input)]
+        inputs: Option<Vec<CliInput>>,
+
+        #[arg(
+            help = "Overwrite the file completely with a new input set",
+            long,
+            short = 't'
+        )]
+        truncate: bool,
+    },
+
+    #[command(about = "Print an input set file contents to stdout")]
+    Read {
+        #[arg(help = "Specify the path to the input set file", long, short = 'p')]
+        path: String,
+    },
+
+    #[command(about = "Add new inputs to the input set file")]
+    Update {
+        #[arg(help = "Specify the path to the input set file", long, short = 'p')]
+        path: String,
+
+        #[arg(help = "Specify inputs to include in the input set file", long = "input", short = 'i', name = "input",  value_parser = parse_cli_input)]
+        inputs: Vec<CliInput>,
+    },
+}
+
+fn parse_cli_input(s: &str) -> Result<CliInput, serde_json::Error> {
+    serde_json::from_str(s)
+}
+
 #[derive(Subcommand, Debug)]
 pub enum Command {
     #[command(
@@ -286,6 +326,11 @@ pub enum Command {
         #[arg(short = 'n', long)]
         project_name: String,
     },
+    #[command(about = "Manage JSON input sets for dedicated input set files")]
+    InputSet {
+        #[command(subcommand)]
+        input_set: InputSetAction,
+    },
 }
 
 #[derive(Debug)]
@@ -328,6 +373,9 @@ pub enum ParsedCommand {
         dir: Option<String>,
 
         project_name: String,
+    },
+    InputSet {
+        input_set: InputSetAction,
     },
 }
 
@@ -384,6 +432,7 @@ impl TryFrom<Command> for ParsedCommand {
                 output_location,
             }),
             Command::Init { dir, project_name } => Ok(ParsedCommand::Init { dir, project_name }),
+            Command::InputSet { input_set } => Ok(ParsedCommand::InputSet { input_set }),
         }
     }
 }

@@ -24,10 +24,10 @@ bonsol -k ./keypair.json -u http://localhost:8899 ...
 You can build a bonsol program with the following command
 
 ```
-bonsol -k ./keypair.json -u http://localhost:8899  build -z {path to program folder}
+bonsol -k ./keypair.json -u http://localhost:8899 build -z {path to program folder}
 ```
 In the above example the program folder is the folder that contains the Cargo.toml file. So if you have a program in the folder `my-program` you would run the command 
-```bonsol -k ./keypair.json -u http://localhost:8899  build -z ./my-program```
+```bonsol -k ./keypair.json -u http://localhost:8899 build -z ./my-program```
 
 The output of the build command is a manifest.json file which is placed in the root of the program folder. The manifest.json file contains needed information for deployment.
  
@@ -58,3 +58,25 @@ todo
 
 ### Prove
 todo
+
+### Input Sets
+For convenience, json input sets can be created, read and updated from the bonsol cli.
+
+Create a new input set with some arbitrary inputs, overwriting some previously existing inputs.
+Creating a new input set without any inputs results in a file containing an empty inputs array.
+
+```
+bonsol -k ./keypair.json -u http://localhost:8899 input-set create --path <path/to/inputs.json> --input '{ "inputType": "PublicData", "data": "..." }' --input '{ "inputType": "Private", "data": "..." }' -t 
+```
+
+Read an input set, printing it to stdout.
+
+```
+bonsol -k ./keypair.json -u http://localhost:8899 input-set read -p <path/to/inputs.json>
+```
+
+Update an input set, appending inputs to the array of existing inputs.
+
+```
+bonsol -k ./keypair.json -u http://localhost:8899 input-set update --path <path/to/inputs.json> --input '{ "inputType": "PublicData", "data": "..." }' --input '{ "inputType": "Private", "data": "..." }'
+```

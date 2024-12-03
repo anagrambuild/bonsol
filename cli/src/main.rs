@@ -15,6 +15,7 @@ mod build;
 mod deploy;
 mod execute;
 mod init;
+mod input_set;
 mod prove;
 
 pub mod command;
@@ -110,5 +111,6 @@ async fn main() -> anyhow::Result<()> {
             .await
         }
         ParsedCommand::Init { project_name, dir } => init::init_project(&project_name, dir),
+        ParsedCommand::InputSet { input_set } => input_set::input_set(input_set),
     }
 }
