@@ -195,25 +195,29 @@ impl DeployArgs {
 pub enum InputSetAction {
     #[command(about = "Generate a new input set file")]
     Create {
-        #[arg(help = "Specify the path to the input set file", long)]
+        #[arg(help = "Specify the path to the input set file", long, short = 'p')]
         path: String,
 
         #[arg(help = "Optionally specify inputs to include in the newly created input set file", long = "input", short = 'i', name = "input", value_parser = parse_cli_input)]
         inputs: Option<Vec<CliInput>>,
 
-        #[arg(help = "Overwrite the file completely with a new input set", long)]
+        #[arg(
+            help = "Overwrite the file completely with a new input set",
+            long,
+            short = 't'
+        )]
         truncate: bool,
     },
 
     #[command(about = "Print an input set file contents to stdout")]
     Read {
-        #[arg(help = "Specify the path to the input set file", long)]
+        #[arg(help = "Specify the path to the input set file", long, short = 'p')]
         path: String,
     },
 
     #[command(about = "Add new inputs to the input set file")]
     Update {
-        #[arg(help = "Specify the path to the input set file", long)]
+        #[arg(help = "Specify the path to the input set file", long, short = 'p')]
         path: String,
 
         #[arg(help = "Specify inputs to include in the input set file", long = "input", short = 'i', name = "input",  value_parser = parse_cli_input)]
