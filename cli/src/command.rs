@@ -191,22 +191,38 @@ impl DeployArgs {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Subcommand)]
 pub enum InputSetAction {
+    #[command(about = "Generate a new input set file")]
     Create {
-        #[arg(long)]
+        #[arg(help = "Specify the path to the input set file", long)]
         path: String,
+
+        #[arg(help = "Optionally specify inputs to include in the newly created input set file", long = "input", short = 'i', name = "input", value_parser = parse_cli_input)]
+        inputs: Option<Vec<CliInput>>,
+
+        #[arg(help = "Overwrite the file completely with a new input set", long)]
+        truncate: bool,
     },
+
+    #[command(about = "Print an input set file contents to stdout")]
     Read {
-        #[arg(long)]
+        #[arg(help = "Specify the path to the input set file", long)]
         path: String,
     },
+
+    #[command(about = "Add new inputs to the input set file")]
     Update {
-        #[arg(long)]
+        #[arg(help = "Specify the path to the input set file", long)]
         path: String,
-        #[arg(long)]
-        value: Vec<CliInput>,
+
+        #[arg(help = "Specify inputs to include in the input set file", long = "input", short = 'i', name = "input",  value_parser = parse_cli_input)]
+        inputs: Vec<CliInput>,
     },
+}
+
+fn parse_cli_input(s: &str) -> Result<CliInput, serde_json::Error> {
+    serde_json::from_str(s)
 }
 
 #[derive(Subcommand, Debug)]
@@ -306,6 +322,7 @@ pub enum Command {
         #[arg(short = 'n', long)]
         project_name: String,
     },
+    #[command(about = "Manage JSON input sets for dedicated input set files")]
     InputSet {
         #[command(subcommand)]
         input_set: InputSetAction,
