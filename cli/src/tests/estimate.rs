@@ -58,8 +58,8 @@ fn estimate_simple() {
         "--input-file",
         input_file.to_str().unwrap(),
     ]);
-    bonsol_estimate
-        .assert()
-        .success()
-        .stdout(predicates::str::is_match(r##"total cycles: 65536"##).unwrap());
+    bonsol_estimate.assert().success().stdout(
+        predicates::str::is_match(r##"User cycles: 3380\nTotal cycles: 65536\nSegments: 1"##)
+            .unwrap(),
+    );
 }

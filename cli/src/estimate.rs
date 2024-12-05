@@ -4,20 +4,25 @@
 
 use anyhow::Result;
 use risc0_binfmt::{MemoryImage, Program};
-use risc0_zkvm::{ExecutorEnv, ExecutorImpl, GUEST_MAX_MEM};
+use risc0_zkvm::{ExecutorEnv, ExecutorImpl, Session, GUEST_MAX_MEM};
 use risc0_zkvm_platform::PAGE_SIZE;
 
 pub fn estimate<E: MkImage>(elf: E, env: ExecutorEnv) -> Result<()> {
-    let cycles = get_cycle_count(elf, env)?;
-    println!("total: {cycles}");
+    let session = get_session(elf, env)?;
+    println!(
+        "User cycles: {}\nTotal cycles: {}\nSegments: {}",
+        session.user_cycles,
+        session.total_cycles,
+        session.segments.len()
+    );
 
     Ok(())
 }
 
 /// Get the total number of cycles by stepping through the ELF using emulation
 /// tools from the risc0_circuit_rv32im module.
-pub fn get_cycle_count<E: MkImage>(elf: E, env: ExecutorEnv) -> Result<u64> {
-    Ok(ExecutorImpl::new(env, elf.mk_image()?)?.run()?.total_cycles)
+pub fn get_session<E: MkImage>(elf: E, env: ExecutorEnv) -> Result<Session> {
+    Ok(ExecutorImpl::new(env, elf.mk_image()?)?.run()?)
 }
 
 /// Helper trait for loading an image from an elf.
@@ -59,8 +64,11 @@ mod estimate_tests {
             .session_limit(DEFAULT_SESSION_LIMIT);
         let image = MemoryImage::new(&program, PAGE_SIZE as u32)
             .expect("failed to create image from basic program");
-        let res = estimate::get_cycle_count(image, env.build().unwrap());
+        let res = estimate::get_session(image, env.build().unwrap());
 
-        assert_eq!(res.ok(), Some(16384));
+        assert_eq!(
+            res.ok().and_then(|session| Some(session.total_cycles)),
+            Some(16384)
+        );
     }
 }
