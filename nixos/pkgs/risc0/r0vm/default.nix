@@ -9,6 +9,10 @@
 , risc0CircuitRecursionPatch
 }:
 
+{ version ? ""
+, gitHash ? ""
+, cargoHash ? ""
+}:
 import ../mkRisc0Package.nix {
   inherit
     lib
@@ -18,11 +22,12 @@ import ../mkRisc0Package.nix {
     pkg-config
     openssl
     darwin
-    risc0CircuitRecursionPatch;
+    risc0CircuitRecursionPatch
+
+    version
+    gitHash
+    cargoHash;
   pname = "r0vm";
-  version = "1.0.1";
-  gitHash = "sha256-0Y7+Z2TEm5ZbEkbO8nSOZulGuZAgl9FdyEVNmqV7S8U=";
-  cargoHash = "sha256-3DwrWkjPCE4f/FHjzWyRGAXJPv30B4Ce8fh2oKDhpMM=";
   extraNativeBuildInputs = [ perl ];
   metaDescription = "RISC Zero zero-knowledge VM";
 }

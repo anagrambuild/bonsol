@@ -1,3 +1,5 @@
+# TODO: Transition naming conventions and links to anza/agave
+
 { stdenv
 , fetchFromGitHub
 , lib
@@ -35,15 +37,18 @@
     "solana-validator"
     "solana-watchtower"
   ] ++ [
-    # XXX: Ensure `solana-genesis` is built LAST!
+    # Ensure `solana-genesis` is built LAST!
     # See https://github.com/solana-labs/solana/issues/5826
     "solana-genesis"
   ]
 }:
+
+{ version ? ""
+, hash ? ""
+}:
 let
+  inherit version hash;
   pname = "solana-cli";
-  version = "1.18.22";
-  hash = "sha256-MQcnxMhlD0a2cQ8xY//2K+EHgE6rvdUtqufhOw6Ib0Y=";
   src = fetchFromGitHub {
     owner = "solana-labs";
     repo = "solana";
@@ -128,31 +133,6 @@ rustPlatform.buildRustPackage {
   # cmath functions
   CPPFLAGS = lib.optionals stdenv.hostPlatform.isDarwin "-isystem ${lib.getDev libcxx}/include/c++/v1";
   LDFLAGS = lib.optionals stdenv.hostPlatform.isDarwin "-L${lib.getLib libcxx}/lib";
-
-  # This is run only when the package is used in a nix-shell, in the event that it's consumed by outside sources.
-  # This effectively "re-creates" the logic removed from `cargo-build-sbf` that forcibly removes and symlinks `platform-tools`.
-  shellHook = ''
-    # make cargo-build-sbf aware of platform-tools
-    export SBF_SDK_PATH=$out/bin/sdk # This is the default but we export it anyway just in case
-    cache_dir="''$HOME/.cache/solana"
-    # if the cache dir exists, ask if the user wants to remove it
-    if [[ -d "''$cache_dir" ]]; then
-      read -p "'$cache_dir' will be removed and replaced with a nix store symbolic link, continue? (y/n): " response
-      response=$(echo "$response" | tr '[:upper:]' '[:lower:]')
-      if [[ "''$response" == "y" || "''$response" == "yes" ]]; then
-        rm -rf "''$cache_dir"
-        # create the cache dir
-        mkdir -p "''$cache_dir"
-        # symlink the platform tools to the cache dir
-        ln -s ${solana-platform-tools}/v${solana-platform-tools.version} ''$cache_dir
-      fi
-    else
-      # create the cache dir
-      mkdir -p "''$cache_dir"
-      # symlink the platform tools to the cache dir
-      ln -s ${solana-platform-tools}/v${solana-platform-tools.version} ''$cache_dir
-    fi
-  '';
 
   meta = with lib; {
     description = "Web-Scale Blockchain for fast, secure, scalable, decentralized apps and marketplaces.";

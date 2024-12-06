@@ -6,12 +6,12 @@
 , libsodium
 , gmp
 , fetchurl
+}:
 
-, imageDigest
+{ imageDigest
 , sha256
 , finalImageTag
 }:
-
 let
   owner = "risczero";
   pname = "risc0-groth16-prover";

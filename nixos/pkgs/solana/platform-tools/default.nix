@@ -10,15 +10,18 @@
 , libxml2
 , lldb
 }:
+
+{ version ? ""
+, hash ? ""
+}:
 let
   owner = "anza-xyz";
   repo = "platform-tools";
-  version = "1.41";
   system = "linux-x86_64"; # TODO: Add other archs
   src = fetchzip {
+    inherit hash;
     name = "${owner}-${repo}-${version}-${system}";
     url = "https://github.com/${owner}/${repo}/releases/download/v${version}/platform-tools-${system}.tar.bz2";
-    hash = "sha256-m+9QArPvapnOO9lMWYZK2/Yog5cVoY9x1DN7JAusYsk=";
     stripRoot = false;
   };
   python38 = (python39.override {
