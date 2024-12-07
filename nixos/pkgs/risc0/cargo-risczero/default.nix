@@ -9,7 +9,7 @@
 }:
 
 { version ? ""
-, gitHash ? ""
+, hash ? ""
 , cargoHash ? ""
 }:
 import ../mkRisc0Package.nix {
@@ -24,7 +24,7 @@ import ../mkRisc0Package.nix {
     risc0CircuitRecursionPatch
 
     version
-    gitHash
+    hash
     cargoHash;
   pname = "cargo-risczero";
   metaDescription = "Cargo extension to help create, manage, and test RISC Zero projects";

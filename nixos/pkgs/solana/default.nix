@@ -81,6 +81,8 @@ rustPlatform.buildRustPackage {
   # and will forcibly delete, download and replace symbolic links regardless of if they already
   # exist and are up-to-date. This just stops it from doing that since we handle that through
   # `autoPatchelfHook` and creating a symbolic link to the dependencies in the nix store.
+  #
+  # TODO: Probably this isn't strictly necessary, there is likely some way we can work around it
   cargoPatches = [
     ./patches/v1.18.22/cargo-build-sbf.diff
   ];

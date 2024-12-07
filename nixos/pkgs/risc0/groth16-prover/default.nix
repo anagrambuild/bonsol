@@ -9,8 +9,8 @@
 }:
 
 { imageDigest
-, sha256
-, finalImageTag
+, version
+, hash
 }:
 let
   owner = "risczero";
@@ -23,16 +23,15 @@ let
     fromImage = dockerTools.pullImage {
       inherit
         imageName
-        imageDigest
-        sha256
-        finalImageTag;
+        imageDigest;
+      sha256 = hash;
+      finalImageTag = version;
     };
     diskSize = 10240; # 10G is necessary to build the layered image.
   };
 in
 stdenv.mkDerivation {
-  inherit pname src;
-  version = finalImageTag;
+  inherit pname src version;
 
   nativeBuildInputs = [ autoPatchelfHook ];
 

@@ -8,7 +8,7 @@
 
 , pname
 , version
-, gitHash
+, hash
 , cargoHash
 , extraNativeBuildInputs ? [ ]
 , extraBuildInputs ? [ ]
@@ -20,10 +20,10 @@ rustPlatform.buildRustPackage rec {
   inherit pname version cargoHash;
 
   src = fetchFromGitHub {
+    inherit hash;
     owner = "risc0";
     repo = "risc0";
     rev = "v${version}";
-    hash = gitHash;
   };
 
   nativeBuildInputs = [

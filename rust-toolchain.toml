@@ -1,3 +1,12 @@
 [toolchain]
 channel = "1.81.0"
 components = ["rustfmt", "clippy", "rust-analyzer"]
+hash = "sha256-VZZnlyP69+Y3crrLHQyJirqlHrTtGTsyiSnZB8jEvVo="
+
+[toolchain.system-dependencies]
+flatc = { version = "24.3.25", hash = "sha256-uE9CQnhzVgOweYLhWPn2hvzXHyBbFiFVESJ1AEM3BmA=" }
+risc0 = { version = "1.0.1", hash = "sha256-0Y7+Z2TEm5ZbEkbO8nSOZulGuZAgl9FdyEVNmqV7S8U=" }
+groth16-prover = { version = "v2024-05-17.1", hash = "sha256-SV8nUjtq6TheYW+vQltyApOa7/gxnBrWx4Y6fQ71LFg=" }
+# The platform tools version is baked in at https://github.com/solana-labs/solana/blob/27eff8408b7223bb3c4ab70523f8a8dca3ca6645/sdk/cargo-build-sbf/src/main.rs#L916
+platform-tools = { version = "1.41", hash = "sha256-m+9QArPvapnOO9lMWYZK2/Yog5cVoY9x1DN7JAusYsk=" }
+solana = { version = "1.18.22", hash = "sha256-MQcnxMhlD0a2cQ8xY//2K+EHgE6rvdUtqufhOw6Ib0Y=" }

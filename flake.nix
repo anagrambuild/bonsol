@@ -42,34 +42,21 @@
 
           inherit (pkgs) lib;
 
-          rustToolchain = nix-core.toolchains.${system}.mkRustToolchainFromTOML
-            ./rust-toolchain.toml
-            "sha256-VZZnlyP69+Y3crrLHQyJirqlHrTtGTsyiSnZB8jEvVo=";
+          # System dependencies that are pinned to the version that bonsol relies on.
+          toolchain = pkgs.callPackage ./nixos/lib/toolchain.nix {
+            inherit (nix-core.toolchains.${system}) mkRustToolchainFromTOML;
+          };
+          inherit (toolchain) flatc rustToolchain;
+          inherit (toolchain.risc0) r0vm cargo-risczero risc0-groth16-prover isRisc0CircuitRecursion risc0CircuitRecursionPatch;
+          inherit (toolchain.solana) solana-platform-tools solana-cli;
           craneLib = (crane.mkLib pkgs).overrideToolchain rustToolchain.fenix-pkgs;
+
           workspace = rec {
             root = ./.;
             src = craneLib.cleanCargoSource root;
             mkCratePath = crate: root + "/${crate}";
           };
 
-          # Returns true if the dependency requires `risc0-circuit-recursion` as part of its build.
-          isRisc0CircuitRecursion = p: lib.hasPrefix
-            "git+https://github.com/anagrambuild/risc0?branch=v1.0.1-bonsai-fix#189829d0b84d57e8928a85aa4fac60dd6ce45ea9"
-            p.source;
-          # Pre-pull the zkr file in order to apply in the postPatch phase for dependencies that require `risc0-circuit-recursion`.
-          risc0CircuitRecursionPatch =
-            let
-              # see https://github.com/risc0/risc0/blob/v1.0.5/risc0/circuit/recursion/build.rs
-              sha256Hash = "4e8496469e1efa00efb3630d261abf345e6b2905fb64b4f3a297be88ebdf83d2";
-              recursionZkr = pkgs.fetchurl {
-                name = "recursion_zkr.zip";
-                url = "https://risc0-artifacts.s3.us-west-2.amazonaws.com/zkr/${sha256Hash}.zip";
-                hash = "sha256-ToSWRp4e+gDvs2MNJhq/NF5rKQX7ZLTzope+iOvfg9I=";
-              };
-            in
-            ''
-              ln -sf ${recursionZkr} ./risc0/circuit/recursion/src/recursion_zkr.zip
-            '';
           # Patch git dependencies that require `risc0-circuit-recursion` for bonsol specifically.
           cargoVendorDir = craneLib.vendorCargoDeps (workspace // {
             overrideVendorGitCheckout = ps: drv:
@@ -157,46 +144,11 @@
           node_toml = pkgs.callPackage ./nixos/pkgs/bonsol/Node.toml.nix { inherit risc0-groth16-prover; };
           validator = pkgs.callPackage ./nixos/pkgs/bonsol/validator.nix { };
           run-node = pkgs.callPackage ./nixos/pkgs/bonsol/run-node.nix { inherit bonsol-node node_toml; };
-
-          # System dependencies that are pinned to the version that bonsol relies on.
-          flatc = with pkgs;
-            (flatbuffers.overrideAttrs (old: rec {
-              version = "24.3.25";
-              src = fetchFromGitHub {
-                inherit (old.src) owner repo;
-                rev = "v${version}";
-                hash = "sha256-uE9CQnhzVgOweYLhWPn2hvzXHyBbFiFVESJ1AEM3BmA=";
-              };
-            }));
-          cargo-risczero = pkgs.callPackage ./nixos/pkgs/risc0/cargo-risczero {
-            inherit risc0CircuitRecursionPatch;
-          } {
-            version = "1.0.1";
-            gitHash = "sha256-0Y7+Z2TEm5ZbEkbO8nSOZulGuZAgl9FdyEVNmqV7S8U=";
-            cargoHash = "sha256-G3S41Je4HJCvaixjPpNWnHHJgEjTVj83p5xLkXVsASU=";
-          };
-          r0vm = pkgs.callPackage ./nixos/pkgs/risc0/r0vm {
-            inherit risc0CircuitRecursionPatch;
-          } {
-            version = "1.0.1";
-            gitHash = "sha256-0Y7+Z2TEm5ZbEkbO8nSOZulGuZAgl9FdyEVNmqV7S8U=";
-            cargoHash = "sha256-3DwrWkjPCE4f/FHjzWyRGAXJPv30B4Ce8fh2oKDhpMM=";
-          };
-          risc0-groth16-prover = pkgs.callPackage ./nixos/pkgs/risc0/groth16-prover { } {
-            imageDigest = "sha256:5a862bac2c5c070ec50ff615572a05d870c1372818cf0f5d8bb9effc101590c8";
-            sha256 = "sha256-SV8nUjtq6TheYW+vQltyApOa7/gxnBrWx4Y6fQ71LFg=";
-            finalImageTag = "v2024-05-17.1";
-          };
-          solana-platform-tools = pkgs.callPackage ./nixos/pkgs/solana/platform-tools { } {
-            version = "1.41";
-            hash = "sha256-m+9QArPvapnOO9lMWYZK2/Yog5cVoY9x1DN7JAusYsk=";
-          };
-          solana-cli = pkgs.callPackage ./nixos/pkgs/solana { inherit solana-platform-tools; } {
-            version = "1.18.22";
-            hash = "sha256-MQcnxMhlD0a2cQ8xY//2K+EHgE6rvdUtqufhOw6Ib0Y=";
-          };
         in
         {
+          # NOTE: Some checks below fail due to generated code not being present
+          # this is because `cargo build` isn't run on the source, just their
+          # respective commands for checking formatting, docs, etc.
           checks = {
             # Build the crates as part of `nix flake check` for convenience
             inherit
