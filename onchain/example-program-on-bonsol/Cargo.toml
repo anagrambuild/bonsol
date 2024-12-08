@@ -17,9 +17,9 @@ bonsol-interface = { path = "../interface", features = [
 solana-program = { workspace = true }
 
 [dev-dependencies]
+anyhow = { workspace = true }
 solana-program-test = { workspace = true }
 solana-sdk = { workspace = true }
-anyhow = { workspace = true }
 tokio-test = { workspace = true }
 
 [lib]

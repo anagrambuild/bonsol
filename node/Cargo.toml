@@ -4,8 +4,6 @@ version.workspace = true
 edition = "2021"
 publish = false          # Exclude local crates from licensing checks
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [features]
 cuda = ["risc0-zkvm/cuda"]
 metal = ["risc0-zkvm/metal"]
@@ -21,6 +19,7 @@ ark-relations = { version = "0.4.0" }
 ark-serialize = "0.4.0"
 ark-std = { version = "0.4.0" }
 async-trait = "0.1.80"
+bonsol-interface.workspace = true
 bonsol-prover = { path = "../prover" }
 bytemuck = "1.15.0"
 byteorder = "1.5.0"
@@ -80,10 +79,12 @@ tracing-subscriber = { version = "0.3.18", features = [
 yellowstone-grpc-client = { workspace = true }
 yellowstone-grpc-proto = { workspace = true }
 
-bonsol-interface.workspace = true
-
 [dev-dependencies]
 expect-test = "1.5.0"
+
+[build-dependencies]
+toml = "0.8.19"
+toml_edit = "0.22.22"
 
 [lints]
 workspace = true

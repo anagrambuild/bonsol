@@ -10,15 +10,19 @@
 , libxml2
 , lldb
 }:
+
+# The platform tools version is baked in as a str at https://github.com/solana-labs/solana/blob/27eff8408b7223bb3c4ab70523f8a8dca3ca6645/sdk/cargo-build-sbf/src/main.rs#L916
+{ version ? ""
+, hash ? ""
+}:
 let
   owner = "anza-xyz";
   repo = "platform-tools";
-  version = "1.41";
   system = "linux-x86_64"; # TODO: Add other archs
   src = fetchzip {
+    inherit hash;
     name = "${owner}-${repo}-${version}-${system}";
     url = "https://github.com/${owner}/${repo}/releases/download/v${version}/platform-tools-${system}.tar.bz2";
-    hash = "sha256-m+9QArPvapnOO9lMWYZK2/Yog5cVoY9x1DN7JAusYsk=";
     stripRoot = false;
   };
   python38 = (python39.override {
@@ -51,6 +55,7 @@ stdenv.mkDerivation {
     mkdir -p $out/v${version}/platform-tools
     cp -r ${src}/* $out/v${version}/platform-tools/
   '';
+
   meta = with lib; {
     homepage = "https://github.com/anza-xyz/platform-tools";
     description = ''

@@ -6,12 +6,12 @@
 , libsodium
 , gmp
 , fetchurl
-
-, imageDigest
-, sha256
-, finalImageTag
 }:
 
+{ imageDigest
+, version
+, hash
+}:
 let
   owner = "risczero";
   pname = "risc0-groth16-prover";
@@ -23,16 +23,15 @@ let
     fromImage = dockerTools.pullImage {
       inherit
         imageName
-        imageDigest
-        sha256
-        finalImageTag;
+        imageDigest;
+      sha256 = hash;
+      finalImageTag = version;
     };
     diskSize = 10240; # 10G is necessary to build the layered image.
   };
 in
 stdenv.mkDerivation {
-  inherit pname src;
-  version = finalImageTag;
+  inherit pname src version;
 
   nativeBuildInputs = [ autoPatchelfHook ];
 
