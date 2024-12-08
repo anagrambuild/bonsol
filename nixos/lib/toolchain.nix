@@ -38,19 +38,23 @@ with rustToolchainTOML.toolchain.system-dependencies;
         ln -sf ${recursionZkr} ./risc0/circuit/recursion/src/recursion_zkr.zip
       '';
 
-    r0vm = callPackage ../pkgs/risc0/r0vm {
-      inherit risc0CircuitRecursionPatch;
-    } {
-      inherit (risc0) version hash;
-      cargoHash = "sha256-3DwrWkjPCE4f/FHjzWyRGAXJPv30B4Ce8fh2oKDhpMM=";
-    };
+    r0vm = callPackage ../pkgs/risc0/r0vm
+      {
+        inherit risc0CircuitRecursionPatch;
+      }
+      {
+        inherit (risc0) version hash;
+        cargoHash = "sha256-3DwrWkjPCE4f/FHjzWyRGAXJPv30B4Ce8fh2oKDhpMM=";
+      };
 
-    cargo-risczero = callPackage ../pkgs/risc0/cargo-risczero {
-      inherit risc0CircuitRecursionPatch;
-    } {
-      inherit (risc0) version hash;
-      cargoHash = "sha256-G3S41Je4HJCvaixjPpNWnHHJgEjTVj83p5xLkXVsASU=";
-    };
+    cargo-risczero = callPackage ../pkgs/risc0/cargo-risczero
+      {
+        inherit risc0CircuitRecursionPatch;
+      }
+      {
+        inherit (risc0) version hash;
+        cargoHash = "sha256-G3S41Je4HJCvaixjPpNWnHHJgEjTVj83p5xLkXVsASU=";
+      };
 
     risc0-groth16-prover = callPackage ../pkgs/risc0/groth16-prover { } {
       inherit (groth16-prover) version hash;

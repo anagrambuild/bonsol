@@ -1293,6 +1293,8 @@ dependencies = [
  "thiserror",
  "tokio",
  "tokio-util 0.7.12",
+ "toml 0.8.19",
+ "toml_edit 0.22.22",
  "tracing",
  "tracing-subscriber 0.3.18",
  "yellowstone-grpc-client",

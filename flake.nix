@@ -108,6 +108,7 @@
             fileset = lib.fileset.unions [
               ./Cargo.toml
               ./Cargo.lock
+              ./rust-toolchain.toml
               ./schemas
               ./schemas-rust
               ./iop
