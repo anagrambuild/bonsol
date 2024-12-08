@@ -11,7 +11,7 @@
 , lldb
 }:
 
-# The platform tools version is baked in at https://github.com/solana-labs/solana/blob/27eff8408b7223bb3c4ab70523f8a8dca3ca6645/sdk/cargo-build-sbf/src/main.rs#L916
+# The platform tools version is baked in as a str at https://github.com/solana-labs/solana/blob/27eff8408b7223bb3c4ab70523f8a8dca3ca6645/sdk/cargo-build-sbf/src/main.rs#L916
 { version ? ""
 , hash ? ""
 }:

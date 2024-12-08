@@ -33,13 +33,12 @@
     with flake-utils.lib;
     eachSystem
       (with system; [
-        # Currently only known to run on x86-linux but this may change soon
+        # Currently only supported on x86-linux due to groth16-prover
         x86_64-linux
       ])
       (system:
         let
           pkgs = nixpkgs.legacyPackages.${system};
-
           inherit (pkgs) lib;
 
           # System dependencies that are pinned to the version that bonsol relies on.
@@ -203,18 +202,18 @@
             inherit
               bonsol-cli
               bonsol-node
+              validator;
+            run-node = (run-node.override {
+              use-nix = true;
+            });
 
-              validator
-
+            inherit
+              flatc
               cargo-risczero
               r0vm
               risc0-groth16-prover
               solana-cli
               solana-platform-tools;
-
-            run-node = (run-node.override {
-                use-nix = true;
-              });
 
             simple-e2e-script = pkgs.writeShellApplication {
               name = "simple-e2e-test";

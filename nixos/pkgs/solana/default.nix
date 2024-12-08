@@ -83,6 +83,8 @@ rustPlatform.buildRustPackage {
   # `autoPatchelfHook` and creating a symbolic link to the dependencies in the nix store.
   #
   # TODO: Probably this isn't strictly necessary, there is likely some way we can work around it
+  # but will need to upstream some change to cargo-build-sbf so that we can avoid making unnecessary
+  # network calls.
   cargoPatches = [
     ./patches/v1.18.22/cargo-build-sbf.diff
   ];

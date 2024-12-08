@@ -14,42 +14,39 @@ members = [
   "prover",
   "tester",
 ]
-
-
 resolver = "2"
 # Only necessary for nix cargo workspace artifacts to build without warnings.
 # The actual crate derivations build using their individual manifest version.
 package.version = "0.2.1"
 
 [workspace.dependencies]
-solana-sdk = "=1.18.22"
-thiserror = "1.0.57"
-flatbuffers = "24.3.25"
 anyhow = "1.0.40"
-solana-program = "=1.18.22"
-solana-program-test = "=1.18.22"
-solana-rpc-client = "=1.18.22"
-solana-rpc-client-api = "=1.18.22"
-solana-pubsub-client = "=1.18.22"
-solana-transaction-status = "=1.18.22"
-solana-cli-config = "=1.18.22"
-yellowstone-grpc-client = "=1.15.4"
-yellowstone-grpc-proto = "=1.14.2"
+bonsol-cli = { path = "./cli" }
+bonsol-interface = { path = "./onchain/interface" }
+bonsol-schema = { path = "./schemas-rust" }
+bonsol-sdk = { path = "./sdk" }
+flatbuffers = "24.3.25"
+risc0-binfmt = { git = "https://github.com/anagrambuild/risc0", branch = "v1.0.1-bonsai-fix" }
+risc0-circuit-recursion = { git = "https://github.com/anagrambuild/risc0", branch = "v1.0.1-bonsai-fix" }
+risc0-core = { git = "https://github.com/anagrambuild/risc0", branch = "v1.0.1-bonsai-fix" }
+risc0-groth16 = { git = "https://github.com/anagrambuild/risc0", branch = "v1.0.1-bonsai-fix" }
+risc0-sys = { git = "https:m//github.com/anagrambuild/risc0", branch = "v1.0.1-bonsai-fix" }
+risc0-zkp = { git = "https://github.com/anagrambuild/risc0", branch = "v1.0.1-bonsai-fix" }
 risc0-zkvm = { git = "https://github.com/anagrambuild/risc0", branch = "v1.0.1-bonsai-fix", features = [
   "prove",
 ], default-features = false }
-risc0-core = { git = "https://github.com/anagrambuild/risc0", branch = "v1.0.1-bonsai-fix" }
-risc0-zkp = { git = "https://github.com/anagrambuild/risc0", branch = "v1.0.1-bonsai-fix" }
-risc0-groth16 = { git = "https://github.com/anagrambuild/risc0", branch = "v1.0.1-bonsai-fix" }
-risc0-binfmt = { git = "https://github.com/anagrambuild/risc0", branch = "v1.0.1-bonsai-fix" }
-risc0-circuit-recursion = { git = "https://github.com/anagrambuild/risc0", branch = "v1.0.1-bonsai-fix" }
-risc0-sys = { git = "https:m//github.com/anagrambuild/risc0", branch = "v1.0.1-bonsai-fix" }
+solana-cli-config = "=1.18.22"
+solana-program = "=1.18.22"
+solana-program-test = "=1.18.22"
+solana-pubsub-client = "=1.18.22"
+solana-rpc-client = "=1.18.22"
+solana-rpc-client-api = "=1.18.22"
+solana-sdk = "=1.18.22"
+solana-transaction-status = "=1.18.22"
+thiserror = "1.0.57"
 tokio-test = "0.4.3"
-
-bonsol-interface = { path = "./onchain/interface" }
-bonsol-schema = { path = "./schemas-rust" }
-bonsol-cli = { path = "./cli" }
-bonsol-sdk = { path = "./sdk" }
+yellowstone-grpc-client = "=1.15.4"
+yellowstone-grpc-proto = "=1.14.2"
 
 [workspace.lints.clippy]
 clone_on_ref_ptr = "deny"
