@@ -19,15 +19,15 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
       - name: Install Nix With Bonsol Binary Cache
         uses: DeterminateSystems/nix-installer-action@main
         with:
           extra-conf: |
             extra-substituters = https://bonsol.cachix.org
             extra-trusted-public-keys = bonsol.cachix.org-1:yz7vi1rCPW1BpqoszdJvf08HZxQ/5gPTPxft4NnT74A=
-
-      - name: Run Integration Tests
+      - name: Setup Toolchain
         run: nix develop
+      - name: List Cargo Plugins
         run: cargo --list
+      - name: Build and Test
         run: cargo build && cargo test --features integration -- --nocapture
