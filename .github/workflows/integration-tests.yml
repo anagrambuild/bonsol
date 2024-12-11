@@ -28,4 +28,4 @@ jobs:
             extra-trusted-public-keys = bonsol.cachix.org-1:yz7vi1rCPW1BpqoszdJvf08HZxQ/5gPTPxft4NnT74A=
 
       - name: Run Integration Tests
-        run: nix develop --command cargo test --features integration -- --nocapture
+        run: nix develop --command cargo build && cargo test --features integration -- --nocapture
