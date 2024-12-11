@@ -11,6 +11,7 @@ path = "src/main.rs"
 [features]
 mac = ["risc0-zkvm/metal"]
 linux = ["risc0-zkvm/cuda"]
+integration = []
 
 [dependencies]
 anyhow = "1.0.86"
