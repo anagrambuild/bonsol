@@ -5,6 +5,7 @@ on:
       - '**'
 
 concurrency:
+  group: "integration-tests"
   cancel-in-progress: true
 
 permissions: read-all
