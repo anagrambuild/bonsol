@@ -58,3 +58,20 @@ todo
 
 ### Prove
 todo
+
+### Estimate
+
+You can estimate the number of cycles and segments using risc0 emulation to step through an ELF by passing the `estimate` command the path to a manifest.json and an inputs file (if required).
+
+```
+bonsol -k ./keypair.json -u http://localhost:8899 estimate \
+    --manifest-path program/manifest.json \
+    --input-file program/inputs.json \
+    --max-cycles 16777216 # this is the default
+
+# Example Output:
+#
+# User cycles: 3380
+# Total cycles: 65536
+# Segments: 1
+```

@@ -1,0 +1,12 @@
+{
+  "inputs": [
+    {
+      "inputType": "PublicData",
+      "data": "{\"attestation\":\"test\"}"
+    },
+    {
+      "inputType": "Private",
+      "data": "https://echoserver.dev/server?response=N4IgFgpghgJhBOBnEAuA2mkBjA9gOwBcJCBaAgTwAcIQAaEIgDwIHpKAbKASzxAF0+9AEY4Y5VKArVUDCMzogYUAlBlFEBEAF96G5QFdkKAEwAGU1qA"
+    }
+  ]
+}

@@ -57,4 +57,5 @@ RUN /go/bin/yamlfmt -lint .github/workflows/*.yaml .github/workflows/*.yml .gith
 
 RUN cargo check
 RUN cargo +nightly fmt --all -- --check
-RUN cargo test   
+# Build the bonsol cli target prior to running integration tests that require it.
+RUN cargo build --bin bonsol && cargo test
