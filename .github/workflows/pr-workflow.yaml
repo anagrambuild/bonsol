@@ -65,7 +65,7 @@ jobs:
           cargo build -p bonsol-node
           cargo build -p bonsol-cli
           cargo test -p bonsol-cli -- --nocapture
-          solana-keygen new -f
+          solana-keygen new --no-bip39-passphrase -f 
           solana-test-validator \
           --ledger ./ledger \
           --limit-ledger-size 0 \
