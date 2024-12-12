@@ -1,0 +1,11 @@
+{
+  "name": "simple2",
+  "binaryPath": "elf/68f4b0c5f9ce034aa60ceb264a18d6c410a3af68fafd931bcfd9ebe7c1e42960",
+  "imageId": "68f4b0c5f9ce034aa60ceb264a18d6c410a3af68fafd931bcfd9ebe7c1e42960",
+  "inputOrder": [
+    "Public",
+    "Private"
+  ],
+  "signature": "4RBscJtuw32qGuCuTVEY6wF7nuTu3NFxS4phDrTBGqtZ5feY41ogNKKEptj3R5jNyVyj4UUCEJ5RoyyfXKjZxDTc",
+  "size": 266612
+}
