@@ -1,0 +1,81 @@
+name: CI
+on:
+  pull_request:
+    branches:
+      - main
+permissions:
+  contents: read
+  pull-requests: write
+jobs:
+  fmt:
+    name: Check & Fmt
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/anagrambuild/bonsol-ci-env:latest
+      volumes:
+        - ${{ github.workspace }}:/workspaces/bonsol
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Check 
+        shell: bash
+        id: check
+        run: |
+          cargo check --quiet 
+      - name: Fmt
+        shell: bash
+        id: fmt
+        run: |
+          cargo +nightly fmt --all 
+  test:
+    name: Unit Test
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/anagrambuild/bonsol-ci-env:latest
+      options: "-it"
+      volumes:
+        - ${{ github.workspace }}:/workspaces/bonsol
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Test
+        run: cargo test -- --nocapture
+  e2e-test:
+    name: E2E Test
+    runs-on: ubuntu-latest-m
+    container:
+      image: ghcr.io/anagrambuild/bonsol-ci-env:latest
+      options: "-it"
+      volumes:
+        - ${{ github.workspace }}:/workspaces/bonsol
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - uses: actions/cache@v4
+        id: cache
+        with:
+          path: stark
+          key: stark-v2024-05-17.1
+      - name: Setup Deps
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: ./bin/install_prover.sh --prefix . 
+      - name: E2E Test
+        run: |
+          cargo build-sbf
+          cargo build -p bonsol-node
+          cargo build -p bonsol-cli
+          cargo test -p bonsol-cli --features integration-tests -- --nocapture
+          solana-keygen new --no-bip39-passphrase -f 
+          solana-test-validator \
+          --ledger ./ledger \
+          --limit-ledger-size 0 \
+          --bind-address 0.0.0.0 \
+          --rpc-pubsub-enable-block-subscription \
+          --bpf-program BoNsHRcyLLNdtnoDf8hiCNZpyehMC4FDMxs6NTxFi3ew target/deploy/bonsol.so \
+          --bpf-program exay1T7QqsJPNcwzMiWubR6vZnqrgM16jZRraHgqBGG target/deploy/callback_example.so \
+          -r &
+          sleep 30
+          ./bin/run-node.sh &
+          sleep 15
+          cargo run -p bonsol-cli deploy -m images/simple/manifest.json -t url --url https://bonsol-public-images.s3.amazonaws.com/simple-68f4b0c5f9ce034aa60ceb264a18d6c410a3af68fafd931bcfd9ebe7c1e42960 -y
+          cargo run -p bonsol-tester -- 300

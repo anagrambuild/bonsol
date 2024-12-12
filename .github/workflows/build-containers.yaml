@@ -29,8 +29,18 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Extract Version from Cargo.toml
-        run: echo "VERSION=${{ github.head_ref || github.ref_name }}-$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[] | select(.name == "bonsol-node") | .version')" >> $GITHUB_ENV
+        run: echo "VERSION=v${{ github.head_ref || github.ref_name }}-$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[] | select(.name == "bonsol-node") | .version')" >> $GITHUB_ENV
         working-directory: ./node
+      - name: Check tag and version match
+        run: |
+          if [[ "${{ github.ref_name }}" != "v"* ]]; then
+            echo "Tag must start with v"
+            exit 1
+          fi
+          if [[ "${{ github.ref_name }}" != "${{ env.VERSION }}" ]]; then
+            echo "Tag and version do not match"
+            exit 1
+          fi
       - name: Build and Push Docker Image
         uses: docker/build-push-action@v3
         with:
@@ -38,7 +48,7 @@ jobs:
           push: true
           file: Dockerfile.${{ matrix.flavor }}
           tags: |
-            ghcr.io/${{ github.repository_owner }}/bonsol-node:${{ matrix.flavor }}-${{ env.VERSION }}
+            ghcr.io/${{ github.repository_owner }}/bonsol-node:${{ matrix.flavor }}-v${{ github.ref_name }}
             ghcr.io/${{ github.repository_owner }}/bonsol-node:${{ matrix.flavor }}-${{ github.sha }}
           platforms: linux/amd64
           cache-from: type=gha
