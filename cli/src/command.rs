@@ -227,6 +227,7 @@ pub enum Command {
         )]
         auto_confirm: bool,
     },
+    #[command(about = "Build a ZK program")]
     Build {
         #[arg(
             help = "The path to a ZK program folder containing a Cargo.toml",
@@ -234,6 +235,25 @@ pub enum Command {
             long
         )]
         zk_program_path: String,
+    },
+    #[command(about = "Estimate the execution cost of a ZK RISC0 program")]
+    Estimate {
+        #[arg(
+            help = "The path to the program's manifest file (manifest.json)",
+            short = 'm',
+            long
+        )]
+        manifest_path: String,
+
+        #[arg(help = "The path to the program input file", short = 'i', long)]
+        input_file: Option<String>,
+
+        #[arg(
+            help = "Set the maximum number of cycles [default: 16777216u64]",
+            short = 'c',
+            long
+        )]
+        max_cycles: Option<u64>,
     },
     Execute {
         #[arg(short = 'f', long)]
@@ -296,6 +316,11 @@ pub enum ParsedCommand {
     Build {
         zk_program_path: String,
     },
+    Estimate {
+        manifest_path: String,
+        input_file: Option<String>,
+        max_cycles: Option<u64>,
+    },
     Execute {
         execution_request_file: Option<String>,
 
@@ -351,6 +376,15 @@ impl TryFrom<Command> for ParsedCommand {
                 ),
             }),
             Command::Build { zk_program_path } => Ok(ParsedCommand::Build { zk_program_path }),
+            Command::Estimate {
+                manifest_path,
+                input_file,
+                max_cycles,
+            } => Ok(ParsedCommand::Estimate {
+                manifest_path,
+                input_file,
+                max_cycles,
+            }),
             Command::Execute {
                 execution_request_file,
                 program_id,

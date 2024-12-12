@@ -1,0 +1,34 @@
+name: Integration Tests
+on:
+  pull_request:
+    branches:
+      - '**'
+
+concurrency:
+  group: "integration-tests"
+  cancel-in-progress: true
+
+permissions: read-all
+
+jobs:
+  integration-tests:
+    name: Setup Toolchain and Test
+    runs-on: ubuntu-latest-m
+    permissions:
+      id-token: "write"
+      contents: "read"
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Install Nix With Bonsol Binary Cache
+        uses: DeterminateSystems/nix-installer-action@main
+        with:
+          extra-conf: |
+            extra-substituters = https://bonsol.cachix.org
+            extra-trusted-public-keys = bonsol.cachix.org-1:yz7vi1rCPW1BpqoszdJvf08HZxQ/5gPTPxft4NnT74A=
+      - name: Setup Toolchain, Build and Test
+        run: |
+          nix develop --command bash -c "
+            cargo build &&
+            cargo test --features integration -- --nocapture
+          "
