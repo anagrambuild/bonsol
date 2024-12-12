@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 * `bonsol` cli option requirements and error messages updated for added clarity
 
+### Added
+* `bonsol estimate` for estimating execution cost of bonsol programs.
+
 ### Fixed
 * **Breaking**: `execute_v1` interface instruction now uses the new `InputRef` to improve CU usage.
 * Adds a callback struct to use the input_hash and committed_outputs from the callback program ergonomically.
