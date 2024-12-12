@@ -39,7 +39,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Test
-        run: cargo test
+        run: cargo test - --nocapture
   e2e-test:
     name: E2E Test
     runs-on: ubuntu-latest-m
@@ -64,7 +64,7 @@ jobs:
           cargo build-sbf
           cargo build -p bonsol-node
           cargo build -p bonsol-cli
-          cargo test -p bonsol-cli -- --nocapture
+          cargo test -p bonsol-cli --features integration-tests -- --nocapture
           solana-keygen new --no-bip39-passphrase -f 
           solana-test-validator \
           --ledger ./ledger \
