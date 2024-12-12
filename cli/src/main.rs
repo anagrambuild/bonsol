@@ -23,7 +23,7 @@ mod execute;
 mod init;
 mod prove;
 
-#[cfg(all(test, feature = "integration"))]
+#[cfg(test)]
 mod tests;
 
 pub mod command;
