@@ -15,6 +15,7 @@ jobs:
     name: Setup Toolchain and Test
     runs-on: ubuntu-latest-m
     permissions:
+      id-token: "write"
       contents: "read"
     steps:
       - name: Checkout repository
@@ -25,9 +26,5 @@ jobs:
           extra-conf: |
             extra-substituters = https://bonsol.cachix.org
             extra-trusted-public-keys = bonsol.cachix.org-1:yz7vi1rCPW1BpqoszdJvf08HZxQ/5gPTPxft4NnT74A=
-      - name: Setup Toolchain
-        run: nix develop
-      - name: List Cargo Plugins
-        run: cargo --list
-      - name: Build and Test
-        run: cargo build && cargo test --features integration -- --nocapture
+      - name: Setup Toolchain, Build and Test
+        run: nix develop --command cargo build && cargo test --features integration -- --nocapture
