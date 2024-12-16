@@ -71,7 +71,7 @@ pub async fn deploy(rpc_url: String, signer: Keypair, deploy_args: DeployArgs) -
                 .with_region(&region)
                 .with_access_key_id(&access_key)
                 .with_secret_access_key(&secret_key)
-                .with_url(&url)
+                .with_endpoint(&url)
                 .build()
                 .map_err(|err| {
                     BonsolCliError::S3ClientError(S3ClientError::FailedToBuildClient {
