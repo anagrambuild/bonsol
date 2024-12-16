@@ -53,14 +53,25 @@ pub async fn deploy(rpc_url: String, signer: Keypair, deploy_args: DeployArgs) -
                 access_key,
                 secret_key,
                 region,
+                endpoint,
                 ..
             } = s3_upload;
+
+            let dest =
+            object_store::path::Path::from(format!("{}-{}", manifest.name, manifest.image_id));
+
+            let url = if let Some(endpoint) = endpoint {
+                format!("{}", endpoint)
+            } else {
+                format!("https://{}.s3.{}.amazonaws.com/{}", bucket, region, dest)
+            };
 
             let s3_client = AmazonS3Builder::new()
                 .with_bucket_name(&bucket)
                 .with_region(&region)
                 .with_access_key_id(&access_key)
                 .with_secret_access_key(&secret_key)
+                .with_url(&url)
                 .build()
                 .map_err(|err| {
                     BonsolCliError::S3ClientError(S3ClientError::FailedToBuildClient {
@@ -78,9 +89,6 @@ pub async fn deploy(rpc_url: String, signer: Keypair, deploy_args: DeployArgs) -
                     })
                 })?;
 
-            let dest =
-                object_store::path::Path::from(format!("{}-{}", manifest.name, manifest.image_id));
-            let url = format!("https://{}.s3.{}.amazonaws.com/{}", bucket, region, dest);
             // get the file to see if it exists
             if s3_client.head(&dest).await.is_ok() {
                 bar.set_message("File already exists, skipping upload");
@@ -94,6 +102,7 @@ pub async fn deploy(rpc_url: String, signer: Keypair, deploy_args: DeployArgs) -
             }
 
             bar.finish_and_clear();
+            println!("Uploaded to S3 url {}", url);
             url
         }
         DeployDestination::ShadowDrive(shadow_drive_upload) => {
