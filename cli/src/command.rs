@@ -100,6 +100,14 @@ pub struct S3UploadArgs {
         env = "AWS_REGION"
     )]
     pub region: String,
+
+    #[arg(
+        help = "Specify the AWS S3 compatibility endpoint",
+        long,
+        required = false,
+        env = "AWS_S3_ENDPOINT"
+    )]
+    pub endpoint: Option<String>,
 }
 
 #[derive(Debug, Clone, Args)]
