@@ -60,11 +60,8 @@ pub async fn deploy(rpc_url: String, signer: Keypair, deploy_args: DeployArgs) -
             let dest =
             object_store::path::Path::from(format!("{}-{}", manifest.name, manifest.image_id));
 
-            let url = if let Some(endpoint) = endpoint {
-                format!("{}", endpoint)
-            } else {
-                format!("https://{}.s3.{}.amazonaws.com/{}", bucket, region, dest)
-            };
+            let url = endpoint.unwrap_or(
+                format!("https://{}.s3.{}.amazonaws.com/{}", bucket, region, dest));
 
             let s3_client = AmazonS3Builder::new()
                 .with_bucket_name(&bucket)
