@@ -78,6 +78,14 @@ pub struct S3UploadArgs {
     )]
     pub region: String,
 
+    #[arg(
+        help = "Specify the AWS S3 compatibility endpoint",
+        long,
+        required = false,
+        env = "AWS_S3_ENDPOINT"
+    )]
+    pub endpoint: Option<String>,
+
     #[command(flatten)]
     pub shared_args: SharedDeployArgs,
 }
