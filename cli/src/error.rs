@@ -21,7 +21,7 @@ pub enum BonsolCliError {
     FailedToReadKeypair { file: String, err: String },
 
     #[error("Account '{0}' does not have any SOL to pay for the transaction(s)")]
-    InsufficientFundsForTransactions(String),
+    InsufficientFunds(String),
 
     #[error(transparent)]
     ZkManifestError(#[from] ZkManifestError),
