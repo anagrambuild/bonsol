@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 * `bonsol` cli option requirements and error messages updated for added clarity
+* **Breaking**: `bonsol deploy` cli subcommand requirements updated. Please refer to the docs, or use `bonsol deploy --help` for more info.
 
 ### Added
 * `bonsol estimate` for estimating execution cost of bonsol programs.

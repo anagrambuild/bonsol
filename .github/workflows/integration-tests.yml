@@ -3,13 +3,10 @@ on:
   pull_request:
     branches:
       - '**'
-
 concurrency:
   group: "integration-tests"
   cancel-in-progress: true
-
 permissions: read-all
-
 jobs:
   integration-tests:
     name: Setup Toolchain and Test
