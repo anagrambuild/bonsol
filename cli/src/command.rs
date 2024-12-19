@@ -1,4 +1,4 @@
-use clap::{command, ArgGroup, Args, Parser, Subcommand, ValueEnum};
+use clap::{command, ArgGroup, Args, Parser, Subcommand};
 
 #[derive(Parser, Debug)]
 #[command(version)]
@@ -39,29 +39,6 @@ pub struct BonsolCli {
     pub command: Command,
 }
 
-pub struct ParsedBonsolCli {
-    pub config: Option<String>,
-
-    pub keypair: Option<String>,
-
-    pub rpc_url: Option<String>,
-
-    pub command: ParsedCommand,
-}
-
-impl TryFrom<BonsolCli> for ParsedBonsolCli {
-    type Error = anyhow::Error;
-
-    fn try_from(value: BonsolCli) -> Result<Self, Self::Error> {
-        Ok(Self {
-            config: value.config,
-            keypair: value.keypair,
-            rpc_url: value.rpc_url,
-            command: value.command.try_into()?,
-        })
-    }
-}
-
 #[derive(Debug, Clone, Args)]
 pub struct S3UploadArgs {
     #[arg(
@@ -100,6 +77,17 @@ pub struct S3UploadArgs {
         env = "AWS_REGION"
     )]
     pub region: String,
+
+    #[arg(
+        help = "Specify the AWS S3 compatibility endpoint",
+        long,
+        required = false,
+        env = "AWS_S3_ENDPOINT"
+    )]
+    pub endpoint: Option<String>,
+
+    #[command(flatten)]
+    pub shared_args: SharedDeployArgs,
 }
 
 #[derive(Debug, Clone, Args)]
@@ -131,62 +119,57 @@ pub struct ShadowDriveUploadArgs {
 
     #[arg(help = "Create a new Shadow Drive storage account", long)]
     pub create: bool,
+
+    #[command(flatten)]
+    pub shared_args: SharedDeployArgs,
 }
 
 #[derive(Debug, Clone, Args)]
 pub struct UrlUploadArgs {
     #[arg(help = "Specify a URL endpoint to deploy to", long, required = true)]
     pub url: String,
+
+    #[command(flatten)]
+    pub shared_args: SharedDeployArgs,
 }
 
-#[derive(Debug, Clone, ValueEnum)]
-pub enum DeployType {
-    S3,
-    ShadowDrive,
-    Url,
-}
-
-#[derive(Debug, Clone)]
-pub enum DeployDestination {
+#[derive(Debug, Clone, Subcommand)]
+pub enum DeployArgs {
+    #[command(about = "Deploy a program using an AWS S3 bucket")]
     S3(S3UploadArgs),
+
+    #[command(about = "Deploy a program using ShadowDrive")]
     ShadowDrive(ShadowDriveUploadArgs),
+
+    #[command(about = "Deploy a program manually with a URL")]
     Url(UrlUploadArgs),
 }
-impl DeployDestination {
-    pub fn try_parse(
-        deploy_type: DeployType,
-        s3: Option<S3UploadArgs>,
-        sd: Option<ShadowDriveUploadArgs>,
-        url: Option<UrlUploadArgs>,
-    ) -> anyhow::Result<Self> {
-        match deploy_type {
-            // Because we are not supporting a direct mapping (eg, subcommand),
-            // it's possible for a user to specify a deployment type and provide the wrong
-            // arguments. If we support subcommands in the future this will be
-            // much clearer, otherwise we would need to do more validation here
-            // to provide better error messages when the wrong args are present.
-            DeployType::S3 if s3.is_some() => Ok(Self::S3(s3.unwrap())),
-            DeployType::ShadowDrive if sd.is_some() => Ok(Self::ShadowDrive(sd.unwrap())),
-            DeployType::Url if url.is_some() => Ok(Self::Url(url.unwrap())),
-            _ => anyhow::bail!("The deployment type and its corresponding args do not match, expected args for deployment type '{:?}'", deploy_type),
+
+impl DeployArgs {
+    pub fn shared_args(&self) -> SharedDeployArgs {
+        match self {
+            Self::S3(s3) => s3.shared_args.clone(),
+            Self::ShadowDrive(sd) => sd.shared_args.clone(),
+            Self::Url(url) => url.shared_args.clone(),
         }
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct DeployArgs {
-    pub dest: DeployDestination,
+#[derive(Debug, Clone, Args)]
+pub struct SharedDeployArgs {
+    #[arg(
+        help = "The path to the program's manifest file (manifest.json)",
+        short = 'm',
+        long
+    )]
     pub manifest_path: String,
+
+    #[arg(
+        help = "Whether to automatically confirm deployment",
+        short = 'y',
+        long
+    )]
     pub auto_confirm: bool,
-}
-impl DeployArgs {
-    pub fn parse(dest: DeployDestination, manifest_path: String, auto_confirm: bool) -> Self {
-        Self {
-            dest,
-            manifest_path,
-            auto_confirm,
-        }
-    }
 }
 
 #[derive(Subcommand, Debug)]
@@ -195,38 +178,10 @@ pub enum Command {
         about = "Deploy a program with various storage options, such as S3, ShadowDrive, or manually with a URL"
     )]
     Deploy {
-        #[arg(
-            help = "Specify the deployment type",
-            short = 't',
-            long,
-            value_enum,
-            required = true
-        )]
-        deploy_type: DeployType,
-
-        #[command(flatten)]
-        s3: Option<S3UploadArgs>,
-
-        #[command(flatten)]
-        shadow_drive: Option<ShadowDriveUploadArgs>,
-
-        #[command(flatten)]
-        url: Option<UrlUploadArgs>,
-
-        #[arg(
-            help = "The path to the program's manifest file (manifest.json)",
-            short = 'm',
-            long
-        )]
-        manifest_path: String,
-
-        #[arg(
-            help = "Whether to automatically confirm deployment",
-            short = 'y',
-            long
-        )]
-        auto_confirm: bool,
+        #[clap(subcommand)]
+        deploy_args: DeployArgs,
     },
+
     #[command(about = "Build a ZK program")]
     Build {
         #[arg(
@@ -236,6 +191,7 @@ pub enum Command {
         )]
         zk_program_path: String,
     },
+
     #[command(about = "Estimate the execution cost of a ZK RISC0 program")]
     Estimate {
         #[arg(
@@ -255,6 +211,7 @@ pub enum Command {
         )]
         max_cycles: Option<u64>,
     },
+
     Execute {
         #[arg(short = 'f', long)]
         execution_request_file: Option<String>,
@@ -272,17 +229,18 @@ pub enum Command {
         #[arg(short = 'm', long)]
         tip: Option<u64>,
 
-        #[arg(short = 'i')]
-        input_file: Option<String>, // overrides inputs in execution request file
+        #[arg(short = 'i', long, help = "override inputs in execution request file")]
+        input_file: Option<String>,
 
         /// wait for execution to be proven
-        #[arg(short = 'w', long)]
+        #[arg(short = 'w', long, help = "wait for execution to be proven")]
         wait: bool,
 
         /// timeout in seconds
-        #[arg(short = 't', long)]
+        #[arg(short = 't', long, help = "timeout in seconds")]
         timeout: Option<u64>,
     },
+
     Prove {
         #[arg(short = 'm', long)]
         manifest_path: Option<String>,
@@ -299,6 +257,8 @@ pub enum Command {
         #[arg(short = 'o')]
         output_location: Option<String>,
     },
+
+    #[command(about = "Initialize a new project")]
     Init {
         #[arg(short = 'd', long)]
         dir: Option<String>,
@@ -306,118 +266,4 @@ pub enum Command {
         #[arg(short = 'n', long)]
         project_name: String,
     },
-}
-
-#[derive(Debug)]
-pub enum ParsedCommand {
-    Deploy {
-        deploy_args: DeployArgs,
-    },
-    Build {
-        zk_program_path: String,
-    },
-    Estimate {
-        manifest_path: String,
-        input_file: Option<String>,
-        max_cycles: Option<u64>,
-    },
-    Execute {
-        execution_request_file: Option<String>,
-
-        program_id: Option<String>,
-
-        execution_id: Option<String>,
-
-        expiry: Option<u64>,
-
-        tip: Option<u64>,
-
-        input_file: Option<String>,
-
-        wait: bool,
-
-        timeout: Option<u64>,
-    },
-    Prove {
-        manifest_path: Option<String>,
-
-        program_id: Option<String>,
-
-        input_file: Option<String>,
-
-        execution_id: String,
-
-        output_location: Option<String>,
-    },
-    Init {
-        dir: Option<String>,
-
-        project_name: String,
-    },
-}
-
-impl TryFrom<Command> for ParsedCommand {
-    type Error = anyhow::Error;
-
-    fn try_from(value: Command) -> Result<Self, Self::Error> {
-        match value {
-            Command::Deploy {
-                deploy_type,
-                s3,
-                shadow_drive,
-                url,
-                manifest_path,
-                auto_confirm,
-            } => Ok(ParsedCommand::Deploy {
-                deploy_args: DeployArgs::parse(
-                    DeployDestination::try_parse(deploy_type, s3, shadow_drive, url)?,
-                    manifest_path,
-                    auto_confirm,
-                ),
-            }),
-            Command::Build { zk_program_path } => Ok(ParsedCommand::Build { zk_program_path }),
-            Command::Estimate {
-                manifest_path,
-                input_file,
-                max_cycles,
-            } => Ok(ParsedCommand::Estimate {
-                manifest_path,
-                input_file,
-                max_cycles,
-            }),
-            Command::Execute {
-                execution_request_file,
-                program_id,
-                execution_id,
-                expiry,
-                tip,
-                input_file,
-                wait,
-                timeout,
-            } => Ok(ParsedCommand::Execute {
-                execution_request_file,
-                program_id,
-                execution_id,
-                expiry,
-                tip,
-                input_file,
-                wait,
-                timeout,
-            }),
-            Command::Prove {
-                manifest_path,
-                program_id,
-                input_file,
-                execution_id,
-                output_location,
-            } => Ok(ParsedCommand::Prove {
-                manifest_path,
-                program_id,
-                input_file,
-                execution_id,
-                output_location,
-            }),
-            Command::Init { dir, project_name } => Ok(ParsedCommand::Init { dir, project_name }),
-        }
-    }
 }

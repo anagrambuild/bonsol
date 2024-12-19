@@ -2,7 +2,6 @@
 #
 # substituter: https://bonsol.cachix.org
 # public-key: bonsol.cachix.org-1:yz7vi1rCPW1BpqoszdJvf08HZxQ/5gPTPxft4NnT74A=
-
 name: Update Cachix
 on:
   push:
@@ -22,22 +21,18 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@main
         with:
           extra-conf: |
             extra-substituters = https://bonsol.cachix.org
             extra-trusted-public-keys = bonsol.cachix.org-1:yz7vi1rCPW1BpqoszdJvf08HZxQ/5gPTPxft4NnT74A=
-
       - name: Install and configure Cachix
         uses: cachix/cachix-action@v15
         with:
           name: bonsol
           authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
-
       - name: Run nix flake check
         run: nix flake check
-
       - name: Enter development shell
         run: nix develop

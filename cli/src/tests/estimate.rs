@@ -7,21 +7,7 @@ use crate::tests::bonsol_cmd;
 
 fn bonsol_estimate() -> Command {
     let mut cmd = bonsol_cmd();
-    let keypair = cmd
-        .get_current_dir()
-        .unwrap()
-        .join("cli")
-        .join("src")
-        .join("tests")
-        .join("test_data")
-        .join("test_id.json");
-    cmd.args(&[
-        "--keypair",
-        keypair.to_str().unwrap(),
-        "--rpc-url",
-        "http://localhost:8899",
-    ])
-    .arg("estimate");
+    cmd.arg("estimate");
     cmd
 }
 
