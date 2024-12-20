@@ -23,7 +23,7 @@ use std::env;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let rpc_url = "http://localhost:8899".to_string();
+    let rpc_url = "http://127.0.0.1:8899".to_string();
     let rpc_client = RpcClient::new(rpc_url.clone());
     let bonsol_client = BonsolClient::new(rpc_url);
     let signer = Keypair::new();
