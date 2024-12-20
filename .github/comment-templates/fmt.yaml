@@ -1,0 +1,19 @@
+comment:
+  on-update: recreate
+  header: |
+    Formatting Issues Found
+
+  footer: |
+    ---
+    This is an automated comment created by the Bonsol CI
+
+  snippets:
+    - id: fmt_{{ outhash }}
+      files:
+        - '*.txt'
+      body: |
+        ```
+        {{ outcontent }}
+        ```
+        
+        
