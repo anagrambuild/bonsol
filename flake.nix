@@ -23,13 +23,9 @@
       inputs.fenix.follows = "fenix";
     };
 
-    advisory-db = {
-      url = "github:rustsec/advisory-db";
-      flake = false;
-    };
   };
 
-  outputs = { self, nixpkgs, crane, fenix, flake-utils, nix-core, advisory-db, ... }:
+  outputs = { self, nixpkgs, crane, fenix, flake-utils, nix-core, ... }:
     with flake-utils.lib;
     eachSystem
       (with system; [
@@ -155,48 +151,15 @@
               bonsol-cli
               bonsol-node;
 
-            # Run clippy (and deny all warnings) on the workspace source
-            # TODO: uncomment once all clippy lints are fixed
-            # workspace-clippy = craneLib.cargoClippy (commonArgs // {
-            #   inherit cargoArtifacts;
-            #   cargoClippyExtraArgs = "--all-targets -- --deny warnings";
-            # });
-
-            # TODO: Broken because schemas-rust is not generated at this point
-            # workspace-doc = craneLib.cargoDoc (commonArgs // {
-            #   inherit cargoArtifacts;
-            # });
-
-            # Check formatting
-            # TODO: Broken because schemas-rust is not generated at this point
-            # workspace-fmt = craneLib.cargoFmt {
-            #   inherit (workspace) src;
-            # };
-
             workspace-toml-fmt = craneLib.taploFmt {
               src = pkgs.lib.sources.sourceFilesBySuffices workspace.src [ ".toml" ];
             };
-
-            # Audit dependencies
-            # TODO: Uncoment once all audits are fixed
-            # workspace-audit = craneLib.cargoAudit {
-            #   inherit (workspace) src;
-            #   inherit advisory-db;
-            # };
 
             # Audit licenses
             # TODO: Many problems still need to be addressed in the deny.toml
             workspace-deny = craneLib.cargoDeny {
               inherit (workspace) src;
             };
-
-            # Run tests with cargo-nextest
-            # TODO: Broken because schemas-rust is not generated at this point
-            # workspace-nextest = craneLib.cargoNextest (commonArgs // {
-            #   inherit cargoArtifacts;
-            #   partitions = 1;
-            #   partitionType = "count";
-            # });
           };
 
           packages = {

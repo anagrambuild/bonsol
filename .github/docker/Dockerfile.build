@@ -57,4 +57,4 @@ RUN /go/bin/yamlfmt -lint .github/workflows/*.yaml .github/workflows/*.yml .gith
 
 RUN cargo check
 RUN cargo +nightly fmt --all -- --check
-RUN cargo test   
+RUN cargo test
