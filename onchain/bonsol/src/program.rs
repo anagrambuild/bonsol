@@ -22,6 +22,9 @@ pub fn program<'a>(
         ChannelInstructionIxType::StatusV1 => {
             process_status_v1(accounts, ix)?;
         }
+        ChannelInstructionIxType::InputSetOpV1 => {
+            process_input_set_v1(accounts, ix)?;
+        }
         _ => return Err(ChannelError::InvalidInstruction.into()),
     };
     Ok(())
