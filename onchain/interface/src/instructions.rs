@@ -1,7 +1,7 @@
 use bonsol_schema::{
-    Account, ChannelInstruction, ChannelInstructionArgs, ChannelInstructionIxType, DeployV1,
-    DeployV1Args, ExecutionRequestV1, ExecutionRequestV1Args, InputBuilder, InputT, InputType,
-    ProgramInputType, ProverVersion,
+    input_set_op_v1_generated, Account, ChannelInstruction, ChannelInstructionArgs,
+    ChannelInstructionIxType, DeployV1, DeployV1Args, ExecutionRequestV1, ExecutionRequestV1Args,
+    Input, InputArgs, InputBuilder, InputType, ProgramInputType, ProverVersion,
 };
 use flatbuffers::{FlatBufferBuilder, WIPOffset};
 
@@ -66,6 +66,58 @@ pub fn deploy_v1(
     );
     fbb.finish(fbb_ix, None);
     let ix_data = fbb.finished_data();
+    Ok(Instruction::new_with_bytes(crate::ID, ix_data, accounts))
+}
+
+pub fn input_set_v1(
+    signer: &Pubkey,
+    image_id: &str,
+    op: input_set_op_v1_generated::InputSetOp,
+    inputs: Vec<InputArgs>,
+) -> Result<Instruction, ClientError> {
+    let (deployment_account, _) = deployment_address(image_id);
+    let accounts = vec![
+        AccountMeta::new(signer.to_owned(), true),
+        AccountMeta::new(signer.to_owned(), true),
+        AccountMeta::new(deployment_account, false),
+        /* TODO: Check if this is all that's necessary */
+    ];
+
+    let mut fbb = FlatBufferBuilder::new();
+    let id = fbb.create_string(""); // TODO: Not sure where id comes from
+    let inputs = fbb.create_vector(
+        inputs
+            .iter()
+            .map(|args| {
+                let mut fbb = FlatBufferBuilder::new();
+                Input::create(&mut fbb, args)
+            })
+            .collect::<Vec<WIPOffset<Input>>>()
+            .as_slice(),
+    );
+    let fbb_input_set = input_set_op_v1_generated::InputSetOpV1::create(
+        &mut fbb,
+        &input_set_op_v1_generated::InputSetOpV1Args {
+            id: Some(id),
+            op,
+            inputs: Some(inputs),
+        },
+    );
+    fbb.finish(fbb_input_set, None);
+    let ix_data = fbb.finished_data();
+    let mut fbb = FlatBufferBuilder::new();
+    let ix = fbb.create_vector(ix_data);
+    let fbb_ix = ChannelInstruction::create(
+        &mut fbb,
+        &ChannelInstructionArgs {
+            ix_type: ChannelInstructionIxType::InputSetOpV1,
+            input_set_v1: Some(ix),
+            ..Default::default()
+        },
+    );
+    fbb.finish(fbb_ix, None);
+    let ix_data = fbb.finished_data();
+
     Ok(Instruction::new_with_bytes(crate::ID, ix_data, accounts))
 }
 

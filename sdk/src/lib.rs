@@ -2,6 +2,8 @@ use std::time::Duration;
 
 use anyhow::Result;
 
+use bonsol_schema::input_set_op_v1_generated::InputSetOp;
+use bonsol_schema::InputArgs;
 use bytes::Bytes;
 use futures_util::TryFutureExt;
 use num_traits::FromPrimitive;
@@ -167,6 +169,20 @@ impl BonsolClient {
         Ok(vec![compute, compute_price, instruction])
     }
 
+    pub async fn input_set_v1<'a>(
+        &self,
+        signer: &Pubkey,
+        image_id: &str,
+        op: InputSetOp,
+        inputs: Vec<InputArgs<'a>>,
+    ) -> Result<Vec<Instruction>> {
+        let compute_price_val = self.get_fees(signer).await?;
+        let instruction = instructions::input_set_v1(signer, image_id, op, inputs)?;
+        let compute = ComputeBudgetInstruction::set_compute_unit_limit(20_000);
+        let compute_price = ComputeBudgetInstruction::set_compute_unit_price(compute_price_val);
+        Ok(vec![compute, compute_price, instruction])
+    }
+
     pub async fn execute_v1<'a>(
         &self,
         signer: &Pubkey,
@@ -204,6 +220,10 @@ impl BonsolClient {
         let compute = ComputeBudgetInstruction::set_compute_unit_limit(20_000);
         let compute_price = ComputeBudgetInstruction::set_compute_unit_price(compute_price_val);
         Ok(vec![compute, compute_price, instruction])
+    }
+
+    pub async fn manage_inputs_v1() -> Result<Vec<Instruction>> {
+        Ok(vec![])
     }
 
     pub async fn send_txn_standard(

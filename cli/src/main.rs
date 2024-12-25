@@ -111,6 +111,8 @@ async fn main() -> anyhow::Result<()> {
             .await
         }
         ParsedCommand::Init { project_name, dir } => init::init_project(&project_name, dir),
-        ParsedCommand::InputSet { input_set } => input_set::input_set(input_set),
+        ParsedCommand::InputSet { input_set } => {
+            input_set::input_set(&sdk, &keypair, input_set).await
+        }
     }
 }

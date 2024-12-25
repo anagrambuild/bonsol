@@ -4,7 +4,9 @@ use std::process::Command;
 use std::str::FromStr;
 
 use anyhow::{Context, Result};
+use bonsol_interface::bonsol_schema::InputArgs;
 use bonsol_prover::input_resolver::{ProgramInput, ResolvedInput};
+use bonsol_sdk::flatbuffers::FlatBufferBuilder;
 use bonsol_sdk::instructions::CallbackConfig;
 use bonsol_sdk::{InputT, InputType, ProgramInputType};
 use clap::Args;
@@ -60,8 +62,23 @@ pub struct CliInput {
     pub data: String, // hex encoded if binary with hex: prefix
 }
 
+impl<'a> From<&'a CliInput> for InputArgs<'a> {
+    fn from(value: &'a CliInput) -> Self {
+        let mut fbb = FlatBufferBuilder::new();
+        let data = fbb.create_vector(value.data.as_ref());
+
+        InputArgs {
+            input_type: CliInputType::from_str(&value.input_type)
+                .expect("invalid input type")
+                .0,
+            data: Some(data),
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct CliInputType(InputType);
+
 impl ToString for CliInputType {
     fn to_string(&self) -> String {
         match self.0 {

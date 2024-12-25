@@ -1,3 +1,4 @@
+use bonsol_interface::bonsol_schema::input_set_op_v1_generated::InputSetOp;
 use clap::{command, ArgGroup, Args, Parser, Subcommand, ValueEnum};
 
 use crate::common::CliInput;
@@ -192,41 +193,38 @@ impl DeployArgs {
 }
 
 #[derive(Debug, Clone, Subcommand)]
-pub enum InputSetAction {
-    #[command(about = "Generate a new input set file")]
+pub enum CliInputSetOp {
+    #[command(about = "Create a new set of onchain inputs")]
     Create {
-        #[arg(help = "Specify the path to the input set file", long, short = 'p')]
-        path: String,
-
-        #[arg(help = "Optionally specify inputs to include in the newly created input set file", long = "input", short = 'i', name = "input", value_parser = parse_cli_input)]
-        inputs: Option<Vec<CliInput>>,
-
-        #[arg(
-            help = "Overwrite the file completely with a new input set",
-            long,
-            short = 't'
-        )]
-        truncate: bool,
+        #[arg(help = "Specify inputs to include in the newly created input set", long = "input", short = 'i', name = "input", value_parser = parse_cli_input)]
+        inputs: Vec<CliInput>,
     },
 
-    #[command(about = "Print an input set file contents to stdout")]
-    Read {
-        #[arg(help = "Specify the path to the input set file", long, short = 'p')]
-        path: String,
-    },
-
-    #[command(about = "Add new inputs to the input set file")]
+    #[command(about = "Update an onchain input set with new inputs")]
     Update {
-        #[arg(help = "Specify the path to the input set file", long, short = 'p')]
-        path: String,
+        #[arg(help = "Specify inputs to include in the input set", long = "input", short = 'i', name = "input",  value_parser = parse_cli_input)]
+        inputs: Vec<CliInput>,
+    },
 
-        #[arg(help = "Specify inputs to include in the input set file", long = "input", short = 'i', name = "input",  value_parser = parse_cli_input)]
+    #[command(about = "Delete inputs from an onchain input set")]
+    Delete {
+        #[arg(help = "Specify inputs to remove from the input set", long = "input", short = 'i', name = "input", value_parser = parse_cli_input)]
         inputs: Vec<CliInput>,
     },
 }
 
 fn parse_cli_input(s: &str) -> Result<CliInput, serde_json::Error> {
     serde_json::from_str(s)
+}
+
+impl<'a> From<&'a CliInputSetOp> for InputSetOp {
+    fn from(value: &'a CliInputSetOp) -> Self {
+        match value {
+            CliInputSetOp::Create { .. } => InputSetOp::Create,
+            CliInputSetOp::Update { .. } => InputSetOp::Update,
+            CliInputSetOp::Delete { .. } => InputSetOp::Delete,
+        }
+    }
 }
 
 #[derive(Subcommand, Debug)]
@@ -329,7 +327,7 @@ pub enum Command {
     #[command(about = "Manage JSON input sets for dedicated input set files")]
     InputSet {
         #[command(subcommand)]
-        input_set: InputSetAction,
+        input_set: CliInputSetOp,
     },
 }
 
@@ -375,7 +373,7 @@ pub enum ParsedCommand {
         project_name: String,
     },
     InputSet {
-        input_set: InputSetAction,
+        input_set: CliInputSetOp,
     },
 }
 
