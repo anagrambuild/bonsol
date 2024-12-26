@@ -232,6 +232,26 @@ pub(crate) fn try_load_from_config(config: Option<String>) -> anyhow::Result<(St
     Ok((config.json_rpc_url, config.keypair_path))
 }
 
+pub(crate) fn load_solana_config(
+    config: Option<String>,
+    rpc_url: Option<String>,
+    keypair: Option<String>,
+) -> anyhow::Result<(String, solana_sdk::signer::keypair::Keypair)> {
+    let (rpc_url, keypair_file) = match rpc_url.zip(keypair) {
+        Some(config) => config,
+        None => try_load_from_config(config)?,
+    };
+    Ok((
+        rpc_url,
+        solana_sdk::signature::read_keypair_file(std::path::Path::new(&keypair_file)).map_err(
+            |err| BonsolCliError::FailedToReadKeypair {
+                file: keypair_file,
+                err: format!("{err:?}"),
+            },
+        )?,
+    ))
+}
+
 pub async fn sol_check(rpc_client: String, pubkey: Pubkey) -> bool {
     let rpc_client = rpc_client::RpcClient::new(rpc_client);
     if let Ok(account) = rpc_client.get_account(&pubkey).await {

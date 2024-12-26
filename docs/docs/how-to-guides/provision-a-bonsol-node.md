@@ -13,13 +13,13 @@ Ansible role coming soon
 
 ## Installing Deps
 ```bash
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- --default-toolchain 1.80.0 -y
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- --default-toolchain 1.81.0 -y
 ```
 Ensure cargo is on the path
 
-On your local machine you will need to run a docker imahge to get the neede groth16 witness generator and snark binary. Ensure you have a recent version of docker installed. This docker file copies the binaries from the docker image to the local machine.
+On your local machine you will need to run a docker imahge to get the neede groth16 witness generator and snark binary. This script will download them from the internet and save them in the current directory use `--prefix` to change the output directory
 ```bash
-docker build -f setup.dockerfile -o node .
+./bin/setup.sh
 ```
 You will have a director called snark with the binaries in it. You need to copy these binaries to the node and remember the path to the snark directory.
 ```bash

@@ -11,13 +11,16 @@ path = "src/main.rs"
 [features]
 mac = ["risc0-zkvm/metal"]
 linux = ["risc0-zkvm/cuda"]
+integration = []
 
 [dependencies]
 anyhow = "1.0.86"
 atty = "0.2.14"
 bincode = "1.3.3"
+bonsol-interface.workspace = true
 bonsol-prover = { path = "../prover" }
 bonsol-sdk = { path = "../sdk" }
+bytemuck = "1.15.0"
 hex = "0.4.3"
 byte-unit = "4.0.19"
 bytes = "1.4.0"
@@ -34,7 +37,9 @@ reqwest = { version = "0.11.26", features = [
   "native-tls-vendored",
 ] }
 risc0-binfmt = { workspace = true }
-risc0-zkvm = { workspace = true, features = ["prove"] }
+risc0-zkvm = { workspace = true, default-features = false, features = ["prove", "std"] }
+risc0-zkvm-platform = { git = "https://github.com/anagrambuild/risc0", branch = "v1.0.1-bonsai-fix" }
+risc0-circuit-rv32im = { git = "https://github.com/anagrambuild/risc0", branch = "v1.0.1-bonsai-fix" }
 serde = { version = "1.0.197", features = ["derive"] }
 serde_json = "1.0.104"
 sha2 = "0.10.6"
@@ -46,4 +51,6 @@ tera = "1.17.1"
 thiserror = "1.0.65"
 tokio = { version = "1.38.0", features = ["full"] }
 
-bonsol-interface.workspace = true
+[dev-dependencies]
+assert_cmd = "2.0.16"
+predicates = "3.1.2"

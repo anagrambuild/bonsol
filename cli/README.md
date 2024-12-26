@@ -43,12 +43,12 @@ The output of the build command is a manifest.json file which is placed in the r
 You can deploy a bonsol program with the following command
 
 ```
-bonsol -k ./keypair.json -u http://localhost:8899 deploy -m {path to manifest.json} -y {auto confirm} -t {s3|shadow-drive|url} ... {upload type specific options}
+bonsol -k ./keypair.json -u http://localhost:8899 deploy {s3|shadow-drive|url} -m {path to manifest.json} -y {auto confirm} ... {upload type specific options}
 
 ```
 There will be many options for how to upload the program, the default is s3. Here is an example of how to deploy a program to s3
 ```
-bonsol -k ./keypair.json -u http://localhost:8899 deploy -m program/manifest.json -t s3 --bucket bonsol-public-images --region us-east-1 --access-key {your key} --secret-key {your secret key}
+bonsol -k ./keypair.json -u http://localhost:8899 deploy s3 -m program/manifest.json --bucket bonsol-public-images --region us-east-1 --access-key {your key} --secret-key {your secret key}
 ```
 In the above example the manifest.json file is the file that was created by the build command.
 This will try to upload the binary to the s3 bucket and create a deployment account for the program. Programs are indexed by the image id, which is a kind of checksum of the program elf file. This means that if you change the elf file, the image id will change and the program will be deployed again under a new deployment account. Programs are immutable and can only be changed by redeploying the program. When a node downloads a program it will check the image id and if it doesnt match the deployment account it will reject the program. Furthermore when bonsol checks the proof, it will check the image id and if it doesnt match the deployment account and desired image id from execution request it will reject the proof.
@@ -59,24 +59,20 @@ todo
 ### Prove
 todo
 
-### Input Sets
-For convenience, json input sets can be created, read and updated from the bonsol cli.
+### Estimate
 
-Create a new input set with some arbitrary inputs, overwriting some previously existing inputs.
-Creating a new input set without any inputs results in a file containing an empty inputs array.
+You can estimate the number of cycles and segments using risc0 emulation to step through an ELF by passing the `estimate` command the path to a manifest.json and an inputs file (if required).
 
 ```
-bonsol -k ./keypair.json -u http://localhost:8899 input-set create --path <path/to/inputs.json> --input '{ "inputType": "PublicData", "data": "..." }' --input '{ "inputType": "Private", "data": "..." }' -t 
-```
+bonsol -k ./keypair.json -u http://localhost:8899 estimate \
+    --manifest-path program/manifest.json \
+    --input-file program/inputs.json \
+    --max-cycles 16777216 # this is the default
 
-Read an input set, printing it to stdout.
-
-```
-bonsol -k ./keypair.json -u http://localhost:8899 input-set read -p <path/to/inputs.json>
-```
-
-Update an input set, appending inputs to the array of existing inputs.
-
-```
-bonsol -k ./keypair.json -u http://localhost:8899 input-set update --path <path/to/inputs.json> --input '{ "inputType": "PublicData", "data": "..." }' --input '{ "inputType": "Private", "data": "..." }'
+# Example Output:
+#
+# User cycles: 3380
+# Total cycles: 65536
+# Segments: 1
+>>>>>>> main
 ```

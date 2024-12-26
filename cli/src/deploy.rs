@@ -15,18 +15,17 @@ use solana_sdk::commitment_config::CommitmentConfig;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::read_keypair_file;
 
-use crate::command::{DeployArgs, DeployDestination, S3UploadArgs, ShadowDriveUploadArgs};
+use crate::command::{DeployArgs, S3UploadArgs, ShadowDriveUploadArgs, SharedDeployArgs};
 use crate::common::ZkProgramManifest;
 use crate::error::{BonsolCliError, S3ClientError, ShadowDriveClientError, ZkManifestError};
 
 pub async fn deploy(rpc_url: String, signer: Keypair, deploy_args: DeployArgs) -> Result<()> {
     let bar = ProgressBar::new_spinner();
     let rpc_client = RpcClient::new_with_commitment(rpc_url.clone(), CommitmentConfig::confirmed());
-    let DeployArgs {
-        dest,
+    let SharedDeployArgs {
         manifest_path,
         auto_confirm,
-    } = deploy_args;
+    } = deploy_args.shared_args();
 
     let manifest_file = File::open(Path::new(&manifest_path)).map_err(|err| {
         BonsolCliError::ZkManifestError(ZkManifestError::FailedToOpen {
@@ -46,21 +45,31 @@ pub async fn deploy(rpc_url: String, signer: Keypair, deploy_args: DeployArgs) -
             err,
         })
     })?;
-    let url: String = match dest {
-        DeployDestination::S3(s3_upload) => {
+    let url: String = match deploy_args {
+        DeployArgs::S3(s3_upload) => {
             let S3UploadArgs {
                 bucket,
                 access_key,
                 secret_key,
                 region,
+                endpoint,
                 ..
             } = s3_upload;
+
+            let dest =
+                object_store::path::Path::from(format!("{}-{}", manifest.name, manifest.image_id));
+
+            let url = endpoint.unwrap_or(format!(
+                "https://{}.s3.{}.amazonaws.com/{}",
+                bucket, region, dest
+            ));
 
             let s3_client = AmazonS3Builder::new()
                 .with_bucket_name(&bucket)
                 .with_region(&region)
                 .with_access_key_id(&access_key)
                 .with_secret_access_key(&secret_key)
+                .with_endpoint(&url)
                 .build()
                 .map_err(|err| {
                     BonsolCliError::S3ClientError(S3ClientError::FailedToBuildClient {
@@ -78,9 +87,6 @@ pub async fn deploy(rpc_url: String, signer: Keypair, deploy_args: DeployArgs) -
                     })
                 })?;
 
-            let dest =
-                object_store::path::Path::from(format!("{}-{}", manifest.name, manifest.image_id));
-            let url = format!("https://{}.s3.{}.amazonaws.com/{}", bucket, region, dest);
             // get the file to see if it exists
             if s3_client.head(&dest).await.is_ok() {
                 bar.set_message("File already exists, skipping upload");
@@ -94,9 +100,10 @@ pub async fn deploy(rpc_url: String, signer: Keypair, deploy_args: DeployArgs) -
             }
 
             bar.finish_and_clear();
+            println!("Uploaded to S3 url {}", url);
             url
         }
-        DeployDestination::ShadowDrive(shadow_drive_upload) => {
+        DeployArgs::ShadowDrive(shadow_drive_upload) => {
             let ShadowDriveUploadArgs {
                 storage_account,
                 storage_account_size_mb,
@@ -192,7 +199,7 @@ pub async fn deploy(rpc_url: String, signer: Keypair, deploy_args: DeployArgs) -
             println!("Uploaded to shadow drive");
             resp.message
         }
-        DeployDestination::Url(url_upload) => {
+        DeployArgs::Url(url_upload) => {
             let req = reqwest::get(&url_upload.url).await?;
             let bytes = req.bytes().await?;
             if bytes != loaded_binary {
