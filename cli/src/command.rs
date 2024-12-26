@@ -175,37 +175,19 @@ pub struct SharedDeployArgs {
     pub auto_confirm: bool,
 }
 
-#[derive(Debug, Clone, Subcommand)]
+#[derive(Debug, Clone, ValueEnum)]
 pub enum CliInputSetOp {
-    #[command(about = "Create a new set of onchain inputs")]
-    Create {
-        #[arg(help = "Specify inputs to include in the newly created input set", long = "input", short = 'i', name = "input", value_parser = parse_cli_input)]
-        inputs: Vec<CliInput>,
-    },
-
-    #[command(about = "Update an onchain input set with new inputs")]
-    Update {
-        #[arg(help = "Specify inputs to include in the input set", long = "input", short = 'i', name = "input",  value_parser = parse_cli_input)]
-        inputs: Vec<CliInput>,
-    },
-
-    #[command(about = "Delete inputs from an onchain input set")]
-    Delete {
-        #[arg(help = "Specify inputs to remove from the input set", long = "input", short = 'i', name = "input", value_parser = parse_cli_input)]
-        inputs: Vec<CliInput>,
-    },
+    Create,
+    Update,
+    Delete,
 }
 
-fn parse_cli_input(s: &str) -> Result<CliInput, serde_json::Error> {
-    serde_json::from_str(s)
-}
-
-impl<'a> From<&'a CliInputSetOp> for InputSetOp {
-    fn from(value: &'a CliInputSetOp) -> Self {
+impl From<CliInputSetOp> for InputSetOp {
+    fn from(value: CliInputSetOp) -> Self {
         match value {
-            CliInputSetOp::Create { .. } => InputSetOp::Create,
-            CliInputSetOp::Update { .. } => InputSetOp::Update,
-            CliInputSetOp::Delete { .. } => InputSetOp::Delete,
+            CliInputSetOp::Create => InputSetOp::Create,
+            CliInputSetOp::Update => InputSetOp::Update,
+            CliInputSetOp::Delete => InputSetOp::Delete,
         }
     }
 }
@@ -296,6 +278,29 @@ pub enum Command {
         output_location: Option<String>,
     },
 
+    #[command(about = "Manage onchain input sets")]
+    InputSet {
+        #[arg(short = 'p', long)]
+        program_id: Option<String>,
+
+        #[arg(
+            help = "The operation to apply to an onchain input set",
+            long,
+            value_enum
+        )]
+        op: CliInputSetOp,
+
+        // TODO: Change this to use execution request file since users will likely just update that
+        #[arg(
+            help = "Specify inputs to include in the input set operation",
+            long = "input",
+            short = 'i',
+            name = "input",
+            value_parser = |s: &str| -> Result<CliInput, serde_json::Error> { serde_json::from_str(s) }
+        )]
+        inputs: Vec<CliInput>,
+    },
+
     #[command(about = "Initialize a new project")]
     Init {
         #[arg(short = 'd', long)]
@@ -303,10 +308,5 @@ pub enum Command {
 
         #[arg(short = 'n', long)]
         project_name: String,
-    },
-    #[command(about = "Manage JSON input sets for dedicated input set files")]
-    InputSet {
-        #[command(subcommand)]
-        input_set: CliInputSetOp,
     },
 }

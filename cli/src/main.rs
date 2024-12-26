@@ -155,10 +155,18 @@ async fn main() -> anyhow::Result<()> {
             )
             .await
         }
-        Command::InputSet { input_set } => {
+        Command::InputSet {
+            program_id,
+            op,
+            inputs,
+        } => {
             let (rpc_url, keypair) = load_solana_config(config, rpc_url, keypair)?;
+            if !sol_check(rpc_url.clone(), keypair.pubkey()).await {
+                return Err(BonsolCliError::InsufficientFunds(keypair.pubkey().to_string()).into());
+            }
             let sdk = BonsolClient::new(rpc_url.clone());
-            input_set::input_set(&sdk, &keypair, input_set).await
+
+            input_set::input_set(&sdk, &keypair, program_id, op, inputs).await
         }
         Command::Init { project_name, dir } => init::init_project(&project_name, dir),
     }

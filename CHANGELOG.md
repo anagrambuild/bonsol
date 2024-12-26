@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 * `bonsol estimate` for estimating execution cost of bonsol programs.
+* `bonsol input-set` for applying changes to onchain input sets.
 
 ### Fixed
 * **Breaking**: `execute_v1` interface instruction now uses the new `InputRef` to improve CU usage.

@@ -69,12 +69,16 @@ pub fn deploy_v1(
     Ok(Instruction::new_with_bytes(crate::ID, ix_data, accounts))
 }
 
-pub fn input_set_v1(
+pub fn input_set_v1<'a, I>(
     signer: &Pubkey,
     image_id: &str,
     op: input_set_op_v1_generated::InputSetOp,
-    inputs: Vec<InputArgs>,
-) -> Result<Instruction, ClientError> {
+    input_len: usize,
+    input_iter: I,
+) -> Result<Instruction, ClientError>
+where
+    I: Iterator<Item = InputArgs<'a>>,
+{
     let (deployment_account, _) = deployment_address(image_id);
     let accounts = vec![
         AccountMeta::new(signer.to_owned(), true),
@@ -84,17 +88,17 @@ pub fn input_set_v1(
     ];
 
     let mut fbb = FlatBufferBuilder::new();
-    let id = fbb.create_string(""); // TODO: Not sure where id comes from
-    let inputs = fbb.create_vector(
-        inputs
-            .iter()
-            .map(|args| {
-                let mut fbb = FlatBufferBuilder::new();
-                Input::create(&mut fbb, args)
-            })
-            .collect::<Vec<WIPOffset<Input>>>()
-            .as_slice(),
-    );
+    // TODO: Not sure where `id` comes from...
+    // This is required though, as it is the first check in `InputSetAccounts::from_instruction`
+    let id = fbb.create_string("");
+    let inputs = {
+        let mut inputs = Vec::with_capacity(input_len);
+        for ref args in input_iter {
+            inputs.push(Input::create(&mut fbb, args));
+        }
+
+        fbb.create_vector(inputs.as_slice())
+    };
     let fbb_input_set = input_set_op_v1_generated::InputSetOpV1::create(
         &mut fbb,
         &input_set_op_v1_generated::InputSetOpV1Args {

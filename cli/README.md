@@ -74,5 +74,11 @@ bonsol -k ./keypair.json -u http://localhost:8899 estimate \
 # User cycles: 3380
 # Total cycles: 65536
 # Segments: 1
->>>>>>> main
+```
+
+### Input-Set
+
+Update onchain input sets.
+
+```
 ```
