@@ -226,10 +226,6 @@ impl BonsolClient {
         Ok(vec![compute, compute_price, instruction])
     }
 
-    pub async fn manage_inputs_v1() -> Result<Vec<Instruction>> {
-        Ok(vec![])
-    }
-
     pub async fn send_txn_standard(
         &self,
         signer: impl Signer,
