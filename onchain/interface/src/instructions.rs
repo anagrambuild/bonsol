@@ -69,7 +69,7 @@ pub fn deploy_v1(
     Ok(Instruction::new_with_bytes(crate::ID, ix_data, accounts))
 }
 
-pub fn input_set_v1<'a, I>(
+pub fn input_set_v1<I>(
     signer: &Pubkey,
     image_id: &str,
     op: input_set_op_v1_generated::InputSetOp,
@@ -77,7 +77,7 @@ pub fn input_set_v1<'a, I>(
     input_iter: I,
 ) -> Result<Instruction, ClientError>
 where
-    I: Iterator<Item = InputArgs<'a>>,
+    I: Iterator<Item = (InputType, String)>,
 {
     let (deployment_account, _) = deployment_address(image_id);
     let accounts = vec![
@@ -93,8 +93,14 @@ where
     let id = fbb.create_string("");
     let inputs = {
         let mut inputs = Vec::with_capacity(input_len);
-        for ref args in input_iter {
-            inputs.push(Input::create(&mut fbb, args));
+        for (input_type, data) in input_iter {
+            let data = fbb.create_vector(data.as_bytes());
+            let args = InputArgs {
+                input_type,
+                data: Some(data),
+            };
+
+            inputs.push(Input::create(&mut fbb, &args));
         }
 
         fbb.create_vector(inputs.as_slice())

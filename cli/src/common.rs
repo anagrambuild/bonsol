@@ -62,22 +62,8 @@ pub struct CliInput {
     pub data: String, // hex encoded if binary with hex: prefix
 }
 
-impl<'a> From<&'a CliInput> for InputArgs<'a> {
-    fn from(value: &'a CliInput) -> Self {
-        let mut fbb = FlatBufferBuilder::new();
-        let data = fbb.create_vector(value.data.as_ref());
-
-        InputArgs {
-            input_type: CliInputType::from_str(&value.input_type)
-                .expect("invalid input type")
-                .0,
-            data: Some(data),
-        }
-    }
-}
-
 #[derive(Debug, Clone)]
-pub struct CliInputType(InputType);
+pub struct CliInputType(pub InputType);
 
 impl ToString for CliInputType {
     fn to_string(&self) -> String {

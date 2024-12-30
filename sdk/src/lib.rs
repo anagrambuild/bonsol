@@ -169,7 +169,7 @@ impl BonsolClient {
         Ok(vec![compute, compute_price, instruction])
     }
 
-    pub async fn input_set_v1<'a, I>(
+    pub async fn input_set_v1<I>(
         &self,
         signer: &Pubkey,
         image_id: &str,
@@ -178,7 +178,7 @@ impl BonsolClient {
         input_iter: I,
     ) -> Result<Vec<Instruction>>
     where
-        I: Iterator<Item = InputArgs<'a>>,
+        I: Iterator<Item = (InputType, String)>,
     {
         let compute_price_val = self.get_fees(signer).await?;
         let instruction = instructions::input_set_v1(signer, image_id, op, input_len, input_iter)?;
