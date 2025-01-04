@@ -1,4 +1,4 @@
-use std::str::FromStr;
+use std::{fs, str::FromStr};
 
 use anyhow::Result;
 use bonsol_sdk::BonsolClient;
@@ -6,20 +6,43 @@ use solana_sdk::signer::Signer;
 
 use crate::{
     command::CliInputSetOp,
-    common::{CliInput, CliInputType},
+    common::{execute_get_inputs, rand_id, CliInput, CliInputType, ExecutionRequestFile},
+    error::BonsolCliError,
 };
+
+pub(crate) fn resolve_inputs(
+    execution_request_file: Option<String>,
+    input_file: Option<String>,
+    stdin: Option<String>,
+) -> Result<Vec<CliInput>> {
+    if input_file.as_ref().or(stdin.as_ref()).is_some() {
+        execute_get_inputs(input_file, stdin)
+    } else {
+        let req_file = fs::File::open(execution_request_file.ok_or(
+            BonsolCliError::MissingInputs(
+                "Input set management function called without supplying inputs. Please supply inputs via stdin, input file, or execution request file.".into()
+            )
+        )?)?;
+        let req_file: ExecutionRequestFile = serde_json::from_reader(req_file)?;
+        req_file.inputs.ok_or(
+            BonsolCliError::MissingInputs(
+                "The provided execution request file does not contain any inputs. Please update the inputs field and try again.".into()
+            ).into()
+        )
+    }
+}
 
 pub async fn input_set(
     sdk: &BonsolClient,
     keypair: impl Signer,
-    program_id: Option<String>,
+    id: Option<String>,
     op: CliInputSetOp,
     inputs: Vec<CliInput>,
 ) -> Result<()> {
     let ixs = sdk
         .input_set_v1(
             &keypair.pubkey(),
-            program_id.unwrap().as_str(),
+            id.or(Some(rand_id(8))).unwrap().as_str(),
             op.into(),
             inputs.len(),
             inputs.into_iter().map(|i| {
@@ -37,16 +60,15 @@ pub async fn input_set(
 }
 
 #[test]
-fn test_input_set_v1_with_simple_image() {
+fn test_input_set_v1() {
     let signer = solana_sdk::pubkey::Pubkey::new_unique();
-    let image_id = "68f4b0c5f9ce034aa60ceb264a18d6c410a3af68fafd931bcfd9ebe7c1e42960";
     let op = CliInputSetOp::Create;
     let inputs = vec![
-        CliInput {
+        crate::common::CliInput {
             input_type: String::from("PublicData"),
             data: String::from("{\"attestation\":\"test\"}"),
         },
-        CliInput {
+        crate::common::CliInput {
             input_type: String::from("Private"),
             data: String::from("https://echoserver.dev/server?response=N4IgFgpghgJhBOBnEAuA2mkBjA9gOwBcJCBaAgTwAcIQAaEIgDwIHpKAbKASzxAF0+9AEY4Y5VKArVUDCMzogYUAlBlFEBEAF96G5QFdkKAEwAGU1qA"),
         }
@@ -55,7 +77,7 @@ fn test_input_set_v1_with_simple_image() {
     assert!(
         bonsol_sdk::instructions::input_set_v1(
             &signer,
-            image_id,
+            rand_id(8).as_str(),
             op.into(),
             inputs.len(),
             inputs.into_iter().map(|i| {

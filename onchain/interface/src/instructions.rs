@@ -71,7 +71,7 @@ pub fn deploy_v1(
 
 pub fn input_set_v1<I>(
     signer: &Pubkey,
-    image_id: &str,
+    id: &str,
     op: input_set_op_v1_generated::InputSetOp,
     input_len: usize,
     input_iter: I,
@@ -79,18 +79,13 @@ pub fn input_set_v1<I>(
 where
     I: Iterator<Item = (InputType, String)>,
 {
-    let (deployment_account, _) = deployment_address(image_id);
     let accounts = vec![
         AccountMeta::new(signer.to_owned(), true),
         AccountMeta::new(signer.to_owned(), true),
-        AccountMeta::new(deployment_account, false),
-        /* TODO: Check if this is all that's necessary */
     ];
 
     let mut fbb = FlatBufferBuilder::new();
-    // TODO: Not sure where `id` comes from...
-    // This is required though, as it is the first check in `InputSetAccounts::from_instruction`
-    let id = fbb.create_string("");
+    let id = fbb.create_string(id);
     let inputs = {
         let mut inputs = Vec::with_capacity(input_len);
         for (input_type, data) in input_iter {

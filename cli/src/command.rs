@@ -175,7 +175,7 @@ pub struct SharedDeployArgs {
     pub auto_confirm: bool,
 }
 
-#[derive(Debug, Clone, ValueEnum)]
+#[derive(Debug, Clone, ValueEnum, PartialEq, Eq)]
 pub enum CliInputSetOp {
     Create,
     Update,
@@ -280,8 +280,17 @@ pub enum Command {
 
     #[command(about = "Manage onchain input sets")]
     InputSet {
-        #[arg(short = 'p', long)]
-        program_id: Option<String>,
+        #[arg(short = 'f', long)]
+        execution_request_file: Option<String>,
+
+        #[arg(short = 'i', long, help = "override inputs in execution request file")]
+        input_file: Option<String>,
+
+        #[arg(
+            help = "The id of the input set, if op=create this will always be generated",
+            long
+        )]
+        id: Option<String>,
 
         #[arg(
             help = "The operation to apply to an onchain input set",
@@ -289,16 +298,6 @@ pub enum Command {
             value_enum
         )]
         op: CliInputSetOp,
-
-        // TODO: Change this to use execution request file since users will likely just update that
-        #[arg(
-            help = "Specify inputs to include in the input set operation",
-            long = "input",
-            short = 'i',
-            name = "input",
-            value_parser = |s: &str| -> Result<CliInput, serde_json::Error> { serde_json::from_str(s) }
-        )]
-        inputs: Vec<CliInput>,
     },
 
     #[command(about = "Initialize a new project")]

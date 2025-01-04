@@ -172,7 +172,7 @@ impl BonsolClient {
     pub async fn input_set_v1<I>(
         &self,
         signer: &Pubkey,
-        image_id: &str,
+        id: &str,
         op: InputSetOp,
         input_len: usize,
         input_iter: I,
@@ -181,7 +181,7 @@ impl BonsolClient {
         I: Iterator<Item = (InputType, String)>,
     {
         let compute_price_val = self.get_fees(signer).await?;
-        let instruction = instructions::input_set_v1(signer, image_id, op, input_len, input_iter)?;
+        let instruction = instructions::input_set_v1(signer, id, op, input_len, input_iter)?;
         let compute = ComputeBudgetInstruction::set_compute_unit_limit(20_000);
         let compute_price = ComputeBudgetInstruction::set_compute_unit_price(compute_price_val);
         Ok(vec![compute, compute_price, instruction])

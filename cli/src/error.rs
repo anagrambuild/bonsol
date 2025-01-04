@@ -35,6 +35,12 @@ pub enum BonsolCliError {
         err: anyhow::Error,
     },
 
+    #[error("{0}")]
+    MissingInputs(String),
+
+    #[error("Attempt to augment existing input set without specifying its id")]
+    InputSetExists,
+
     #[error(transparent)]
     S3ClientError(#[from] S3ClientError),
 

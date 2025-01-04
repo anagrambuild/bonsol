@@ -5,6 +5,7 @@ use std::path::Path;
 use atty::Stream;
 use bonsol_sdk::BonsolClient;
 use clap::Parser;
+use command::CliInputSetOp;
 use risc0_circuit_rv32im::prove::emu::exec::DEFAULT_SEGMENT_LIMIT_PO2;
 use risc0_circuit_rv32im::prove::emu::testutil::DEFAULT_SESSION_LIMIT;
 use risc0_zkvm::ExecutorEnv;
@@ -156,17 +157,35 @@ async fn main() -> anyhow::Result<()> {
             .await
         }
         Command::InputSet {
-            program_id,
+            id,
             op,
-            inputs,
+            execution_request_file,
+            input_file,
         } => {
+            if CliInputSetOp::Create != op && id.is_none() {
+                return Err(BonsolCliError::InputSetExists.into());
+            }
             let (rpc_url, keypair) = load_solana_config(config, rpc_url, keypair)?;
             if !sol_check(rpc_url.clone(), keypair.pubkey()).await {
                 return Err(BonsolCliError::InsufficientFunds(keypair.pubkey().to_string()).into());
             }
+            let stdin = atty::isnt(Stream::Stdin)
+                .then(|| {
+                    let mut buffer = String::new();
+                    io::stdin().read_to_string(&mut buffer).ok()?;
+                    (!buffer.trim().is_empty()).then_some(buffer)
+                })
+                .flatten();
             let sdk = BonsolClient::new(rpc_url.clone());
 
-            input_set::input_set(&sdk, &keypair, program_id, op, inputs).await
+            input_set::input_set(
+                &sdk,
+                &keypair,
+                id,
+                op,
+                input_set::resolve_inputs(execution_request_file, input_file, stdin)?,
+            )
+            .await
         }
         Command::Init { project_name, dir } => init::init_project(&project_name, dir),
     }
