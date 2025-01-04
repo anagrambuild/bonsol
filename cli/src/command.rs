@@ -1,8 +1,6 @@
 use bonsol_interface::bonsol_schema::input_set_op_v1_generated::InputSetOp;
 use clap::{command, ArgGroup, Args, Parser, Subcommand, ValueEnum};
 
-use crate::common::CliInput;
-
 #[derive(Parser, Debug)]
 #[command(version)]
 #[command(group(

@@ -80,5 +80,21 @@ bonsol -k ./keypair.json -u http://localhost:8899 estimate \
 
 Update onchain input sets.
 
+The input-set command will look for an input set with the following hierarchy:
+
+1. stdin
+2. input file
+3. execution request file
+
+For example, the following command will use inputs from stdin, instead of the input file or execution request file:
+
 ```
+cat my_input_file_overrides.json |
+  bonsol -k ./keypair.json -u http://localhost:8899 input-set \
+    --op update \
+    --id <ID> \
+    -i input_file.json \
+    -f execution_request_file.json \
 ```
+
+> An id can be a helpful way of distinguishing input sets. If one isn't provided upon creation, the bonsol client will automatically create one for you.
