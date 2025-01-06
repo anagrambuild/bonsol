@@ -17,3 +17,5 @@ stark
 MyLogFile.log
 *_generated.rs
 .pnpm-store
+bonsol_explorer.db
+my_test_program/
