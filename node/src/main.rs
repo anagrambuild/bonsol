@@ -3,11 +3,27 @@ pub mod types;
 pub mod observe;
 mod ingest;
 
-mod transaction_sender;
 pub mod config;
 mod risc0_runner;
+mod transaction_sender;
 use {
-    anyhow::Result, bonsol_prover::input_resolver::DefaultInputResolver, config::*, ingest::{GrpcIngester, Ingester, RpcIngester}, metrics::counter, metrics_exporter_prometheus::PrometheusBuilder, observe::MetricEvents, risc0_runner::Risc0Runner, rlimit::Resource, solana_rpc_client::nonblocking::rpc_client::RpcClient, solana_sdk::{pubkey::Pubkey, signature::read_keypair_file, signer::Signer}, std::{process::exit, str::FromStr, sync::Arc, time::Duration}, thiserror::Error, tokio::{select, signal}, tracing::{error, info}, tracing_subscriber, transaction_sender::{RpcTransactionSender, TransactionSender}
+    anyhow::Result,
+    bonsol_prover::input_resolver::DefaultInputResolver,
+    config::*,
+    ingest::{GrpcIngester, Ingester, RpcIngester},
+    metrics::counter,
+    metrics_exporter_prometheus::PrometheusBuilder,
+    observe::MetricEvents,
+    risc0_runner::Risc0Runner,
+    rlimit::Resource,
+    solana_rpc_client::nonblocking::rpc_client::RpcClient,
+    solana_sdk::{pubkey::Pubkey, signature::read_keypair_file, signer::Signer},
+    std::{process::exit, str::FromStr, sync::Arc, time::Duration},
+    thiserror::Error,
+    tokio::{select, signal},
+    tracing::{error, info},
+    tracing_subscriber,
+    transaction_sender::{RpcTransactionSender, TransactionSender},
 };
 
 #[derive(Error, Debug)]
@@ -97,7 +113,9 @@ async fn main() -> Result<()> {
         Arc::new(reqwest::Client::new()),
         Arc::new(solana_rpc_client),
         Some(config.max_input_size_mb),
-        Some(Duration::from_secs(config.image_download_timeout_secs as u64)),
+        Some(Duration::from_secs(
+            config.image_download_timeout_secs as u64,
+        )),
     );
     //may take time to load images, depending on the number of images TODO put limit
     let mut runner = Risc0Runner::new(

@@ -24,7 +24,7 @@ pub fn verify_risc0(
 }
 
 pub fn verify_risc0_v1_0_1(proof: &[u8], inputs: &[u8]) -> Result<bool, ChannelError> {
-    let ace: Vec<u8> = toggle_endianness_256(&*[&proof[0..64], &[0u8][..]].concat());
+    let ace: Vec<u8> = toggle_endianness_256(&[&proof[0..64], &[0u8][..]].concat());
     let proof_a: G1 = G1::deserialize_with_mode(&*ace, Compress::No, Validate::No).unwrap();
 
     let mut proof_a_neg = [0u8; 65];
@@ -200,7 +200,7 @@ mod tests {
         digest[0] = 103;
         let (a, b) = split_digest_reversed(&mut digest).unwrap();
         let expect_digest_right = to_fixed_array::<32>(&[1u8; 16]);
-        let mut expect_digest_left = expect_digest_right.clone();
+        let mut expect_digest_left = expect_digest_right;
         expect_digest_left[31] = 103;
         assert_eq!(a, expect_digest_left);
         assert_eq!(b, expect_digest_right);

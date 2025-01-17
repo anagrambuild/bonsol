@@ -77,7 +77,7 @@ pub fn create_program_account<'a>(
     let lamports =
         Rent::default().minimum_balance(space as usize) + additional_lamports.unwrap_or(0);
     let create_pda_account_ix =
-        system_instruction::create_account(&payer.key, &account.key, lamports, space, &crate::id());
+        system_instruction::create_account(payer.key, account.key, lamports, space, &crate::id());
     invoke_signed(
         &create_pda_account_ix,
         &[account.clone(), payer.clone(), system.clone()],

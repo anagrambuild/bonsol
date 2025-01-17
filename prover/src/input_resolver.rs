@@ -116,14 +116,14 @@ impl DefaultInputResolver {
                 let url = Url::parse(url)?;
                 task_set.spawn(download_public_input(
                     client,
-                    index as u8,
+                    index,
                     url.clone(),
-                    self.max_input_size_mb.clone() as usize,
+                    self.max_input_size_mb as usize,
                     ProgramInputType::Public,
                     self.timeout,
                 ));
                 Ok(ProgramInput::Unresolved(UnresolvedInput {
-                    index: index as u8,
+                    index,
                     url,
                     input_type: ProgramInputType::Public,
                 }))
@@ -133,7 +133,7 @@ impl DefaultInputResolver {
                 let url = from_utf8(&url)?;
                 let url = Url::parse(url)?;
                 Ok(ProgramInput::Unresolved(UnresolvedInput {
-                    index: index as u8,
+                    index,
                     url,
                     input_type: ProgramInputType::Private,
                 }))
@@ -142,7 +142,7 @@ impl DefaultInputResolver {
                 let data = input.data.ok_or(anyhow::anyhow!("Invalid data"))?;
                 let data = data.to_vec();
                 Ok(ProgramInput::Resolved(ResolvedInput {
-                    index: index as u8,
+                    index,
                     data,
                     input_type: ProgramInputType::Public,
                 }))
@@ -153,14 +153,14 @@ impl DefaultInputResolver {
                 let url = Url::parse(url)?;
                 task_set.spawn(download_public_input(
                     client,
-                    index as u8,
+                    index,
                     url.clone(),
-                    self.max_input_size_mb.clone() as usize,
+                    self.max_input_size_mb as usize,
                     ProgramInputType::PublicProof,
                     self.timeout,
                 ));
                 Ok(ProgramInput::Unresolved(UnresolvedInput {
-                    index: index as u8,
+                    index,
                     url,
                     input_type: ProgramInputType::PublicProof,
                 }))
@@ -177,14 +177,14 @@ impl DefaultInputResolver {
         input_set_account: Pubkey,
         client: Arc<reqwest::Client>,
         index: u8,
-        mut task_set: &mut JoinSet<Result<ResolvedInput>>,
+        task_set: &mut JoinSet<Result<ResolvedInput>>,
     ) -> Result<Vec<ProgramInput>> {
         let data = self
             .solana_rpc_client
             .get_account_data(&input_set_account)
             .await?;
         let input_set =
-            root_as_input_set(&*data).map_err(|_| anyhow::anyhow!("Invalid Input set data"))?;
+            root_as_input_set(&data).map_err(|_| anyhow::anyhow!("Invalid Input set data"))?;
         if input_set.inputs().is_none() {
             return Err(anyhow::anyhow!("Invalid Input set data"));
         }
@@ -195,7 +195,7 @@ impl DefaultInputResolver {
                 return Err(anyhow::anyhow!("Input set nesting not supported"));
             }
             let input = input.unpack();
-            res.push(self.par_resolve_input(client.clone(), index, input, &mut task_set)?);
+            res.push(self.par_resolve_input(client.clone(), index, input, task_set)?);
         }
         Ok(res)
     }
@@ -350,9 +350,12 @@ async fn download_public_input(
     input_type: ProgramInputType,
     timeout: Duration,
 ) -> Result<ResolvedInput> {
-    let resp = client.get(url)
-    .timeout(timeout)
-    .send().await?.error_for_status()?;
+    let resp = client
+        .get(url)
+        .timeout(timeout)
+        .send()
+        .await?
+        .error_for_status()?;
     let byte = get_body_max_size(resp.bytes_stream(), max_size_mb * 1024 * 1024).await?;
     Ok(ResolvedInput {
         index,
@@ -458,7 +461,7 @@ mod test {
             1u8,
             url,
             max_size_mb,
-            ProgramInputType::Public,   
+            ProgramInputType::Public,
             Duration::from_secs(30),
         )
         .await;

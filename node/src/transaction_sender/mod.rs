@@ -1,6 +1,5 @@
 use std::sync::Arc;
 
-use dashmap::mapref::one::Ref;
 use tracing::error;
 
 use {
@@ -30,9 +29,8 @@ use {
 };
 
 use {
-    crate::{observe::MetricEvents, types::ProgramExec},
+    crate::types::ProgramExec,
     anyhow::Result,
-    metrics::gauge,
     solana_rpc_client::nonblocking::rpc_client::RpcClient,
     solana_sdk::{
         instruction::{AccountMeta, Instruction},
@@ -76,10 +74,7 @@ pub trait TransactionSender {
         exit_code_user: u32,
     ) -> Result<Signature>;
     async fn get_current_block(&self) -> Result<u64>;
-    fn get_signature_status(
-        &self,
-        sig: &Signature,
-    ) -> Option<TransactionStatus>;
+    fn get_signature_status(&self, sig: &Signature) -> Option<TransactionStatus>;
     fn clear_signature_status(&self, sig: &Signature);
     async fn get_deployment_account(&self, image_id: &str) -> Result<Account>;
 }
@@ -136,15 +131,8 @@ impl TransactionSender for RpcTransactionSender {
         Ok(sig.to_string())
     }
 
-    fn get_signature_status(
-        &self,
-        sig: &Signature,
-    ) -> Option<TransactionStatus> {
-        if let Some(status) = self.sigs.get(sig) {
-            Some(status.value().to_owned())
-        } else {
-            None
-        }
+    fn get_signature_status(&self, sig: &Signature) -> Option<TransactionStatus> {
+        self.sigs.get(sig).map(|status| status.value().to_owned())
     }
 
     fn clear_signature_status(&self, sig: &Signature) {
@@ -158,7 +146,7 @@ impl TransactionSender for RpcTransactionSender {
         execution_account: Pubkey,
         block_commitment: u64,
     ) -> Result<Signature> {
-        let (execution_claim_account, _) = execution_claim_address(&execution_account.as_ref());
+        let (execution_claim_account, _) = execution_claim_address(execution_account.as_ref());
         let accounts = vec![
             AccountMeta::new(execution_account, false),
             AccountMeta::new_readonly(requester, false),
@@ -190,7 +178,7 @@ impl TransactionSender for RpcTransactionSender {
         );
         fbb2.finish(root, None);
         let ix_data = fbb2.finished_data();
-        let instruction = Instruction::new_with_bytes(self.bonsol_program, &ix_data, accounts);
+        let instruction = Instruction::new_with_bytes(self.bonsol_program, ix_data, accounts);
         let (blockhash_req, last_valid) = self
             .rpc_client
             .get_latest_blockhash_with_commitment(self.rpc_client.commitment())
@@ -231,7 +219,7 @@ impl TransactionSender for RpcTransactionSender {
         exit_code_user: u32,
     ) -> Result<Signature> {
         let (execution_request_data_account, _) =
-            execution_address(&requester_account, &execution_id.as_bytes());
+            execution_address(&requester_account, execution_id.as_bytes());
         let (id, additional_accounts) = match callback_exec {
             None => (self.bonsol_program, vec![]),
             Some(pe) => {
@@ -283,7 +271,7 @@ impl TransactionSender for RpcTransactionSender {
         );
         fbb2.finish(root, None);
         let ix_data = fbb2.finished_data();
-        let instruction = Instruction::new_with_bytes(self.bonsol_program, &ix_data, accounts);
+        let instruction = Instruction::new_with_bytes(self.bonsol_program, ix_data, accounts);
         let (blockhash, last_valid) = self
             .rpc_client
             .get_latest_blockhash_with_commitment(self.rpc_client.commitment())
@@ -331,14 +319,13 @@ impl TransactionSender for RpcTransactionSender {
                         }
                         true
                     });
-                    let all_sigs = sigs_ref.iter().map(|x| x.key().clone()).collect_vec();
+                    let all_sigs = sigs_ref.iter().map(|x| *x.key()).collect_vec();
                     let statuses = rpc_client.get_signature_statuses(&all_sigs).await;
                     if let Ok(statuses) = statuses {
                         for sig in all_sigs.into_iter().zip(statuses.value.into_iter()) {
-                            if let Some(status) = sig.1 { 
+                            if let Some(status) = sig.1 {
                                 sigs_ref.insert(sig.0, TransactionStatus::Confirmed(status));
                             }
-
                         }
                     }
                 } else {

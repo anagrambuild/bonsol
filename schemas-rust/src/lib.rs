@@ -18,7 +18,7 @@ pub use execution_request_v1_generated::*;
 pub use input_set_generated::*;
 pub use input_type_generated::*;
 pub use status_v1_generated::*;
-pub fn parse_ix_data<'a>(ix_data: &'a [u8]) -> Result<ChannelInstruction, ChannelSchemaError> {
+pub fn parse_ix_data(ix_data: &[u8]) -> Result<ChannelInstruction, ChannelSchemaError> {
     let instruction =
         root_as_channel_instruction(ix_data).map_err(|_| ChannelSchemaError::InvalidInstruction)?;
     Ok(instruction)
@@ -47,41 +47,41 @@ impl Display for ExitCode {
 }
 
 impl InputT {
-    pub fn new(input_type: InputType, data: Option<Vec<u8>>) -> Self {
+    pub const fn new(input_type: InputType, data: Option<Vec<u8>>) -> Self {
         Self { input_type, data }
     }
 
-    pub fn public(data: Vec<u8>) -> Self {
+    pub const fn public(data: Vec<u8>) -> Self {
         Self {
             input_type: InputType::PublicData,
             data: Some(data),
         }
     }
-    pub fn private(data: Vec<u8>) -> Self {
+    pub const fn private(data: Vec<u8>) -> Self {
         Self {
             input_type: InputType::Private,
             data: Some(data),
         }
     }
-    pub fn public_proof(data: Vec<u8>) -> Self {
+    pub const fn public_proof(data: Vec<u8>) -> Self {
         Self {
             input_type: InputType::PublicProof,
             data: Some(data),
         }
     }
-    pub fn url(data: Vec<u8>) -> Self {
+    pub const fn url(data: Vec<u8>) -> Self {
         Self {
             input_type: InputType::PublicUrl,
             data: Some(data),
         }
     }
-    pub fn input_set(data: Vec<u8>) -> Self {
+    pub const fn input_set(data: Vec<u8>) -> Self {
         Self {
             input_type: InputType::InputSet,
             data: Some(data),
         }
     }
-    pub fn public_account(data: Vec<u8>) -> Self {
+    pub const fn public_account(data: Vec<u8>) -> Self {
         Self {
             input_type: InputType::PublicAccountData,
             data: Some(data),

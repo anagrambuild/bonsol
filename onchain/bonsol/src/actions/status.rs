@@ -46,7 +46,7 @@ impl<'a, 'b> StatusAccounts<'a, 'b> {
             .execution_id()
             .ok_or(ChannelError::InvalidExecutionAccount)?;
         let bmp = Some(check_pda(
-            &execution_address_seeds(&accounts[0].key, eid.as_bytes()),
+            &execution_address_seeds(accounts[0].key, eid.as_bytes()),
             ea.key,
             ChannelError::InvalidExecutionAccount,
         )?);
@@ -74,8 +74,8 @@ pub fn process_status_v1<'a>(
     let st = st.unwrap();
     let sa = StatusAccounts::from_instruction(accounts, &st)?;
     let er_ref = sa.exec.try_borrow_data()?;
-    let er = root_as_execution_request_v1(&*er_ref)
-        .map_err(|_| ChannelError::InvalidExecutionAccount)?;
+    let er =
+        root_as_execution_request_v1(&er_ref).map_err(|_| ChannelError::InvalidExecutionAccount)?;
     let pr_v = st.proof().filter(|x| x.len() == 256);
     if er.max_block_height() < Clock::get()?.slot {
         return Err(ChannelError::ExecutionExpired.into());

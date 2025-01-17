@@ -22,7 +22,7 @@ pub fn estimate<E: MkImage>(elf: E, env: ExecutorEnv) -> Result<()> {
 /// Get the total number of cycles by stepping through the ELF using emulation
 /// tools from the risc0_circuit_rv32im module.
 pub fn get_session<E: MkImage>(elf: E, env: ExecutorEnv) -> Result<Session> {
-    Ok(ExecutorImpl::new(env, elf.mk_image()?)?.run()?)
+    ExecutorImpl::new(env, elf.mk_image()?)?.run()
 }
 
 /// Helper trait for loading an image from an elf.
@@ -66,9 +66,6 @@ mod estimate_tests {
             .expect("failed to create image from basic program");
         let res = estimate::get_session(image, env.build().unwrap());
 
-        assert_eq!(
-            res.ok().and_then(|session| Some(session.total_cycles)),
-            Some(16384)
-        );
+        assert_eq!(res.ok().map(|session| session.total_cycles), Some(16384));
     }
 }

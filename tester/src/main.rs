@@ -82,7 +82,7 @@ async fn example_sdk_test(
                     AccountMeta::new_readonly(ea3, false),
                 ],
             }),
-            None
+            None,
         )
         .await?;
     let bh = client.get_latest_blockhash().await?;

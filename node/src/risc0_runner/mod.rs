@@ -22,13 +22,7 @@ use {
     risc0_zkvm::{ExitCode, Journal, SuccinctReceipt},
     solana_sdk::{pubkey::Pubkey, signature::Signature},
     std::{
-        convert::TryInto,
-        env::consts::ARCH,
-        fs,
-        io::Cursor,
-        path::Path,
-        sync::Arc,
-        time::{Duration, SystemTime, UNIX_EPOCH},
+        convert::TryInto, env::consts::ARCH, fs, io::Cursor, path::Path, sync::Arc, time::Duration,
     },
 };
 
@@ -54,8 +48,8 @@ use {
         fs::File, io::AsyncReadExt, process::Command, sync::mpsc::UnboundedSender, task::JoinHandle,
     },
     tracing::{error, info, warn},
+    verify_prover_version::verify_prover_version,
 };
-use verify_prover_version::verify_prover_version;
 
 const REQUIRED_PROVER: ProverVersion = VERSION_V1_0_1;
 
@@ -83,13 +77,13 @@ pub enum Risc0RunnerError {
     ProofGenerationError,
 }
 
-#[derive(Clone,Copy,Debug,PartialEq,Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ClaimStatus {
     Claiming,
     Submitted,
 }
 
-#[derive(Clone,Debug,PartialEq,Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct InflightProof {
     pub execution_id: String,
     pub image_id: String,
@@ -206,17 +200,16 @@ impl Risc0Runner {
                                     }
                                 }
                             };
-                            
                         }
                         ClaimStatus::Submitted => {
                             if let Some(sig) = v.submission_signature.as_ref() {
-                                let inner_status = txn_sender.get_signature_status(&sig);
+                                let inner_status = txn_sender.get_signature_status(sig);
                                 return match inner_status {
                                     None => false,
                                     Some(status) => {
                                         match status {
                                             TransactionStatus::Confirmed(status) => {
-                                                txn_sender.clear_signature_status(&sig);
+                                                txn_sender.clear_signature_status(sig);
                                                 if status.err.is_some() {
                                                     emit_event!(MetricEvents::ProofSubmissionError, sig => sig.to_string());
                                                 }
@@ -254,7 +247,7 @@ impl Risc0Runner {
                             let payload = bonsol_ix_type
                                 .deploy_v1_nested_flatbuffer()
                                 .ok_or(Risc0RunnerError::EmptyInstruction)?;
-                            emit_counter!(MetricEvents::ImageDeployment, 1, "image_id" => payload.image_id().clone().unwrap_or_default());
+                            emit_counter!(MetricEvents::ImageDeployment, 1, "image_id" => payload.image_id().unwrap_or_default());
                             handle_image_deployment(&config, &img_client, payload, &loaded_images)
                                 .await
                         }
@@ -344,7 +337,9 @@ pub async fn handle_claim<'a>(
         return Ok(());
     }
 
-    let claim_status = in_flight_proofs.get(execution_id).map(|v| v.value().to_owned());
+    let claim_status = in_flight_proofs
+        .get(execution_id)
+        .map(|v| v.value().to_owned());
     if let Some(mut claim) = claim_status {
         emit_event!(MetricEvents::ClaimReceived, execution_id => execution_id);
         if let ClaimStatus::Claiming = claim.status {
@@ -375,9 +370,9 @@ pub async fn handle_claim<'a>(
                     input_staging_area.insert(execution_id.to_string(), inputs);
                     // one of the huge problems with the claim system is that we are not guaranteed to have
                     // the inputs we need at the time we claim and no way to
-                }   
+                }
                 info!("{} inputs resolved", unresolved_count);
-                
+
                 // drain the inputs and own them here, this is a bit of a hack but it works
                 let (eid, inputs) = input_staging_area
                     .remove(execution_id)
@@ -425,7 +420,7 @@ pub async fn handle_claim<'a>(
                                 error!("Error submitting proof: {:?}", e);
                                 Risc0RunnerError::TransactionError(e.to_string())
                             })?;
-                        
+
                         claim.status = ClaimStatus::Submitted;
                         claim.submission_signature = Some(sig);
                         in_flight_proofs.insert(eid.clone(), claim);
@@ -540,7 +535,7 @@ async fn handle_execution_request<'a>(
                     let callback_program = exec
                         .callback_program_id()
                         .and_then::<[u8; 32], _>(|v| v.bytes().try_into().ok())
-                        .map(|v| Pubkey::from(v));
+                        .map(Pubkey::from);
                     let callback = if callback_program.is_some() {
                         Some(ProgramExec {
                             program_id: callback_program.unwrap(),
@@ -603,7 +598,7 @@ async fn load_image<'a>(
     let account = transaction_sender
         .get_deployment_account(image_id)
         .await
-        .map_err(|e| Risc0RunnerError::ImageDownloadError(e))?;
+        .map_err(Risc0RunnerError::ImageDownloadError)?;
     let deploy_data = root_as_deploy_v1(&account.data)
         .map_err(|_| anyhow::anyhow!("Failed to parse account data"))?;
     handle_image_deployment(config, http_client, deploy_data, loaded_images).await?;
@@ -627,7 +622,7 @@ async fn handle_image_deployment<'a>(
             let stream = resp.bytes_stream();
             let resp_data = get_body_max_size(stream, min)
                 .await
-                .map_err(|e| Risc0RunnerError::ImageDownloadError(e))?;
+                .map_err(Risc0RunnerError::ImageDownloadError)?;
 
             let img = Image::from_bytes(resp_data)?;
             if let Some(bytes) = img.bytes() {
@@ -660,7 +655,7 @@ fn risc0_prove(
     emit_histogram!(MetricEvents::ProofCycles, info.stats.total_cycles as f64, system => "risc0", cycle_type => "total", image_id => &image_id);
     emit_histogram!(MetricEvents::ProofCycles, info.stats.user_cycles as f64, system => "risc0", cycle_type => "user", image_id => &image_id);
     if let InnerReceipt::Composite(cr) = &info.receipt.inner {
-        let sr = emit_event_with_duration!(MetricEvents::ProofConversion,{ prover.composite_to_succinct(&cr) }, system => "risc0")?;
+        let sr = emit_event_with_duration!(MetricEvents::ProofConversion,{ prover.composite_to_succinct(cr) }, system => "risc0")?;
         let ident_receipt = identity_p254(&sr)?;
         if let MaybePruned::Value(rc) = sr.claim {
             if let MaybePruned::Value(Some(op)) = rc.output {
@@ -670,7 +665,7 @@ fn risc0_prove(
             }
         }
     }
-    return Err(Risc0RunnerError::ProofGenerationError.into());
+    Err(Risc0RunnerError::ProofGenerationError.into())
 }
 
 pub struct CompressedReciept {
@@ -753,11 +748,10 @@ async fn risc0_compress_proof(
 fn can_execute(exec: ExecutionRequestV1) -> bool {
     let version = exec.prover_version().try_into();
     if version.is_ok() {
-        let is_matching = match version.unwrap() {
+        match version.unwrap() {
             REQUIRED_PROVER => true,
             _ => false,
-        };
-        is_matching
+        }
     } else {
         false
     }

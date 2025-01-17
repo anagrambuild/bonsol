@@ -37,7 +37,7 @@ fn main<'a>(
         0 => {
             let payer = &accounts[0]; //any feepayer
             if data.len() < 57 {
-                return Err(ProgramError::InvalidInstructionData.into());
+                return Err(ProgramError::InvalidInstructionData);
             }
             let execution_id =
                 from_utf8(&data[0..16]).map_err(|_| ProgramError::InvalidInstructionData)?;
@@ -66,7 +66,7 @@ fn main<'a>(
                 requester.key,
                 payer.key,
                 SIMPLE_IMAGE_ID,
-                &execution_id,
+                execution_id,
                 vec![
                     InputRef::public("{\"attestation\":\"test\"}".as_bytes()),
                     InputRef::private(private_input_url),
@@ -104,16 +104,16 @@ fn main<'a>(
             let callback_output: BonsolCallback =
                 handle_callback(SIMPLE_IMAGE_ID, &execution_account, accounts, data)?;
             if sol_memcmp(accounts[2].key.as_ref(), EA1.as_ref(), 32) != 0 {
-                return Err(ProgramError::InvalidInstructionData.into());
+                return Err(ProgramError::InvalidInstructionData);
             }
             if sol_memcmp(accounts[3].key.as_ref(), EA2.as_ref(), 32) != 0 {
-                return Err(ProgramError::InvalidInstructionData.into());
+                return Err(ProgramError::InvalidInstructionData);
             }
             if sol_memcmp(accounts[4].key.as_ref(), EA3.as_ref(), 32) != 0 {
-                return Err(ProgramError::InvalidInstructionData.into());
+                return Err(ProgramError::InvalidInstructionData);
             }
             if !accounts[2].is_writable {
-                return Err(ProgramError::InvalidInstructionData.into());
+                return Err(ProgramError::InvalidInstructionData);
             }
             if callback_output.committed_outputs.len() == 1
                 && callback_output.committed_outputs[0] == 1
@@ -125,18 +125,18 @@ fn main<'a>(
         //only callback test
         2 => {
             let callback_output: BonsolCallback =
-                handle_callback(SIMPLE_IMAGE_ID, &accounts[0].key, accounts, data)?;
+                handle_callback(SIMPLE_IMAGE_ID, accounts[0].key, accounts, data)?;
             if sol_memcmp(accounts[1].key.as_ref(), EA1.as_ref(), 32) != 0 {
-                return Err(ProgramError::InvalidInstructionData.into());
+                return Err(ProgramError::InvalidInstructionData);
             }
             if sol_memcmp(accounts[2].key.as_ref(), EA2.as_ref(), 32) != 0 {
-                return Err(ProgramError::InvalidInstructionData.into());
+                return Err(ProgramError::InvalidInstructionData);
             }
             if sol_memcmp(accounts[3].key.as_ref(), EA3.as_ref(), 32) != 0 {
-                return Err(ProgramError::InvalidInstructionData.into());
+                return Err(ProgramError::InvalidInstructionData);
             }
             if !accounts[1].is_writable {
-                return Err(ProgramError::InvalidInstructionData.into());
+                return Err(ProgramError::InvalidInstructionData);
             }
             if callback_output.committed_outputs.len() == 1
                 && callback_output.committed_outputs[0] == 1
@@ -146,7 +146,7 @@ fn main<'a>(
             Ok(())
         }
 
-        _ => return Err(ProgramError::InvalidInstructionData.into()),
+        _ => Err(ProgramError::InvalidInstructionData),
     }
 }
 
@@ -160,7 +160,7 @@ pub fn create_program_account<'a>(
 ) -> Result<(), ProgramError> {
     let lamports = Rent::get()?.minimum_balance(space as usize) + additional_lamports.unwrap_or(0);
     let create_pda_account_ix =
-        system_instruction::create_account(&payer.key, &account.key, lamports, space, &crate::id());
+        system_instruction::create_account(payer.key, account.key, lamports, space, &crate::id());
     invoke_signed(
         &create_pda_account_ix,
         &[account.clone(), payer.clone(), system.clone()],

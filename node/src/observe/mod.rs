@@ -28,7 +28,7 @@ pub enum MetricEvents {
     SignaturesInFlight,
     IncompatibleProverVersion,
     ProofSubmissionError,
-    TransactionExpired
+    TransactionExpired,
 }
 
 macro_rules! emit_event {

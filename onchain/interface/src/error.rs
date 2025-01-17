@@ -1,5 +1,5 @@
 #[cfg(feature = "on-chain")]
-use {solana_program::msg, solana_program::program_error::ProgramError};
+use solana_program::program_error::ProgramError;
 
 #[cfg(not(feature = "on-chain"))]
 use {solana_sdk::msg, solana_sdk::program_error::ProgramError};
@@ -28,8 +28,8 @@ pub enum ClientError {
     ExecutionRequestReused,
 }
 
-impl Into<ProgramError> for ClientError {
-    fn into(self) -> ProgramError {
-        ProgramError::Custom(self as u32)
+impl From<ClientError> for ProgramError {
+    fn from(val: ClientError) -> Self {
+        ProgramError::Custom(val as u32)
     }
 }

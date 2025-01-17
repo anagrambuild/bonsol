@@ -35,7 +35,7 @@ pub struct GrpcIngester {
 }
 
 impl GrpcIngester {
-    pub fn new(
+    pub const fn new(
         url: String,
         token: String,
         connection_timeout_secs: Option<u32>,
@@ -77,7 +77,9 @@ impl Ingester for GrpcIngester {
     }
 
     fn stop(&mut self) -> Result<()> {
-        self.op_handle.as_mut().map(|t| t.abort());
+        if let Some(t) = self.op_handle.as_mut() {
+            t.abort()
+        }
         Ok(())
     }
 }
@@ -133,7 +135,7 @@ fn handle_msg(
                         soltxn.account_keys(),
                         soltxn.get_transaction(),
                         soltxn.get_status_meta(),
-                        &txchan,
+                        txchan,
                     )
                 })
                 .map_err(|e| anyhow!("error while sending instructions: {e}"))?

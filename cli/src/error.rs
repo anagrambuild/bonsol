@@ -65,7 +65,7 @@ pub enum ParseConfigError {
 impl ParseConfigError {
     pub(crate) fn context(&self, whoami: Option<String>) -> String {
         match self {
-            Self::ConfigNotFound { .. } => format!("The solana cli config path was invalid, please double check that the path is correct and try again.\nTip: Try using an absolute path."),
+            Self::ConfigNotFound { .. } => "The solana cli config path was invalid, please double check that the path is correct and try again.\nTip: Try using an absolute path.".to_string(),
             Self::DefaultConfigNotFound { .. } => format!(
 "The default solana cli config path is used when no other options for deriving the RPC URL and keypair file path are provided, ie. '--rpc_url' and '--keypair', or a path to a config that isn't at the default location, ie '--config'.
 Tip: Try running 'solana config get'. If you have a custom config path set, double check that the default path also exists. A custom config path can be passed to bonsol with the '--config' option, eg. 'bonsol --config /path/to/config.yml'.

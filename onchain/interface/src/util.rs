@@ -18,11 +18,11 @@ pub fn execution_address_seeds<'a>(requester: &'a Pubkey, execution_id: &'a [u8]
     vec!["execution".as_bytes(), requester.as_ref(), execution_id]
 }
 
-pub fn deployment_address_seeds<'a>(hash: &'a Hash) -> Vec<&'a [u8]> {
+pub fn deployment_address_seeds(hash: &Hash) -> Vec<&[u8]> {
     vec!["deployment".as_bytes(), hash.as_ref()]
 }
 
-pub fn execution_claim_address_seeds<'a>(execution_address: &'a [u8]) -> Vec<&'a [u8]> {
+pub fn execution_claim_address_seeds(execution_address: &[u8]) -> Vec<&[u8]> {
     vec!["execution_claim".as_bytes(), execution_address]
 }
 
@@ -34,7 +34,7 @@ pub fn input_set_address(input_set_hash: &[u8]) -> (Pubkey, u8) {
     Pubkey::find_program_address(&input_set_address_seeds(input_set_hash), &ID)
 }
 
-pub fn input_set_address_seeds<'a>(id: &'a [u8]) -> Vec<&'a [u8]> {
+pub fn input_set_address_seeds(id: &[u8]) -> Vec<&[u8]> {
     vec!["input_set".as_bytes(), id]
 }
 

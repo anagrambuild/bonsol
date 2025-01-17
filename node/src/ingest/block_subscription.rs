@@ -23,7 +23,7 @@ pub struct RpcIngester {
 }
 
 impl RpcIngester {
-    pub fn new(rpc_url: String) -> RpcIngester {
+    pub const fn new(rpc_url: String) -> RpcIngester {
         RpcIngester {
             op_handle: None,
             rpc_url,
@@ -59,27 +59,24 @@ fn filter_txs(
             if let Some(inner_ix_groups) = o_ix_groups {
                 for group in inner_ix_groups {
                     for ix in group.instructions {
-                        match ix {
-                            UiInstruction::Compiled(instruction) => {
-                                if &scc[instruction.program_id_index as usize] == program {
-                                    let data = bs58::decode(&instruction.data).into_vec();
-                                    if let Ok(data) = data {
-                                        res.push(BonsolInstruction {
-                                            cpi: true,
-                                            accounts: instruction
-                                                .accounts
-                                                .iter()
-                                                .map(|a| scc[*a as usize])
-                                                .collect(),
-                                            data,
-                                            last_known_block,
-                                        });
-                                    } else {
-                                        error!("Failed to decode bs58 data for bonsol instruction");
-                                    }
+                        if let UiInstruction::Compiled(instruction) = ix {
+                            if &scc[instruction.program_id_index as usize] == program {
+                                let data = bs58::decode(&instruction.data).into_vec();
+                                if let Ok(data) = data {
+                                    res.push(BonsolInstruction {
+                                        cpi: true,
+                                        accounts: instruction
+                                            .accounts
+                                            .iter()
+                                            .map(|a| scc[*a as usize])
+                                            .collect(),
+                                        data,
+                                        last_known_block,
+                                    });
+                                } else {
+                                    error!("Failed to decode bs58 data for bonsol instruction");
                                 }
                             }
-                            _ => {}
                         }
                     }
                 }
@@ -120,10 +117,9 @@ async fn ingest(
             if let Some(txs) = blk.transactions {
                 let ix = txs
                     .into_iter()
-                    .map::<Vec<BonsolInstruction>, _>(|tx| {
+                    .flat_map(|tx| {
                         filter_txs(&program, blk.block_height.unwrap_or(blk.parent_slot), tx)
                     })
-                    .flatten()
                     .collect::<Vec<BonsolInstruction>>();
                 txchan.send(ix).unwrap();
             }
@@ -154,7 +150,9 @@ impl Ingester for RpcIngester {
     }
 
     fn stop(&mut self) -> Result<()> {
-        self.op_handle.as_mut().map(|t| t.abort());
+        if let Some(t) = self.op_handle.as_mut() {
+            t.abort()
+        }
         Ok(())
     }
 }

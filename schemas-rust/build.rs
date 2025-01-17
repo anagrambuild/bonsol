@@ -10,7 +10,7 @@ fn main() {
         PathBuf::from(env::var("GENERATED_CODE_DIR").unwrap_or_else(|_| "src".to_string()));
 
     // Collect all .fbs files in the schema directory.
-    let file_list: Vec<_> = fs::read_dir(&schema_dir)
+    let file_list: Vec<_> = fs::read_dir(schema_dir)
         .expect("Schema directory not found")
         .filter_map(|entry| {
             entry.ok().and_then(|e| {
