@@ -1,5 +1,8 @@
 use std::sync::Arc;
 
+use dashmap::mapref::one::Ref;
+use tracing::error;
+
 use {
     async_trait::async_trait,
     bonsol_interface::{
@@ -22,7 +25,7 @@ use {
         system_program,
         transaction::VersionedTransaction,
     },
-    solana_transaction_status::TransactionStatus,
+    solana_transaction_status::TransactionStatus as TransactionConfirmationStatus,
     tokio::task::JoinHandle,
 };
 
@@ -39,6 +42,12 @@ use {
     },
     tracing::info,
 };
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum TransactionStatus {
+    Pending { expiry: u64 },
+    Confirmed(TransactionConfirmationStatus),
+}
 
 #[async_trait]
 pub trait TransactionSender {
@@ -67,7 +76,10 @@ pub trait TransactionSender {
         exit_code_user: u32,
     ) -> Result<Signature>;
     async fn get_current_block(&self) -> Result<u64>;
-    fn get_signature_status(&self, sig: &Signature) -> Option<TransactionStatus>;
+    fn get_signature_status(
+        &self,
+        sig: &Signature,
+    ) -> Option<TransactionStatus>;
     fn clear_signature_status(&self, sig: &Signature);
     async fn get_deployment_account(&self, image_id: &str) -> Result<Account>;
 }
@@ -77,7 +89,7 @@ pub struct RpcTransactionSender {
     pub bonsol_program: Pubkey,
     pub signer: Keypair,
     pub txn_status_handle: Option<JoinHandle<()>>,
-    pub sigs: Arc<DashMap<Signature, Option<TransactionStatus>>>,
+    pub sigs: Arc<DashMap<Signature, TransactionStatus>>,
 }
 
 impl Signer for RpcTransactionSender {
@@ -124,9 +136,12 @@ impl TransactionSender for RpcTransactionSender {
         Ok(sig.to_string())
     }
 
-    fn get_signature_status(&self, sig: &Signature) -> Option<TransactionStatus> {
+    fn get_signature_status(
+        &self,
+        sig: &Signature,
+    ) -> Option<TransactionStatus> {
         if let Some(status) = self.sigs.get(sig) {
-            status.clone()
+            Some(status.value().to_owned())
         } else {
             None
         }
@@ -176,14 +191,14 @@ impl TransactionSender for RpcTransactionSender {
         fbb2.finish(root, None);
         let ix_data = fbb2.finished_data();
         let instruction = Instruction::new_with_bytes(self.bonsol_program, &ix_data, accounts);
-        let blockhash_req = self.rpc_client.get_latest_blockhash().await;
-        let blockhash = match blockhash_req {
-            Ok(blockhash) => blockhash,
-            Err(e) => {
-                return Err(anyhow::anyhow!("Failed to get blockhash: {:?}", e));
-            }
-        };
-        let msg = v0::Message::try_compile(&self.signer.pubkey(), &[instruction], &[], blockhash)?;
+        let (blockhash_req, last_valid) = self
+            .rpc_client
+            .get_latest_blockhash_with_commitment(self.rpc_client.commitment())
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to get blockhash: {:?}", e))?;
+
+        let msg =
+            v0::Message::try_compile(&self.signer.pubkey(), &[instruction], &[], blockhash_req)?;
         let tx = VersionedTransaction::try_new(VersionedMessage::V0(msg), &[&self.signer])?;
         let sig = self
             .rpc_client
@@ -196,7 +211,8 @@ impl TransactionSender for RpcTransactionSender {
             )
             .await
             .map_err(|e| anyhow::anyhow!("Failed to send transaction: {:?}", e))?;
-        self.sigs.insert(sig, None);
+        self.sigs
+            .insert(sig, TransactionStatus::Pending { expiry: last_valid });
         Ok(sig)
     }
 
@@ -268,13 +284,12 @@ impl TransactionSender for RpcTransactionSender {
         fbb2.finish(root, None);
         let ix_data = fbb2.finished_data();
         let instruction = Instruction::new_with_bytes(self.bonsol_program, &ix_data, accounts);
-        let blockhash_req = self.rpc_client.get_latest_blockhash().await;
-        let blockhash = match blockhash_req {
-            Ok(blockhash) => blockhash,
-            Err(e) => {
-                return Err(anyhow::anyhow!("Failed to get blockhash: {:?}", e));
-            }
-        };
+        let (blockhash, last_valid) = self
+            .rpc_client
+            .get_latest_blockhash_with_commitment(self.rpc_client.commitment())
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to get blockhash: {:?}", e))?;
+
         let msg = v0::Message::try_compile(&self.signer.pubkey(), &[instruction], &[], blockhash)?;
         let tx = VersionedTransaction::try_new(VersionedMessage::V0(msg), &[&self.signer])?;
 
@@ -290,31 +305,45 @@ impl TransactionSender for RpcTransactionSender {
             )
             .await
             .map_err(|e| anyhow::anyhow!("Failed to send transaction: {:?}", e))?;
-        self.sigs.insert(sig, None);
+        self.sigs
+            .insert(sig, TransactionStatus::Pending { expiry: last_valid });
         Ok(sig)
     }
 
     fn start(&mut self) {
-        let sigs = self.sigs.clone();
+        let sigs_ref = self.sigs.clone();
         let rpc_client = self.rpc_client.clone();
         self.txn_status_handle = Some(tokio::spawn(async move {
             let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(1));
-            let sigs = sigs.clone();
-            let mut sigs_num = sigs.len();
             loop {
                 interval.tick().await;
-                let sigs = sigs.clone();
-                if sigs.len() != sigs_num {
-                    emit_gauge!(MetricEvents::SignaturesInFlight, sigs.len() as f64, sent => "s");
-                }
-                let all_sigs = sigs.iter().map(|x| x.key().clone()).collect_vec();
-                let statuses = rpc_client.get_signature_statuses(&all_sigs).await;
-                if let Ok(statuses) = statuses {
-                    for sig in all_sigs.into_iter().zip(statuses.value.into_iter()) {
-                        sigs.insert(sig.0, sig.1);
+                let current_block_height = rpc_client
+                    .get_block_height_with_commitment(rpc_client.commitment())
+                    .await;
+
+                if let Ok(current_block_height) = current_block_height {
+                    sigs_ref.retain(|k, v| {
+                        if let TransactionStatus::Pending { expiry } = v {
+                            if *expiry < current_block_height {
+                                info!("Transaction expired {}", k);
+                                return false;
+                            }
+                        }
+                        true
+                    });
+                    let all_sigs = sigs_ref.iter().map(|x| x.key().clone()).collect_vec();
+                    let statuses = rpc_client.get_signature_statuses(&all_sigs).await;
+                    if let Ok(statuses) = statuses {
+                        for sig in all_sigs.into_iter().zip(statuses.value.into_iter()) {
+                            if let Some(status) = sig.1 { 
+                                sigs_ref.insert(sig.0, TransactionStatus::Confirmed(status));
+                            }
+
+                        }
                     }
+                } else {
+                    error!("Failed to get block height");
                 }
-                sigs_num = sigs.len();
             }
         }));
     }

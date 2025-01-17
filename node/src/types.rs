@@ -96,6 +96,8 @@ pub enum CallbackStatus {
     Completed,
     Failure,
 }
+
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ProgramExec {
     pub program_id: Pubkey,
     pub instruction_prefix: Vec<u8>,

@@ -38,8 +38,8 @@ reqwest = { version = "0.11.26", features = [
 ] }
 risc0-binfmt = { workspace = true }
 risc0-zkvm = { workspace = true, default-features = false, features = ["prove", "std"] }
-risc0-zkvm-platform = { git = "https://github.com/anagrambuild/risc0", branch = "v1.0.1-bonsai-fix" }
-risc0-circuit-rv32im = { git = "https://github.com/anagrambuild/risc0", branch = "v1.0.1-bonsai-fix" }
+risc0-zkvm-platform = { workspace = true }
+risc0-circuit-rv32im = { workspace = true }
 serde = { version = "1.0.197", features = ["derive"] }
 serde_json = "1.0.104"
 sha2 = "0.10.6"

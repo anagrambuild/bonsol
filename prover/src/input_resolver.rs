@@ -1,6 +1,6 @@
 use std::str::from_utf8;
 use std::sync::Arc;
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use anyhow::Result;
 use async_trait::async_trait;
@@ -71,7 +71,8 @@ pub trait InputResolver: Send + Sync {
 pub struct DefaultInputResolver {
     http_client: Arc<reqwest::Client>,
     solana_rpc_client: Arc<solana_rpc_client::nonblocking::rpc_client::RpcClient>,
-    max_input_size_mb: u64,
+    max_input_size_mb: u32,
+    timeout: Duration,
 }
 
 impl DefaultInputResolver {
@@ -83,18 +84,21 @@ impl DefaultInputResolver {
             http_client,
             solana_rpc_client,
             max_input_size_mb: 10,
+            timeout: Duration::from_secs(30),
         }
     }
 
     pub fn new_with_opts(
         http_client: Arc<reqwest::Client>,
         solana_rpc_client: Arc<solana_rpc_client::nonblocking::rpc_client::RpcClient>,
-        max_input_size_mb: Option<u64>,
+        max_input_size_mb: Option<u32>,
+        timeout: Option<Duration>,
     ) -> Self {
         DefaultInputResolver {
             http_client,
             solana_rpc_client,
             max_input_size_mb: max_input_size_mb.unwrap_or(10),
+            timeout: timeout.unwrap_or(Duration::from_secs(30)),
         }
     }
 
@@ -116,6 +120,7 @@ impl DefaultInputResolver {
                     url.clone(),
                     self.max_input_size_mb.clone() as usize,
                     ProgramInputType::Public,
+                    self.timeout,
                 ));
                 Ok(ProgramInput::Unresolved(UnresolvedInput {
                     index: index as u8,
@@ -152,6 +157,7 @@ impl DefaultInputResolver {
                     url.clone(),
                     self.max_input_size_mb.clone() as usize,
                     ProgramInputType::PublicProof,
+                    self.timeout,
                 ));
                 Ok(ProgramInput::Unresolved(UnresolvedInput {
                     index: index as u8,
@@ -281,6 +287,7 @@ impl InputResolver for DefaultInputResolver {
                     self.max_input_size_mb as usize,
                     pir_str,
                     claim_authorization.to_string(), // base58 encoded string
+                    self.timeout,
                 ));
             }
         }
@@ -313,6 +320,7 @@ pub fn resolve_remote_public_data(
     max_input_size_mb: u64,
     index: usize,
     data: &[u8],
+    timeout: Duration,
 ) -> Result<JoinHandle<Result<ResolvedInput>>> {
     let url = from_utf8(data)?;
     let url = Url::parse(url)?;
@@ -322,6 +330,7 @@ pub fn resolve_remote_public_data(
         url,
         max_input_size_mb as usize,
         ProgramInputType::Public,
+        timeout,
     )))
 }
 
@@ -339,8 +348,11 @@ async fn download_public_input(
     url: Url,
     max_size_mb: usize,
     input_type: ProgramInputType,
+    timeout: Duration,
 ) -> Result<ResolvedInput> {
-    let resp = client.get(url).send().await?.error_for_status()?;
+    let resp = client.get(url)
+    .timeout(timeout)
+    .send().await?.error_for_status()?;
     let byte = get_body_max_size(resp.bytes_stream(), max_size_mb * 1024 * 1024).await?;
     Ok(ResolvedInput {
         index,
@@ -356,10 +368,12 @@ async fn download_private_input(
     max_size_mb: usize,
     body: String,
     claim_authorization: String,
+    timeout: Duration,
 ) -> Result<ResolvedInput> {
     let resp = client
         .post(url)
         .body(body)
+        .timeout(timeout)
         // Signature of the json payload
         .header("Authorization", format!("Bearer {}", claim_authorization))
         .header("Content-Type", "application/json")
@@ -413,6 +427,7 @@ mod test {
             url,
             max_size_mb,
             ProgramInputType::Public,
+            Duration::from_secs(30),
         )
         .await;
 
@@ -443,7 +458,8 @@ mod test {
             1u8,
             url,
             max_size_mb,
-            ProgramInputType::Public,
+            ProgramInputType::Public,   
+            Duration::from_secs(30),
         )
         .await;
 

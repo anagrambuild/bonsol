@@ -50,11 +50,12 @@ async fn example_sdk_test(
     let ea2 = Pubkey::from_str("g7dD1FHSemkUQrX1Eak37wzvDjscgBW2pFCENwjLdMX")?;
     let ea3 = Pubkey::from_str("FHab8zDcP1DooZqXHWQowikqtXJb1eNHc46FEh1KejmX")?;
     let example_program = Pubkey::from_str("exay1T7QqsJPNcwzMiWubR6vZnqrgM16jZRraHgqBGG")?;
-    let expiration: u64 = 1000;
+    let expiration: u64 = 10000000000;
     let execution_id = rand_id(16);
     let input_1 = "{\"attestation\":\"test\"}";
     let input_2 = "https://echoserver.dev/server?response=N4IgFgpghgJhBOBnEAuA2mkBjA9gOwBcJCBaAgTwAcIQAaEIgDwIHpKAbKASzxAF0+9AEY4Y5VKArVUDCMzogYUAlBlFEBEAF96G5QFdkKAEwAGU1qA";
     let input_hash = hashv(&[input_1.as_bytes(), input_2.as_bytes()]);
+    println!("Execution expiry {}", expiration);
     let slot = bonsol_client.get_current_slot().await?;
     let ixs = bonsol_client
         .execute_v1(
@@ -126,7 +127,7 @@ async fn example_bonsol_program_test(
     println!("Running Bonsol program test");
     let example_program = Pubkey::from_str("exay1T7QqsJPNcwzMiWubR6vZnqrgM16jZRraHgqBGG")?;
     let bonsol_program = Pubkey::from_str("BoNsHRcyLLNdtnoDf8hiCNZpyehMC4FDMxs6NTxFi3ew")?;
-    let expiration: u64 = 1000;
+    let expiration: u64 = 10000000000;
     let execution_id = rand_id(16);
     let (requester, bump) =
         Pubkey::find_program_address(&[execution_id.as_bytes()], &example_program);

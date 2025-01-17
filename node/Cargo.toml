@@ -21,6 +21,7 @@ ark-relations = { version = "0.4.0" }
 ark-serialize = "0.4.0"
 ark-std = { version = "0.4.0" }
 async-trait = "0.1.80"
+bonsol-interface = { workspace = true }
 bonsol-prover = { path = "../prover" }
 bytemuck = "1.15.0"
 byteorder = "1.5.0"
@@ -79,9 +80,6 @@ tracing-subscriber = { version = "0.3.18", features = [
 ] }
 yellowstone-grpc-client = { workspace = true }
 yellowstone-grpc-proto = { workspace = true }
-
-bonsol-interface.workspace = true
-
 [dev-dependencies]
 expect-test = "1.5.0"
 

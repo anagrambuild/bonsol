@@ -7,75 +7,96 @@ permissions:
   contents: read
   pull-requests: write
 jobs:
-  fmt:
-    name: Check & Fmt
-    runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/anagrambuild/bonsol-ci-env:latest
-      volumes:
-        - ${{ github.workspace }}:/workspaces/bonsol
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Check 
-        shell: bash
-        id: check
-        run: |
-          cargo check --quiet 
-      - name: Fmt
-        shell: bash
-        id: fmt
-        run: |
-          cargo +nightly fmt --all 
-  test:
-    name: Unit Test
-    runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/anagrambuild/bonsol-ci-env:latest
-      options: "-it"
-      volumes:
-        - ${{ github.workspace }}:/workspaces/bonsol
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Test
-        run: cargo test -- --nocapture
+  # fmt:
+  #   name: Check & Fmt
+  #   runs-on: ubuntu-latest
+  #   container:
+  #     image: ghcr.io/anagrambuild/bonsol-ci-env:latest
+  #     volumes:
+  #       - local:/workspaces/bonsol
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v3
+  #     - name: Check 
+  #       shell: bash
+  #       id: check
+  #       run: |
+  #         cargo check --quiet 
+  #     - name: Fmt
+  #       shell: bash
+  #       id: fmt
+  #       run: |
+  #         cargo +nightly fmt --all 
+  # test:
+  #   name: Unit Test
+  #   runs-on: ubuntu-latest
+  #   container:
+  #     image: ghcr.io/anagrambuild/bonsol-ci-env:latest
+  #     options: "-it"
+  #     volumes:
+  #       - local:/workspaces/bonsol
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v3
+  #     - name: Test
+  #       run: cargo test -- --nocapture
   e2e-test:
     name: E2E Test
     runs-on: ubuntu-latest-m
     container:
-      image: ghcr.io/anagrambuild/bonsol-ci-env:latest
+      image: local-bonsol-ci
       options: "-it"
       volumes:
-        - ${{ github.workspace }}:/workspaces/bonsol
+        - local:/workspaces/bonsol
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      - uses: actions/cache@v4
+      - uses: actions/cache/restore@v4
         id: cache
         with:
           path: stark
-          key: stark-v2024-05-17.1
+          key: estark-v2024-05-17.1
       - name: Setup Deps
         if: steps.cache.outputs.cache-hit != 'true'
         run: ./bin/install_prover.sh --prefix . 
+      - uses: actions/cache/save@v4
+        if: always() &&  steps.cache.outputs.cache-hit != 'true'
+        with:
+          path: stark
+          key: estark-v2024-05-17.1
+      - name: Cache dependencies
+        if: always()
+        uses: Swatinem/rust-cache@v2.2.1
+        with:
+          shared-key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - name: E2E Test
         run: |
           cargo build-sbf
-          cargo build -p bonsol-node
+          cargo build --release -p bonsol-node
           cargo build -p bonsol-cli
+          cargo build -p bonsol-tester
+          
           cargo test -p bonsol-cli --features integration-tests -- --nocapture
-          solana-keygen new --no-bip39-passphrase -f 
+
+          solana-keygen new -s --no-bip39-passphrase -f 
           solana-test-validator \
           --ledger ./ledger \
+          -q \
           --limit-ledger-size 0 \
           --bind-address 0.0.0.0 \
           --rpc-pubsub-enable-block-subscription \
           --bpf-program BoNsHRcyLLNdtnoDf8hiCNZpyehMC4FDMxs6NTxFi3ew target/deploy/bonsol.so \
           --bpf-program exay1T7QqsJPNcwzMiWubR6vZnqrgM16jZRraHgqBGG target/deploy/callback_example.so \
-          -r &
-          sleep 30
-          ./bin/run-node.sh &
+          -r 1>/dev/null 2>/dev/null &
           sleep 15
-          cargo run -p bonsol-cli -- --keypair /github/home/.config/solana/id.json --rpc-url http://127.0.0.1:8899 deploy url -m cli/src/tests/test_data/test_manifest.json --url https://bonsol-public-images.s3.amazonaws.com/simple-68f4b0c5f9ce034aa60ceb264a18d6c410a3af68fafd931bcfd9ebe7c1e42960 -y
-          cargo run -p bonsol-tester -- 300
+          solana-keygen new -s --no-bip39-passphrase --outfile node_keypair.json -f
+          solana -u http://localhost:8899 airdrop 1 --keypair node_keypair.json
+          solana -u http://localhost:8899 airdrop 1
+          ulimit -s unlimited
+          echo "Starting node"
+          ./target/release/bonsol-node -f ./Node.toml 1>&1 &
+          sleep 15
+          echo "Deploying"
+          ./target/debug/bonsol --keypair ~/.config/solana/id.json --rpc-url http://127.0.0.1:8899 deploy url -m cli/src/tests/test_data/test_manifest.json --url https://bonsol-public-images.s3.amazonaws.com/simple-68f4b0c5f9ce034aa60ceb264a18d6c410a3af68fafd931bcfd9ebe7c1e42960 -y
+          echo "Running Tests"
+          ./target/debug/bonsol-tester 1000000

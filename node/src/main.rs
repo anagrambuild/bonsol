@@ -3,27 +3,11 @@ pub mod types;
 pub mod observe;
 mod ingest;
 
-mod callback;
+mod transaction_sender;
 pub mod config;
-mod prover;
+mod risc0_runner;
 use {
-    anyhow::Result,
-    bonsol_prover::input_resolver::DefaultInputResolver,
-    callback::{RpcTransactionSender, TransactionSender},
-    config::*,
-    ingest::{GrpcIngester, Ingester, RpcIngester},
-    metrics::counter,
-    metrics_exporter_prometheus::PrometheusBuilder,
-    observe::MetricEvents,
-    prover::Risc0Runner,
-    rlimit::Resource,
-    solana_rpc_client::nonblocking::rpc_client::RpcClient,
-    solana_sdk::{pubkey::Pubkey, signature::read_keypair_file, signer::Signer},
-    std::{str::FromStr, sync::Arc},
-    thiserror::Error,
-    tokio::{select, signal},
-    tracing::{error, info},
-    tracing_subscriber,
+    anyhow::Result, bonsol_prover::input_resolver::DefaultInputResolver, config::*, ingest::{GrpcIngester, Ingester, RpcIngester}, metrics::counter, metrics_exporter_prometheus::PrometheusBuilder, observe::MetricEvents, risc0_runner::Risc0Runner, rlimit::Resource, solana_rpc_client::nonblocking::rpc_client::RpcClient, solana_sdk::{pubkey::Pubkey, signature::read_keypair_file, signer::Signer}, std::{process::exit, str::FromStr, sync::Arc, time::Duration}, thiserror::Error, tokio::{select, signal}, tracing::{error, info}, tracing_subscriber, transaction_sender::{RpcTransactionSender, TransactionSender}
 };
 
 #[derive(Error, Debug)]
@@ -109,9 +93,11 @@ async fn main() -> Result<()> {
         _ => return Err(CliError::InvalidRpcUrl.into()),
     };
     transaction_sender.start();
-    let input_resolver = DefaultInputResolver::new(
+    let input_resolver = DefaultInputResolver::new_with_opts(
         Arc::new(reqwest::Client::new()),
         Arc::new(solana_rpc_client),
+        Some(config.max_input_size_mb),
+        Some(Duration::from_secs(config.image_download_timeout_secs as u64)),
     );
     //may take time to load images, depending on the number of images TODO put limit
     let mut runner = Risc0Runner::new(
@@ -126,6 +112,7 @@ async fn main() -> Result<()> {
     let handle = tokio::spawn(async move {
         while let Some(bix) = ingester_chan.recv().await {
             for ix in bix {
+                println!("Sending to runner");
                 runner_chan.send(ix).unwrap();
             }
         }
@@ -135,7 +122,8 @@ async fn main() -> Result<()> {
             info!("Runner exited");
         },
         _ = signal::ctrl_c() => {
-
+            info!("Received Ctrl-C");
+            exit(1);
         },
     }
     info!("Exited");
