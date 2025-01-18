@@ -2,6 +2,7 @@ use anyhow::Result;
 use std::fs;
 use std::path::Path;
 use tera::{Context, Tera};
+use crate::explorer::Explorer;
 
 pub fn init_project(project_name: &str, dir: Option<String>) -> Result<()> {
     let pwd = std::env::current_dir()?;
@@ -44,7 +45,14 @@ pub fn init_project(project_name: &str, dir: Option<String>) -> Result<()> {
         fs::write(format!("{}/{}", project_name, file_name), content)?;
     }
 
-    println!("Project '{}' initialized successfully!", project_name);
+    // Create an execution request in the explorer
+    let mut explorer = Explorer::new()?;
+    let request_data = format!("Project initialization: {}", project_name);
+    let request_id = explorer.track_request(request_data)?;
+    
+    println!("Created execution request: {}. Track status with:", request_id);
+    println!("  bonsol explorer status {}", request_id);
+
     Ok(())
 }
 
@@ -57,11 +65,16 @@ edition = "2021"
 [package.metadata.zkprogram]
 input_order = ["Public"]
 
-
 [workspace]
 
 [dependencies]
 risc0-zkvm = {git = "https://github.com/anagrambuild/risc0", branch = "v1.0.1-bonsai-fix", default-features = false, features = ["std"]}
+rusqlite = { version = "0.29", features = ["bundled"] }
+uuid = { version = "1.4", features = ["v4"] }
+chrono = { version = "0.4", features = ["serde"] }
+serde = { version = "1.0", features = ["derive"] }
+clap = { version = "4.4", features = ["derive"] }
+anyhow = "1.0"
 
 [dependencies.sha2]
 git = "https://github.com/risc0/RustCrypto-hashes"
