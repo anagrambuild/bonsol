@@ -5,7 +5,7 @@ use bonsol_schema::ProverVersion as FBSProverVersion;
 pub const DIGEST_V1_0_1_BYTES: &str =
     "310fe598e8e3e92fa805bc272d7f587898bb8b68c4d5d7938db884abaa76e15c";
 
-pub const DIGEST_V1_2_0_BYTES: &str =
+pub const DIGEST_V1_2_1_BYTES: &str =
     "c101b42bcacd62e35222b1207223250814d05dd41d41f8cadc1f16f86707ae15";
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -13,7 +13,7 @@ pub enum ProverVersion {
     V1_0_1 {
         verifier_digest: &'static str,
     },
-    V1_2_0 {
+    V1_2_1 {
         verifier_digest: &'static str,
     },
     #[cfg(test)]
@@ -59,8 +59,8 @@ pub const VERSION_V1_0_1: ProverVersion = ProverVersion::V1_0_1 {
     verifier_digest: DIGEST_V1_0_1_BYTES,
 };
 
-pub const VERSION_V1_2_0: ProverVersion = ProverVersion::V1_2_0 {
-    verifier_digest: DIGEST_V1_2_0_BYTES,
+pub const VERSION_V1_2_1: ProverVersion = ProverVersion::V1_2_1 {
+    verifier_digest: DIGEST_V1_2_1_BYTES,
 };
 
 #[cfg(test)]
