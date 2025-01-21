@@ -63,7 +63,7 @@ impl<'a, 'b> ClaimAccounts<'a, 'b> {
                 .exec
                 .try_borrow_data()
                 .map_err(|_| ChannelError::CannotBorrowData)?;
-            let execution_request = root_as_execution_request_v1(&*exec_data)
+            let execution_request = root_as_execution_request_v1(&exec_data)
                 .map_err(|_| ChannelError::InvalidExecutionAccountData)?;
             let expected_eid = execution_request
                 .execution_id()
@@ -73,7 +73,7 @@ impl<'a, 'b> ClaimAccounts<'a, 'b> {
             }
             let tip = execution_request.tip();
             if ca.claimer.lamports() < tip {
-                return Err(ChannelError::InsufficientStake.into());
+                return Err(ChannelError::InsufficientStake);
             }
             if execution_request.max_block_height() < current_block {
                 ca.expired = true;
@@ -130,7 +130,7 @@ pub fn process_claim_v1<'a>(
         transfer_owned(ca.exec_claim, ca.claimer, ca.stake)?;
         if current_block > current_claim.block_commitment {
             let claim =
-                ClaimStateV1::from_claim_ix(&ca.claimer.key, current_block, ca.block_commitment);
+                ClaimStateV1::from_claim_ix(ca.claimer.key, current_block, ca.block_commitment);
             drop(data);
             ClaimStateV1::save_claim(&claim, ca.exec_claim);
             transfer_unowned(ca.claimer, ca.exec_claim, ca.stake)
@@ -138,8 +138,7 @@ pub fn process_claim_v1<'a>(
             Err(ChannelError::ActiveClaimExists.into())
         }
     } else {
-        let claim =
-            ClaimStateV1::from_claim_ix(&ca.claimer.key, current_block, ca.block_commitment);
+        let claim = ClaimStateV1::from_claim_ix(ca.claimer.key, current_block, ca.block_commitment);
         transfer_unowned(ca.claimer, ca.exec_claim, ca.stake)?;
         ClaimStateV1::save_claim(&claim, ca.exec_claim);
         Ok(())

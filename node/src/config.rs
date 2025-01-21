@@ -33,17 +33,12 @@ pub enum SignerConfig {
     KeypairFile { path: String }, //--- below not implemented yet maybe hsm, signer server or some weird sig agg shiz
 }
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone, Default)]
 pub enum MissingImageStrategy {
+    #[default]
     DownloadAndClaim,
     DownloadAndMiss,
     Fail,
-}
-
-impl Default for MissingImageStrategy {
-    fn default() -> Self {
-        MissingImageStrategy::DownloadAndClaim
-    }
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -85,7 +80,7 @@ pub enum MetricsConfig {
     None,
 }
 
-fn default_metrics_config() -> MetricsConfig {
+const fn default_metrics_config() -> MetricsConfig {
     MetricsConfig::None
 }
 
@@ -105,27 +100,27 @@ fn default_risc0_image_folder() -> String {
     "./elf".to_string()
 }
 
-fn default_max_image_size_mb() -> u32 {
+const fn default_max_image_size_mb() -> u32 {
     10
 }
 
-fn default_image_compression_ttl_hours() -> u32 {
+const fn default_image_compression_ttl_hours() -> u32 {
     5
 }
 
-fn default_max_input_size_mb() -> u32 {
+const fn default_max_input_size_mb() -> u32 {
     1
 }
 
-fn default_image_download_timeout_secs() -> u32 {
+const fn default_image_download_timeout_secs() -> u32 {
     120
 }
 
-fn default_input_download_timeout_secs() -> u32 {
+const fn default_input_download_timeout_secs() -> u32 {
     30
 }
 
-fn default_maximum_concurrent_proofs() -> u32 {
+const fn default_maximum_concurrent_proofs() -> u32 {
     100
 }
 

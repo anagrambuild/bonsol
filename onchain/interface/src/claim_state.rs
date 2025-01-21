@@ -30,18 +30,18 @@ impl ClaimStateHolder {
         }
     }
 
-    pub fn claim<'a>(&'a self) -> Result<&'a ClaimStateV1, ClientError> {
+    pub fn claim(&self) -> Result<&ClaimStateV1, ClientError> {
         bytemuck::try_from_bytes(&self.data).map_err(|_| ClientError::InvalidClaimAccount)
     }
 }
 
 impl ClaimStateV1 {
-    pub fn load_claim<'a>(ca_data: &'a mut [u8]) -> Result<&'a Self, ClientError> {
+    pub fn load_claim(ca_data: &mut [u8]) -> Result<&Self, ClientError> {
         bytemuck::try_from_bytes::<ClaimStateV1>(ca_data)
             .map_err(|_| ClientError::InvalidClaimAccount)
     }
 
-    pub fn load_claim_owned<'a>(ca_data: &'a [u8]) -> Result<Self, ClientError> {
+    pub fn load_claim_owned(ca_data: &[u8]) -> Result<Self, ClientError> {
         bytemuck::try_pod_read_unaligned::<ClaimStateV1>(ca_data)
             .map_err(|_| ClientError::InvalidClaimAccount)
     }
@@ -57,6 +57,6 @@ impl ClaimStateV1 {
     #[cfg(feature = "on-chain")]
     pub fn save_claim(claim: &Self, ca: &AccountInfo) {
         let claim_data = bytemuck::bytes_of(claim);
-        sol_memcpy(&mut ca.data.borrow_mut(), &claim_data, claim_data.len());
+        sol_memcpy(&mut ca.data.borrow_mut(), claim_data, claim_data.len());
     }
 }

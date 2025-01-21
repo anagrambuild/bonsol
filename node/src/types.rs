@@ -14,7 +14,12 @@ pub struct BonsolInstruction {
 }
 
 impl BonsolInstruction {
-    pub fn new(cpi: bool, accounts: Vec<Pubkey>, data: Vec<u8>, last_known_block: u64) -> Self {
+    pub const fn new(
+        cpi: bool,
+        accounts: Vec<Pubkey>,
+        data: Vec<u8>,
+        last_known_block: u64,
+    ) -> Self {
         Self {
             cpi,
             accounts,
@@ -22,10 +27,10 @@ impl BonsolInstruction {
             last_known_block,
         }
     }
-    fn inner(accounts: Vec<Pubkey>, data: Vec<u8>, last_known_block: u64) -> Self {
+    const fn inner(accounts: Vec<Pubkey>, data: Vec<u8>, last_known_block: u64) -> Self {
         Self::new(true, accounts, data, last_known_block)
     }
-    fn outer(accounts: Vec<Pubkey>, data: Vec<u8>, last_known_block: u64) -> Self {
+    const fn outer(accounts: Vec<Pubkey>, data: Vec<u8>, last_known_block: u64) -> Self {
         Self::new(false, accounts, data, last_known_block)
     }
 }
@@ -96,6 +101,8 @@ pub enum CallbackStatus {
     Completed,
     Failure,
 }
+
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ProgramExec {
     pub program_id: Pubkey,
     pub instruction_prefix: Vec<u8>,

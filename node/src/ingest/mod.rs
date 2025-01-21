@@ -1,8 +1,8 @@
-mod dragon;
-mod rpc;
+mod block_subscription;
+mod grpc_stream;
 
 use anyhow::Result;
-pub use {dragon::GrpcIngester, rpc::RpcIngester};
+pub use {block_subscription::RpcIngester, grpc_stream::GrpcIngester};
 
 use {
     crate::types::BonsolInstruction, solana_sdk::pubkey::Pubkey,

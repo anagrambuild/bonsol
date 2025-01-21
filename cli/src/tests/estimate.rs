@@ -28,10 +28,11 @@ fn estimate_simple() {
     let image_path = bonsol_estimate
         .get_current_dir()
         .unwrap()
-        .join("images")
-        .join("simple");
+        .join("cli")
+        .join("src")
+        .join("tests")
+        .join("test_data");
 
-    build_test_image(&image_path);
     let input_file = bonsol_estimate
         .get_current_dir()
         .unwrap()
@@ -40,7 +41,7 @@ fn estimate_simple() {
 
     bonsol_estimate.args(&[
         "--manifest-path",
-        image_path.join("manifest.json").to_str().unwrap(),
+        image_path.join("test_manifest.json").to_str().unwrap(),
         "--input-file",
         input_file.to_str().unwrap(),
     ]);

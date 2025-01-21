@@ -57,7 +57,7 @@ impl<'a, 'b> ExecuteAccounts<'a, 'b> {
                 .deployment
                 .try_borrow_data()
                 .map_err(|_| ChannelError::InvalidDeploymentAccount)?;
-            let deploy = root_as_deploy_v1(&*&deploy_data)
+            let deploy = root_as_deploy_v1(deploy_data)
                 .map_err(|_| ChannelError::InvalidDeploymentAccount)?;
 
             let inputs = data.input().ok_or(ChannelError::InvalidInputs)?;
@@ -66,7 +66,7 @@ impl<'a, 'b> ExecuteAccounts<'a, 'b> {
                 .filter(|i| i.input_type() == InputType::PrivateLocal)
                 .count();
             if invalid_input_type_count > 0 {
-                return Err(ChannelError::InvalidInputType.into());
+                return Err(ChannelError::InvalidInputType);
             }
             // this should never be less than 1
             let required_input_size = deploy.inputs().map(|x| x.len()).unwrap_or(1);
@@ -80,7 +80,7 @@ impl<'a, 'b> ExecuteAccounts<'a, 'b> {
                 .flat_map(|i| {
                     num_sets += 1;
                     // can panic here
-                    let index = i.data().map(|x| x.bytes().get(0)).flatten().unwrap();
+                    let index = i.data().and_then(|x| x.bytes().first()).unwrap();
                     let rel_index = index - 6;
                     let account = ea
                         .extra_accounts
@@ -89,19 +89,19 @@ impl<'a, 'b> ExecuteAccounts<'a, 'b> {
                         .unwrap();
                     let data = account.data.borrow();
                     let input_set =
-                        root_as_input_set(&*data).map_err(|_| ChannelError::InvalidInputs)?;
+                        root_as_input_set(&data).map_err(|_| ChannelError::InvalidInputs)?;
                     input_set
                         .inputs()
                         .map(|x| x.len())
                         .ok_or(ChannelError::InvalidInputs)
                 })
-                .fold(0, |acc, x| acc + x);
+                .sum();
 
             if inputs.len() - num_sets + input_set != required_input_size {
                 return Err(ChannelError::InvalidInputs);
             }
             ea.exec_bump = Some(check_pda(
-                &execution_address_seeds(&ea.requester.key, evec.as_bytes()),
+                &execution_address_seeds(ea.requester.key, evec.as_bytes()),
                 ea.exec.key,
                 ChannelError::InvalidExecutionAccount,
             )?);
@@ -147,7 +147,7 @@ pub fn process_execute_v1<'a>(
 ) -> Result<(), ChannelError> {
     let er = ix.execute_v1_nested_flatbuffer();
     if er.is_none() {
-        return Err(ChannelError::InvalidInstruction.into());
+        return Err(ChannelError::InvalidInstruction);
     }
     let er = er.unwrap();
     let ea = ExecuteAccounts::from_instruction(accounts, &er)?;

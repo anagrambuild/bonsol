@@ -20,7 +20,7 @@ pub fn or(res: &[Result<(), ChannelError>], error: ChannelError) -> Result<(), C
 }
 
 pub fn check_pda(seeds: &[&[u8]], tg: &Pubkey, error: ChannelError) -> Result<u8, ChannelError> {
-    let (pda, _bump_seed) = Pubkey::find_program_address(&seeds, &crate::id());
+    let (pda, _bump_seed) = Pubkey::find_program_address(seeds, &crate::id());
     if program_memory::sol_memcmp(&pda.to_bytes(), &tg.to_bytes(), PUBKEY_BYTES) != 0 {
         return Err(error);
     }

@@ -20,13 +20,13 @@ pub fn handle_callback<'a>(
     stripped_data: &'a [u8],
 ) -> Result<BonsolCallback<'a>, ProgramError> {
     let er_info = accounts
-        .get(0)
+        .first()
         .ok_or::<ProgramError>(ClientError::InvalidCallbackInstructionAccounts.into())?;
 
-    if sol_memcmp(er_info.key.as_ref(), &execution_account.as_ref(), 32) != 0 {
+    if sol_memcmp(er_info.key.as_ref(), execution_account.as_ref(), 32) != 0 {
         return Err(ClientError::InvalidCallbackInstructionAccounts.into());
     }
-    if sol_memcmp(er_info.owner.as_ref(), &crate::util::ID.as_ref(), 32) != 0 {
+    if sol_memcmp(er_info.owner.as_ref(), crate::util::ID.as_ref(), 32) != 0 {
         return Err(ClientError::InvalidCallbackInstructionAccounts.into());
     }
     if !er_info.is_signer {

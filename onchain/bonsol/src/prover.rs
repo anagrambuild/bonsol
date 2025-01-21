@@ -23,8 +23,9 @@ impl Default for ProverConstants {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
 pub enum Groth16Prover {
+    #[default]
     V1_0_1,
 }
 
@@ -33,12 +34,6 @@ impl ProverConstants {
         match prover {
             Groth16Prover::V1_0_1 => &PROVER_CONSTANTS_V1_0_1,
         }
-    }
-}
-
-impl Default for Groth16Prover {
-    fn default() -> Self {
-        Groth16Prover::V1_0_1
     }
 }
 

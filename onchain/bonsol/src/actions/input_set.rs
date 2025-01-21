@@ -43,7 +43,7 @@ impl<'a, 'b> InputSetAccounts<'a, 'b> {
             ensure_0(ia.input_set, ChannelError::InvalidInputSetAccount)?;
         }
         if data.op() != InputSetOp::Delete && data.inputs().is_none() {
-            return Err(ChannelError::InvalidInstruction.into());
+            return Err(ChannelError::InvalidInstruction);
         }
         ia.input_set_bump = Some(check_pda(
             &input_set_address_seeds(id.as_bytes()),
@@ -60,7 +60,7 @@ pub fn process_input_set_v1<'a>(
 ) -> Result<(), ChannelError> {
     let is = ix.input_set_v1_nested_flatbuffer();
     if is.is_none() {
-        return Err(ChannelError::InvalidInstruction.into());
+        return Err(ChannelError::InvalidInstruction);
     }
     let is = is.unwrap();
     let sa = InputSetAccounts::from_instruction(accounts, &is)?;

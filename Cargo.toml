@@ -43,9 +43,11 @@ risc0-zkp = { git = "https://github.com/anagrambuild/risc0", branch = "v1.0.1-bo
 risc0-groth16 = { git = "https://github.com/anagrambuild/risc0", branch = "v1.0.1-bonsai-fix" }
 risc0-binfmt = { git = "https://github.com/anagrambuild/risc0", branch = "v1.0.1-bonsai-fix" }
 risc0-circuit-recursion = { git = "https://github.com/anagrambuild/risc0", branch = "v1.0.1-bonsai-fix" }
-risc0-sys = { git = "https:m//github.com/anagrambuild/risc0", branch = "v1.0.1-bonsai-fix" }
+risc0-sys = { git = "https://github.com/anagrambuild/risc0", branch = "v1.0.1-bonsai-fix" }
+risc0-zkvm-platform ={ git = "https://github.com/anagrambuild/risc0", branch = "v1.0.1-bonsai-fix" }
+risc0-circuit-rv32im = { git = "https://github.com/anagrambuild/risc0", branch = "v1.0.1-bonsai-fix" }
+risc0-circuit-recursion-sys = { git = "https://github.com/anagrambuild/risc0", branch = "v1.0.1-bonsai-fix" }
 tokio-test = "0.4.3"
-
 bonsol-interface = { path = "./onchain/interface" }
 bonsol-schema = { path = "./schemas-rust" }
 bonsol-cli = { path = "./cli" }

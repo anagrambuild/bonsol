@@ -17,21 +17,23 @@ use solana_sdk::signer::Signer;
 use solana_sdk::system_program;
 use solana_sdk::transaction::VersionedTransaction;
 
-use bonsol_interface::prover_version::ProverVersion;
 use bonsol_sdk::instructions::{CallbackConfig, ExecutionConfig, InputRef};
 use bonsol_sdk::{deployment_address, execution_address, BonsolClient, ExitCode, InputType};
+use std::env;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let rpc_url = "http://localhost:8899".to_string();
+    let rpc_url = "http://127.0.0.1:8899".to_string();
     let rpc_client = RpcClient::new(rpc_url.clone());
     let bonsol_client = BonsolClient::new(rpc_url);
     let signer = Keypair::new();
+    let args: Vec<String> = env::args().collect();
     rpc_client
         .request_airdrop(&signer.pubkey(), 100_000_000_000)
         .await?;
-    example_bonsol_program_test(&bonsol_client, &rpc_client, &signer).await?;
-    example_sdk_test(&bonsol_client, &rpc_client, &signer).await?;
+    let timeout = args.get(1).map(|s| s.parse::<u64>().unwrap()).unwrap_or(60);
+    example_bonsol_program_test(&bonsol_client, &rpc_client, &signer, timeout).await?;
+    example_sdk_test(&bonsol_client, &rpc_client, &signer, timeout).await?;
     Ok(())
 }
 
@@ -41,17 +43,19 @@ async fn example_sdk_test(
     bonsol_client: &BonsolClient,
     client: &RpcClient,
     signer: &dyn Signer,
+    timeout: u64,
 ) -> Result<()> {
     println!("Running sdk test");
     let ea1 = Pubkey::from_str("3b6DR2gbTJwrrX27VLEZ2FJcHrDvTSLKEcTLVhdxCoaf")?;
     let ea2 = Pubkey::from_str("g7dD1FHSemkUQrX1Eak37wzvDjscgBW2pFCENwjLdMX")?;
     let ea3 = Pubkey::from_str("FHab8zDcP1DooZqXHWQowikqtXJb1eNHc46FEh1KejmX")?;
     let example_program = Pubkey::from_str("exay1T7QqsJPNcwzMiWubR6vZnqrgM16jZRraHgqBGG")?;
-    let expiration: u64 = 1000;
+    let expiration: u64 = 10000000000;
     let execution_id = rand_id(16);
     let input_1 = "{\"attestation\":\"test\"}";
     let input_2 = "https://echoserver.dev/server?response=N4IgFgpghgJhBOBnEAuA2mkBjA9gOwBcJCBaAgTwAcIQAaEIgDwIHpKAbKASzxAF0+9AEY4Y5VKArVUDCMzogYUAlBlFEBEAF96G5QFdkKAEwAGU1qA";
     let input_hash = hashv(&[input_1.as_bytes(), input_2.as_bytes()]);
+    println!("Execution expiry {}", expiration);
     let slot = bonsol_client.get_current_slot().await?;
     let ixs = bonsol_client
         .execute_v1(
@@ -78,7 +82,7 @@ async fn example_sdk_test(
                     AccountMeta::new_readonly(ea3, false),
                 ],
             }),
-            Some(ProverVersion::default()),
+            None,
         )
         .await?;
     let bh = client.get_latest_blockhash().await?;
@@ -102,10 +106,10 @@ async fn example_sdk_test(
         .confirm_transaction_with_spinner(&signature, &bh, CommitmentConfig::confirmed())
         .await?;
     bonsol_client
-        .wait_for_claim(signer.pubkey(), &execution_id, Some(20))
+        .wait_for_claim(signer.pubkey(), &execution_id, Some(timeout))
         .await?;
     let status = bonsol_client
-        .wait_for_proof(signer.pubkey(), &execution_id, Some(60))
+        .wait_for_proof(signer.pubkey(), &execution_id, Some(timeout))
         .await?;
     if status != ExitCode::Success {
         return Err(anyhow::anyhow!("Execution failed"));
@@ -118,11 +122,12 @@ async fn example_bonsol_program_test(
     bonsol_client: &BonsolClient,
     client: &RpcClient,
     signer: &dyn Signer,
+    timeout: u64,
 ) -> Result<()> {
     println!("Running Bonsol program test");
     let example_program = Pubkey::from_str("exay1T7QqsJPNcwzMiWubR6vZnqrgM16jZRraHgqBGG")?;
     let bonsol_program = Pubkey::from_str("BoNsHRcyLLNdtnoDf8hiCNZpyehMC4FDMxs6NTxFi3ew")?;
-    let expiration: u64 = 1000;
+    let expiration: u64 = 10000000000;
     let execution_id = rand_id(16);
     let (requester, bump) =
         Pubkey::find_program_address(&[execution_id.as_bytes()], &example_program);
@@ -173,10 +178,10 @@ async fn example_bonsol_program_test(
         .confirm_transaction_with_spinner(&signature, &bh, CommitmentConfig::confirmed())
         .await?;
     bonsol_client
-        .wait_for_claim(requester, &execution_id, Some(20))
+        .wait_for_claim(requester, &execution_id, Some(timeout))
         .await?;
     let status = bonsol_client
-        .wait_for_proof(requester, &execution_id, Some(60))
+        .wait_for_proof(requester, &execution_id, Some(timeout))
         .await?;
     if status != ExitCode::Success {
         return Err(anyhow::anyhow!("Execution failed"));

@@ -77,7 +77,7 @@ pub fn process_deploy_v1<'a>(
     msg!("deploy");
     let dp = ix.deploy_v1_nested_flatbuffer();
     if dp.is_none() {
-        return Err(ChannelError::InvalidInstruction.into());
+        return Err(ChannelError::InvalidInstruction);
     }
     let dp = dp.unwrap();
     let da = DeployAccounts::from_instruction(accounts, &dp)?;

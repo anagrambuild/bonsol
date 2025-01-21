@@ -121,10 +121,9 @@ impl BonsolClient {
         let resp = reqwest::get(url)
             .await
             .map_err(|e| anyhow::anyhow!("Failed to download program: {:?}", e))?;
-        Ok(resp
-            .bytes()
+        resp.bytes()
             .await
-            .map_err(|e| anyhow::anyhow!("Failed to download program: {:?}", e))?)
+            .map_err(|e| anyhow::anyhow!("Failed to download program: {:?}", e))
     }
 
     pub async fn get_deployment(&self, image_id: &str) -> Result<Option<Account>> {
@@ -143,7 +142,7 @@ impl BonsolClient {
             .rpc_client
             .get_recent_prioritization_fees(&fee_accounts)
             .await?;
-        Ok(if compute_fees.len() == 0 {
+        Ok(if compute_fees.is_empty() {
             5
         } else {
             compute_fees[0].prioritization_fee

@@ -448,7 +448,7 @@ mod test {
     #[test]
     fn test_proof_parse_stdin() {
         let inputs = r#"1234567890abcdef 0x313233343536373839313061626364656667 2.1 2000 -2000 {"attestation":"test"}"#;
-        let inputs_parsed = proof_parse_stdin(&inputs).unwrap();
+        let inputs_parsed = proof_parse_stdin(inputs).unwrap();
 
         let expected_inputs = vec![
             ProgramInput::Resolved(ResolvedInput {

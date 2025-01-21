@@ -21,40 +21,42 @@ RUN tar -zxvf v${FLATC_VERSION}.tar.gz || { echo "Failed to extract tarball"; ex
 WORKDIR /flatbuffers/flatbuffers-${FLATC_VERSION}
 RUN cmake -G "Unix Makefiles" && make -j && make install
 RUN strip /usr/local/bin/flatc
-
 # Stage 2: Bonsol Test
-FROM ghcr.io/anagrambuild/risczero:latest
-
+FROM ghcr.io/anagrambuild/risczero:v1.0.3_2
+RUN apt-get update && apt-get install -y -q --no-install-recommends  ca-certificates bzip2 nodejs zstd libgmp-dev libsodium-dev nasm m4 && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+USER root
 # flatbuffers
 COPY --from=flatc-build /usr/local/bin/flatc /usr/local/bin/flatc
 COPY --from=flatc-build /usr/local/include/flatbuffers /usr/local/include/flatbuffers
 COPY --from=flatc-build /usr/local/lib/libflatbuffers.a /usr/local/lib/libflatbuffers.a
 COPY --from=flatc-build /usr/local/lib/cmake/flatbuffers /usr/local/lib/cmake/flatbuffers
 COPY --from=flatc-build /usr/local/lib/pkgconfig/flatbuffers.pc /usr/local/lib/pkgconfig/flatbuffers.pc
-
-
 ENV USER=solana
 ARG SOLANA=1.18.22
+ARG RUST_VERSION=1.81.0
 ENV CARGO_HOME=/usr/local/cargo
 ENV RUSTUP_HOME=/usr/local/rustup
 ENV PATH=${PATH}:/usr/local/cargo/bin:/go/bin:/home/${USER}/.local/share/solana/install/releases/${SOLANA}/bin
-
-# Set user and working directory
+# Set working directory
 ARG PACKAGE=bonsol
 WORKDIR /workspaces/${PACKAGE}
-USER solana
-
 # Install Rust components
 RUN rustup component add \
     clippy
-
 RUN rustup toolchain install nightly  && \
     rustup component add rustfmt --toolchain nightly
+RUN rustup toolchain install ${RUST_VERSION} && \
+    rustup default ${RUST_VERSION} 
+RUN cargo install sccache --locked
+COPY ci-entry.sh /usr/local/bin/ci-entry.sh
+ENTRYPOINT ["/usr/local/bin/ci-entry.sh"]
+LABEL \
+    org.opencontainers.image.name="bonsol-ci-env" \
+    org.opencontainers.image.description="Bonsol CI Build Environment" \
+    org.opencontainers.image.url="https://github.com/anagrambuild/bonsol" \
+    org.opencontainers.image.source="https://github.com/anagrambuild/bonsol.git" \
+    org.opencontainers.image.vendor="anagram.xyz" \
+    org.opencontainers.image.created=$(date --rfc-3339=seconds) \
+    org.opencontainers.image.licenses="GNU-Affero" \
+    org.opencontainers.image.authors="Anagram Build <build@anagram.xyz>"
 
-COPY --chown=${USER}:${USER} . .
-
-RUN /go/bin/yamlfmt -lint .github/workflows/*.yaml .github/workflows/*.yml .github/*.yaml .github/*.yml
-
-RUN cargo check
-RUN cargo +nightly fmt --all -- --check
-RUN cargo test
