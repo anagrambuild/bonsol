@@ -1,9 +1,9 @@
 name: Docker Build from Image CI
 on:
+  workflow_dispatch:
   push:
     branches:
       - "main"
-      - "ci-rework"
 jobs:
   build:
     permissions:
