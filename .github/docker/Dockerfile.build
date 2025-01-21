@@ -23,7 +23,7 @@ RUN cmake -G "Unix Makefiles" && make -j && make install
 RUN strip /usr/local/bin/flatc
 # Stage 2: Bonsol Test
 FROM ghcr.io/anagrambuild/risczero:v1.0.3_2
-RUN apt-get update && apt-get install -y -q --no-install-recommends  ca-certificates bzip2 nodejs zstd libgmp-dev libsodium-dev nasm m4 && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+RUN apt-get update && apt-get install -y -q --no-install-recommends  ca-certificates bzip2 nodejs zstd libgmp-dev libsodium-dev nasm m4 
 USER root
 # flatbuffers
 COPY --from=flatc-build /usr/local/bin/flatc /usr/local/bin/flatc

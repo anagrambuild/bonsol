@@ -35,18 +35,18 @@ solana-transaction-status = "=1.18.22"
 solana-cli-config = "=1.18.22"
 yellowstone-grpc-client = "=1.15.4"
 yellowstone-grpc-proto = "=1.14.2"
-risc0-zkvm = { git = "https://github.com/anagrambuild/risc0", branch = "v1.0.1-bonsai-fix", features = [
+risc0-zkvm = { version = "1.2.1", features = [
   "prove",
 ], default-features = false }
-risc0-core = { git = "https://github.com/anagrambuild/risc0", branch = "v1.0.1-bonsai-fix" }
-risc0-zkp = { git = "https://github.com/anagrambuild/risc0", branch = "v1.0.1-bonsai-fix" }
-risc0-groth16 = { git = "https://github.com/anagrambuild/risc0", branch = "v1.0.1-bonsai-fix" }
-risc0-binfmt = { git = "https://github.com/anagrambuild/risc0", branch = "v1.0.1-bonsai-fix" }
-risc0-circuit-recursion = { git = "https://github.com/anagrambuild/risc0", branch = "v1.0.1-bonsai-fix" }
-risc0-sys = { git = "https://github.com/anagrambuild/risc0", branch = "v1.0.1-bonsai-fix" }
-risc0-zkvm-platform ={ git = "https://github.com/anagrambuild/risc0", branch = "v1.0.1-bonsai-fix" }
-risc0-circuit-rv32im = { git = "https://github.com/anagrambuild/risc0", branch = "v1.0.1-bonsai-fix" }
-risc0-circuit-recursion-sys = { git = "https://github.com/anagrambuild/risc0", branch = "v1.0.1-bonsai-fix" }
+risc0-core = { version = "1.2.1" }
+risc0-zkp = { version = "1.2.1" }
+risc0-groth16 = { version = "1.2.1" }
+risc0-binfmt = { version = "1.2.1" }
+risc0-circuit-recursion = { version = "1.2.1" }
+risc0-sys = { version = "1.2.1" }
+risc0-zkvm-platform = { version = "1.2.1" }
+risc0-circuit-rv32im = { version = "1.2.1" }
+risc0-circuit-recursion-sys = { version = "1.2.1" }
 tokio-test = "0.4.3"
 bonsol-interface = { path = "./onchain/interface" }
 bonsol-schema = { path = "./schemas-rust" }
