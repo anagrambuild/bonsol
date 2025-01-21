@@ -72,7 +72,7 @@ jobs:
           shared-key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - name: E2E Test
         run: |
-          ls -la
+          ls -la stark
           cargo build-sbf
           cargo build --release -p bonsol-node
           cargo build -p bonsol-cli
