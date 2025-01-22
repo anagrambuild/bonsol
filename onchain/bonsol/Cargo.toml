@@ -1,6 +1,6 @@
 [package]
 name = "bonsol"
-version.workspace = true
+version = "0.1.0"
 description = "Solana channel to bonsai"
 authors = ["anagram build team"]
 repository = "https://github.com/anagrambuild/bonsol"
@@ -20,14 +20,17 @@ test-sbf = []
 [dependencies]
 ark-bn254 = "0.4.0"
 ark-serialize = "0.4.0"
-bonsol-interface = { path = "../interface", features = [
-  "on-chain",
-], default-features = false }
-flatbuffers = { workspace = true }
-groth16-solana = { version = "0.0.2" }
+bonsol-interface = { version = "0.1.0", features = ["on-chain"], default-features = false }
+flatbuffers = "24.3.25"
+groth16-solana = "0.0.2"
 hex = "0.4.2"
 hex-literal = "0.4.1"
 num-bigint = "0.4.4"
-solana-program = { workspace = true }
-thiserror = { workspace = true }
+solana-program = "1.18.22"
+thiserror = "1.0.57"
 
+[dev-dependencies]
+solana-program-test = "1.18.22"
+solana-sdk = "1.18.22"
+anyhow = "1.0.79"
+tokio-test = "0.4.3"
