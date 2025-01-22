@@ -6,6 +6,12 @@ authors = ["anagram build team"]
 repository = "https://github.com/anagrambuild/bonsol"
 license = "MIT"
 edition = "2021"
+include = [
+    "src/**/*",
+    "build.rs",
+    "schemas/*.fbs",
+    "../schemas/*.fbs"
+]
 
 [dependencies]
 bytemuck = "1.7.2"
