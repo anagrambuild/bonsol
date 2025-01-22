@@ -1,6 +1,6 @@
 [package]
 name = "bonsol-schema"
-version = "0.1.0"
+version = "0.1.1"
 description = "Bonsol types, schema definitions"
 authors = ["anagram build team"]
 repository = "https://github.com/anagrambuild/bonsol"
@@ -15,7 +15,7 @@ include = [
 
 [dependencies]
 bytemuck = "1.7.2"
-flatbuffers = "24.3.25"
+flatbuffers = "25.1.21"
 num-derive = "0.3.3"
 num-traits = "0.2.15"
 thiserror = "1.0.57"
