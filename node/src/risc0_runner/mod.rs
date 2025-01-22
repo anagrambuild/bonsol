@@ -75,6 +75,8 @@ pub enum Risc0RunnerError {
     ProofCompressionError,
     #[error("Error with proof generation")]
     ProofGenerationError,
+    #[error("Invalid prover version {0}, expected {1}")]
+    InvalidProverVersion(ProverVersion, ProverVersion),
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -241,12 +243,13 @@ impl Risc0Runner {
                 let input_staging_area = input_staging_area.clone();
                 let inflight_proofs = inflight_proofs.clone();
                 tokio::spawn(async move {
-                    let bonsol_ix_type = parse_ix_data(&bix.data)?;
+                    let bonsol_ix_type = parse_ix_data(&bix.data)
+                    .map_err(|e| Risc0RunnerError::InvalidData)?;
                     let result = match bonsol_ix_type.ix_type() {
                         ChannelInstructionIxType::DeployV1 => {
                             let payload = bonsol_ix_type
                                 .deploy_v1_nested_flatbuffer()
-                                .ok_or(Risc0RunnerError::EmptyInstruction)?;
+                                .ok_or::<anyhow::Error>(Risc0RunnerError::EmptyInstruction.into())?;
                             emit_counter!(MetricEvents::ImageDeployment, 1, "image_id" => payload.image_id().unwrap_or_default());
                             handle_image_deployment(&config, &img_client, payload, &loaded_images)
                                 .await
@@ -256,7 +259,14 @@ impl Risc0Runner {
                             // Evaluate the execution request and decide if it should be claimed
                             let payload = bonsol_ix_type
                                 .execute_v1_nested_flatbuffer()
-                                .ok_or(Risc0RunnerError::EmptyInstruction)?;
+                                .ok_or::<anyhow::Error>(Risc0RunnerError::EmptyInstruction.into())?;
+                            let er_prover_version: ProverVersion = payload
+                                .prover_version()
+                                .try_into()
+                                .map_err::<anyhow::Error,_>(|_| Risc0RunnerError::InvalidProverVersion(ProverVersion::UnsupportedVersion, REQUIRED_PROVER).into())?;
+                            if er_prover_version != REQUIRED_PROVER {
+                                return Err(Risc0RunnerError::InvalidProverVersion(er_prover_version, REQUIRED_PROVER).into());
+                            }
                             handle_execution_request(
                                 &config,
                                 &inflight_proofs,
@@ -275,7 +285,7 @@ impl Risc0Runner {
                             info!("Claim Event");
                             let payload = bonsol_ix_type
                                 .claim_v1_nested_flatbuffer()
-                                .ok_or(Risc0RunnerError::EmptyInstruction)?;
+                                .ok_or::<anyhow::Error>(Risc0RunnerError::EmptyInstruction.into())?;
                             handle_claim(
                                 &config,
                                 &self_id,

@@ -1,7 +1,7 @@
 use crate::{
     assertions::*,
     error::ChannelError,
-    proof_handling::{output_digest_v1_0_1, prepare_inputs_v1_0_1, verify_risc0_v1_0_1},
+    proof_handling::{output_digest_v1_0_1, output_digest_v1_2_1, prepare_inputs_v1_0_1, prepare_inputs_v1_2_1, verify_risc0_v1_0_1, verify_risc0_v1_2_1},
     utilities::*,
 };
 
@@ -9,7 +9,7 @@ use bonsol_interface::{
     bonsol_schema::{
         root_as_execution_request_v1, ChannelInstruction, ExecutionRequestV1, ExitCode, StatusV1,
     },
-    prover_version::{ProverVersion, VERSION_V1_0_1},
+    prover_version::{ProverVersion, VERSION_V1_0_1, VERSION_V1_2_1},
     util::execution_address_seeds,
 };
 
@@ -194,7 +194,6 @@ fn verify_with_prover(
 ) -> Result<bool, ProgramError> {
     let prover_version =
         ProverVersion::try_from(er.prover_version()).unwrap_or(ProverVersion::default());
-
     let verified = match prover_version {
         VERSION_V1_0_1 => {
             let output_digest = output_digest_v1_0_1(input_digest, co, asud);
@@ -206,6 +205,17 @@ fn verify_with_prover(
                 st.exit_code_user(),
             )?;
             verify_risc0_v1_0_1(proof, &proof_inputs)?
+        }
+        VERSION_V1_2_1 => {
+            let output_digest = output_digest_v1_2_1(input_digest, co, asud);
+            let proof_inputs = prepare_inputs_v1_2_1(
+                er.image_id().unwrap(),
+                exed,
+                output_digest.as_ref(),
+                st.exit_code_system(),
+                st.exit_code_user(),
+            )?;
+            verify_risc0_v1_2_1(proof, &proof_inputs)?
         }
         _ => false,
     };

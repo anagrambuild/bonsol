@@ -1,29 +1,45 @@
 use std::ops::Neg;
 
 use ark_serialize::{CanonicalDeserialize, CanonicalSerialize, Compress, Validate};
-use groth16_solana::groth16::Groth16Verifier;
+use groth16_solana::groth16::{Groth16Verifier, Groth16Verifyingkey};
 use solana_program::hash::hashv;
 
 use crate::{
     error::ChannelError,
-    prover::{Groth16Prover, PROVER_CONSTANTS_V1_0_1},
+    prover::{PROVER_CONSTANTS_V1_0_1, PROVER_CONSTANTS_V1_2_1},
     verifying_key::VERIFYINGKEY,
 };
 
 type G1 = ark_bn254::g1::G1Affine;
 
-pub fn verify_risc0(
-    proof: &[u8],
-    inputs: &[u8],
-    groth16_prover: Groth16Prover,
-) -> Result<bool, ChannelError> {
-    match groth16_prover {
-        Groth16Prover::V1_0_1 => verify_risc0_v1_0_1(proof, inputs),
-        _ => Err(ChannelError::UnexpectedProofSystem),
-    }
-}
 
 pub fn verify_risc0_v1_0_1(proof: &[u8], inputs: &[u8]) -> Result<bool, ChannelError> {
+    let ins: [[u8; 32]; 5] = [
+        sized_range::<32>(&inputs[0..32])?,
+        sized_range::<32>(&inputs[32..64])?,
+        sized_range::<32>(&inputs[64..96])?,
+        sized_range::<32>(&inputs[96..128])?,
+        sized_range::<32>(&inputs[128..160])?,
+    ];
+    verify_proof::<5>(proof, ins, &VERIFYINGKEY)
+}
+
+pub fn verify_risc0_v1_2_1(proof: &[u8], inputs: &[u8]) -> Result<bool, ChannelError> {
+    let ins: [[u8; 32]; 5] = [
+        sized_range::<32>(&inputs[0..32])?,
+        sized_range::<32>(&inputs[32..64])?,
+        sized_range::<32>(&inputs[64..96])?,
+        sized_range::<32>(&inputs[96..128])?,
+        sized_range::<32>(&inputs[128..160])?,
+    ];
+    verify_proof::<5>(proof, ins, &VERIFYINGKEY)
+}
+
+fn verify_proof<const NI: usize>(
+    proof: &[u8],
+    inputs: [[u8; 32]; NI],
+    vkey: &Groth16Verifyingkey,
+) -> Result<bool, ChannelError> {
     let ace: Vec<u8> = toggle_endianness_256(&[&proof[0..64], &[0u8][..]].concat());
     let proof_a: G1 = G1::deserialize_with_mode(&*ace, Compress::No, Validate::No).unwrap();
 
@@ -43,16 +59,8 @@ pub fn verify_risc0_v1_0_1(proof: &[u8], inputs: &[u8]) -> Result<bool, ChannelE
         .try_into()
         .map_err(|_| ChannelError::InvalidInstruction)?;
 
-    let ins: [[u8; 32]; 5] = [
-        sized_range::<32>(&inputs[0..32])?,
-        sized_range::<32>(&inputs[32..64])?,
-        sized_range::<32>(&inputs[64..96])?,
-        sized_range::<32>(&inputs[96..128])?,
-        sized_range::<32>(&inputs[128..160])?,
-    ];
-
-    let mut verifier: Groth16Verifier<5> =
-        Groth16Verifier::new(&proof_a, &proof_b, &proof_c, &ins, &VERIFYINGKEY)
+    let mut verifier: Groth16Verifier<NI> =
+        Groth16Verifier::new(&proof_a, &proof_b, &proof_c, &inputs, vkey)
             .map_err(|_| ChannelError::InvalidProof)?;
     verifier
         .verify()
@@ -104,6 +112,56 @@ pub fn prepare_inputs_v1_0_1(
         half1_bytes.try_into().unwrap(),
         half2_bytes.try_into().unwrap(),
         PROVER_CONSTANTS_V1_0_1.bn254_control_id_bytes,
+    ]
+    .concat();
+    Ok(inputs)
+}
+
+pub fn output_digest_v1_2_1(
+    input_digest: &[u8],
+    committed_outputs: &[u8],
+    assumption_digest: &[u8],
+) -> [u8; 32] {
+    let jbytes = [input_digest, committed_outputs].concat(); // bad copy here
+    let journal = hashv(&[jbytes.as_slice()]);
+    hashv(&[
+        PROVER_CONSTANTS_V1_2_1.output_hash.as_ref(),
+        journal.as_ref(),
+        assumption_digest,
+        &2u16.to_le_bytes(),
+    ])
+    .to_bytes()
+}
+
+pub fn prepare_inputs_v1_2_1(
+    image_id: &str,
+    execution_digest: &[u8],
+    output_digest: &[u8],
+    system_exit_code: u32,
+    user_exit_code: u32,
+) -> Result<Vec<u8>, ChannelError> {
+    let imgbytes = hex::decode(image_id).map_err(|_| ChannelError::InvalidFieldElement)?;
+    let mut digest = hashv(&[
+        PROVER_CONSTANTS_V1_2_1.receipt_claim_hash.as_ref(),
+        &[0u8; 32],
+        &imgbytes,
+        execution_digest,
+        output_digest,
+        &system_exit_code.to_le_bytes(),
+        &user_exit_code.to_le_bytes(),
+        &4u16.to_le_bytes(),
+    ])
+    .to_bytes();
+    let (c0, c1) = split_digest_reversed(&mut PROVER_CONSTANTS_V1_2_1.control_root.clone())
+        .map_err(|_| ChannelError::InvalidFieldElement)?;
+    let (half1_bytes, half2_bytes) =
+        split_digest_reversed(&mut digest).map_err(|_| ChannelError::InvalidFieldElement)?;
+    let inputs = [
+        c0,
+        c1,
+        half1_bytes.try_into().unwrap(),
+        half2_bytes.try_into().unwrap(),
+        PROVER_CONSTANTS_V1_2_1.bn254_control_id_bytes,
     ]
     .concat();
     Ok(inputs)

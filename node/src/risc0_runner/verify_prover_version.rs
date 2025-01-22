@@ -21,6 +21,18 @@ pub fn verify_prover_version(required: ProverVersion) -> Result<()> {
             }
             info!("Risc0 Prover with digest {}", verifier_digest);
         }
+        ProverVersion::V1_2_1 {
+            verifier_digest, ..
+        } => {
+            if verifier_digest != prover_digest {
+                return Err(anyhow::anyhow!(
+                    "Prover version mismatch, expected: {}, got: {}",
+                    verifier_digest,
+                    prover_digest
+                ));
+            }
+            info!("Risc0 Prover with digest {}", verifier_digest);
+        }
         _ => {
             return Err(anyhow::anyhow!("Unsupported prover version"));
         }
@@ -33,8 +45,8 @@ mod tests {
     use {super::*, bonsol_interface::prover_version::VERSION_V1_0_1};
 
     #[test]
-    fn test_verify_prover_version() {
-        assert!(verify_prover_version(VERSION_V1_0_1).is_ok());
+    fn test_verify_old_prover_version_fail() {
+        assert!(verify_prover_version(VERSION_V1_0_1).is_err());
     }
 
     #[test]

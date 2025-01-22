@@ -101,4 +101,4 @@ jobs:
           echo "Deploying"
           ./target/debug/bonsol --keypair ~/.config/solana/id.json --rpc-url http://127.0.0.1:8899 deploy url -m cli/src/tests/test_data/test_manifest.json --url https://bonsol-public-images.s3.amazonaws.com/simple-68f4b0c5f9ce034aa60ceb264a18d6c410a3af68fafd931bcfd9ebe7c1e42960 -y
           echo "Running Tests"
-          ./target/debug/bonsol-tester 1000000
+          ./target/debug/bonsol-tester 500

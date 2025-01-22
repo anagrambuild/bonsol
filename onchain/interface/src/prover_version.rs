@@ -1,4 +1,4 @@
-use std::convert::{TryFrom, TryInto};
+use std::{convert::{TryFrom, TryInto}, fmt::Display};
 
 use bonsol_schema::ProverVersion as FBSProverVersion;
 
@@ -16,8 +16,17 @@ pub enum ProverVersion {
     V1_2_1 {
         verifier_digest: &'static str,
     },
-    #[cfg(test)]
     UnsupportedVersion,
+}
+
+impl Display for ProverVersion {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ProverVersion::V1_0_1 { .. } => write!(f, "V1_0_1"),
+            ProverVersion::V1_2_1 { .. } => write!(f, "V1_2_1"),
+            ProverVersion::UnsupportedVersion => write!(f, "UnsupportedVersion"),
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -27,7 +36,7 @@ pub enum ProverVersionError {
 
 impl Default for ProverVersion {
     fn default() -> Self {
-        VERSION_V1_0_1
+        VERSION_V1_2_1
     }
 }
 
@@ -36,7 +45,8 @@ impl TryFrom<FBSProverVersion> for ProverVersion {
 
     fn try_from(prover_version: FBSProverVersion) -> Result<Self, Self::Error> {
         match prover_version {
-            FBSProverVersion::V1_0_1 | FBSProverVersion::DEFAULT => Ok(VERSION_V1_0_1),
+            FBSProverVersion::V1_0_1  => Ok(VERSION_V1_0_1),
+            FBSProverVersion::V1_2_1 | FBSProverVersion::DEFAULT => Ok(VERSION_V1_2_1),
             _ => Err(ProverVersionError::UnsupportedVersion),
         }
     }
@@ -69,7 +79,7 @@ mod tests {
 
     #[test]
     fn test_default_version() {
-        assert_eq!(ProverVersion::default(), VERSION_V1_0_1);
+        assert_eq!(ProverVersion::default(), VERSION_V1_2_1);
     }
 
     #[test]
@@ -121,6 +131,6 @@ mod tests {
         let default_version = FBSProverVersion::DEFAULT;
         let version = ProverVersion::try_from(default_version);
         assert!(version.is_ok());
-        assert_eq!(version.unwrap(), VERSION_V1_0_1);
+        assert_eq!(version.unwrap(), VERSION_V1_2_1);
     }
 }
