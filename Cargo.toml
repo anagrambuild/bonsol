@@ -54,9 +54,9 @@ bonsol-schema = { path = "./schemas-rust" }
 bonsol-cli = { path = "./cli" }
 bonsol-sdk = { path = "./sdk" }
 
-[patch.crates-io.curve25519-dalek] 
- git = "https://github.com/anza-xyz/curve25519-dalek.git" 
- rev = "b500cdc2a920cd5bff9e2dd974d7b97349d61464" 
+[patch.crates-io.curve25519-dalek]
+git = "https://github.com/anza-xyz/curve25519-dalek.git"
+rev = "b500cdc2a920cd5bff9e2dd974d7b97349d61464"
 
 [workspace.lints.clippy]
 clone_on_ref_ptr = "deny"

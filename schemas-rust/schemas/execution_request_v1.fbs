@@ -10,6 +10,7 @@ enum ProverVersion: uint16 {
     V1_1_0 = 6,
     V1_1_1 = 7,
     V1_1_2 = 8,
+    V1_2_1 = 9,
 }
 
 struct Account (force_align: 8) {
