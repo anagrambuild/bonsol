@@ -67,8 +67,6 @@ pub enum Risc0RunnerError {
     ImageDataUnavailable,
     #[error("Image download error")]
     ImageDownloadError(#[from] anyhow::Error),
-    #[error("Invalid input type")]
-    InvalidInputType,
     #[error("Transaction error")]
     TransactionError(String),
     #[error("Error with proof compression")]
@@ -243,13 +241,15 @@ impl Risc0Runner {
                 let input_staging_area = input_staging_area.clone();
                 let inflight_proofs = inflight_proofs.clone();
                 tokio::spawn(async move {
-                    let bonsol_ix_type = parse_ix_data(&bix.data)
-                    .map_err(|e| Risc0RunnerError::InvalidData)?;
+                    let bonsol_ix_type =
+                        parse_ix_data(&bix.data).map_err(|_| Risc0RunnerError::InvalidData)?;
                     let result = match bonsol_ix_type.ix_type() {
                         ChannelInstructionIxType::DeployV1 => {
                             let payload = bonsol_ix_type
                                 .deploy_v1_nested_flatbuffer()
-                                .ok_or::<anyhow::Error>(Risc0RunnerError::EmptyInstruction.into())?;
+                                .ok_or::<anyhow::Error>(
+                                Risc0RunnerError::EmptyInstruction.into(),
+                            )?;
                             emit_counter!(MetricEvents::ImageDeployment, 1, "image_id" => payload.image_id().unwrap_or_default());
                             handle_image_deployment(&config, &img_client, payload, &loaded_images)
                                 .await
@@ -259,13 +259,25 @@ impl Risc0Runner {
                             // Evaluate the execution request and decide if it should be claimed
                             let payload = bonsol_ix_type
                                 .execute_v1_nested_flatbuffer()
-                                .ok_or::<anyhow::Error>(Risc0RunnerError::EmptyInstruction.into())?;
+                                .ok_or::<anyhow::Error>(
+                                Risc0RunnerError::EmptyInstruction.into(),
+                            )?;
                             let er_prover_version: ProverVersion = payload
                                 .prover_version()
                                 .try_into()
-                                .map_err::<anyhow::Error,_>(|_| Risc0RunnerError::InvalidProverVersion(ProverVersion::UnsupportedVersion, REQUIRED_PROVER).into())?;
+                                .map_err::<anyhow::Error, _>(|_| {
+                                    Risc0RunnerError::InvalidProverVersion(
+                                        ProverVersion::UnsupportedVersion,
+                                        REQUIRED_PROVER,
+                                    )
+                                    .into()
+                                })?;
                             if er_prover_version != REQUIRED_PROVER {
-                                return Err(Risc0RunnerError::InvalidProverVersion(er_prover_version, REQUIRED_PROVER).into());
+                                return Err(Risc0RunnerError::InvalidProverVersion(
+                                    er_prover_version,
+                                    REQUIRED_PROVER,
+                                )
+                                .into());
                             }
                             handle_execution_request(
                                 &config,
@@ -285,7 +297,9 @@ impl Risc0Runner {
                             info!("Claim Event");
                             let payload = bonsol_ix_type
                                 .claim_v1_nested_flatbuffer()
-                                .ok_or::<anyhow::Error>(Risc0RunnerError::EmptyInstruction.into())?;
+                                .ok_or::<anyhow::Error>(
+                                Risc0RunnerError::EmptyInstruction.into(),
+                            )?;
                             handle_claim(
                                 &config,
                                 &self_id,
@@ -632,7 +646,7 @@ async fn handle_image_deployment<'a>(
             let stream = resp.bytes_stream();
             let resp_data = get_body_max_size(stream, min)
                 .await
-                .map_err(Risc0RunnerError::ImageDownloadError)?;
+                .map_err(|_|Risc0RunnerError::ImgTooLarge)?;
 
             let img = Image::from_bytes(resp_data)?;
             if let Some(bytes) = img.bytes() {

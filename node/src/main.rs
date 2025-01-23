@@ -138,6 +138,8 @@ async fn main() -> Result<()> {
     select! {
         _ = handle => {
             info!("Runner exited");
+            let _ = ingester.stop();
+            let _ = runner.stop();
         },
         _ = signal::ctrl_c() => {
             info!("Received Ctrl-C");

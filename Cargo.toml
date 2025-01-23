@@ -7,6 +7,7 @@ members = [
   "onchain/bonsol",
   "onchain/interface",
   "onchain/example-program-on-bonsol",
+  "onchain/anchor-interface",
   "node",
   "schemas-rust",
   "cli",
@@ -22,19 +23,19 @@ resolver = "2"
 package.version = "0.2.1"
 
 [workspace.dependencies]
-solana-sdk = "=1.18.22"
+solana-sdk = "~2.0"
 thiserror = "1.0.57"
 flatbuffers = "24.3.25"
 anyhow = "1.0.40"
-solana-program = "=1.18.22"
-solana-program-test = "=1.18.22"
-solana-rpc-client = "=1.18.22"
-solana-rpc-client-api = "=1.18.22"
-solana-pubsub-client = "=1.18.22"
-solana-transaction-status = "=1.18.22"
-solana-cli-config = "=1.18.22"
-yellowstone-grpc-client = "=1.15.4"
-yellowstone-grpc-proto = "=1.14.2"
+solana-program = "~2.0"
+solana-program-test = "~2.0"
+solana-rpc-client = "~2.0"
+solana-rpc-client-api = "~2.0"
+solana-pubsub-client = "~2.0"
+solana-transaction-status = "~2.0"
+solana-cli-config = "~2.0"
+yellowstone-grpc-client = "3.1.1"
+yellowstone-grpc-proto = "3.1.1"
 risc0-zkvm = { version = "1.2.1", features = [
   "prove",
 ], default-features = false }
@@ -52,6 +53,10 @@ bonsol-interface = { path = "./onchain/interface" }
 bonsol-schema = { path = "./schemas-rust" }
 bonsol-cli = { path = "./cli" }
 bonsol-sdk = { path = "./sdk" }
+
+[patch.crates-io.curve25519-dalek] 
+ git = "https://github.com/anza-xyz/curve25519-dalek.git" 
+ rev = "b500cdc2a920cd5bff9e2dd974d7b97349d61464" 
 
 [workspace.lints.clippy]
 clone_on_ref_ptr = "deny"

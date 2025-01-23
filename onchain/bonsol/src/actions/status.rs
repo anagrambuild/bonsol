@@ -1,7 +1,10 @@
 use crate::{
     assertions::*,
     error::ChannelError,
-    proof_handling::{output_digest_v1_0_1, output_digest_v1_2_1, prepare_inputs_v1_0_1, prepare_inputs_v1_2_1, verify_risc0_v1_0_1, verify_risc0_v1_2_1},
+    proof_handling::{
+        output_digest_v1_0_1, output_digest_v1_2_1, prepare_inputs_v1_0_1, prepare_inputs_v1_2_1,
+        verify_risc0_v1_0_1, verify_risc0_v1_2_1,
+    },
     utilities::*,
 };
 

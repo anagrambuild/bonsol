@@ -14,4 +14,5 @@ solana-rpc-client-api.workspace = true
 
 anyhow = "1.0.91"
 rand = "0.8.5"
+rand_core = "0.6.4"
 tokio = "1.41.0"

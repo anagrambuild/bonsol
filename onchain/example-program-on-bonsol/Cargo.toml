@@ -16,11 +16,6 @@ bonsol-interface = { path = "../interface", features = [
 ], default-features = false }
 solana-program = { workspace = true }
 
-[dev-dependencies]
-solana-program-test = { workspace = true }
-solana-sdk = { workspace = true }
-anyhow = { workspace = true }
-tokio-test = { workspace = true }
 
 [lib]
 crate-type = ["cdylib", "lib"]

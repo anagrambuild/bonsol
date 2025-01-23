@@ -11,6 +11,7 @@ use {
 
 pub type TxChannel = UnboundedReceiver<Vec<BonsolInstruction>>;
 
+#[allow(dead_code)]
 #[derive(Debug, thiserror::Error)]
 pub enum IngestErrorType {
     #[error("RPC Error")]

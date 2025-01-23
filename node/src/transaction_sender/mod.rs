@@ -50,8 +50,6 @@ pub enum TransactionStatus {
 #[async_trait]
 pub trait TransactionSender {
     fn start(&mut self);
-    fn stop(&mut self);
-    fn sign_calldata(&self, data: &str) -> Result<String>;
     async fn claim(
         &self,
         execution_id: &str,
@@ -126,11 +124,6 @@ impl RpcTransactionSender {
 
 #[async_trait]
 impl TransactionSender for RpcTransactionSender {
-    fn sign_calldata(&self, data: &str) -> Result<String> {
-        let sig = self.signer.sign_message(data.as_bytes());
-        Ok(sig.to_string())
-    }
-
     fn get_signature_status(&self, sig: &Signature) -> Option<TransactionStatus> {
         self.sigs.get(sig).map(|status| status.value().to_owned())
     }
@@ -333,12 +326,6 @@ impl TransactionSender for RpcTransactionSender {
                 }
             }
         }));
-    }
-
-    fn stop(&mut self) {
-        if let Some(handle) = self.txn_status_handle.take() {
-            handle.abort();
-        }
     }
 
     async fn get_current_block(&self) -> Result<u64> {

@@ -1,5 +1,3 @@
-#[cfg(feature = "anchor")]
-pub mod anchor;
 #[cfg(feature = "on-chain")]
 pub mod callback;
 pub mod claim_state;

@@ -12,7 +12,6 @@ use crate::{
 
 type G1 = ark_bn254::g1::G1Affine;
 
-
 pub fn verify_risc0_v1_0_1(proof: &[u8], inputs: &[u8]) -> Result<bool, ChannelError> {
     let ins: [[u8; 32]; 5] = [
         sized_range::<32>(&inputs[0..32])?,

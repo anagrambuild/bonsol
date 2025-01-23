@@ -14,5 +14,5 @@ num-derive = "0.3.3"
 num-traits = "0.2.15"
 thiserror = { workspace = true }
 
-[lints]
-workspace = true
+[lints.rust]
+unused_imports = "allow"
