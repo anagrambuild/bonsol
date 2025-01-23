@@ -1,23 +1,19 @@
 use std::fs::{self, File};
 use std::path::Path;
-use std::str::FromStr;
 
 use anyhow::Result;
 use bonsol_sdk::{BonsolClient, ProgramInputType};
-use byte_unit::{Byte, ByteUnit};
 use indicatif::ProgressBar;
 use object_store::aws::AmazonS3Builder;
 use object_store::ObjectStore;
-use shadow_drive_sdk::models::ShadowFile;
-use shadow_drive_sdk::{Keypair, ShadowDriveClient, Signer};
 use solana_rpc_client::nonblocking::rpc_client::RpcClient;
 use solana_sdk::commitment_config::CommitmentConfig;
-use solana_sdk::pubkey::Pubkey;
-use solana_sdk::signature::read_keypair_file;
+use solana_sdk::signature::Keypair;
+use solana_sdk::signer::Signer;
 
-use crate::command::{DeployArgs, S3UploadArgs, ShadowDriveUploadArgs, SharedDeployArgs};
+use crate::command::{DeployArgs, S3UploadArgs, SharedDeployArgs};
 use crate::common::ZkProgramManifest;
-use crate::error::{BonsolCliError, S3ClientError, ShadowDriveClientError, ZkManifestError};
+use crate::error::{BonsolCliError, S3ClientError, ZkManifestError};
 
 pub async fn deploy(rpc_url: String, signer: Keypair, deploy_args: DeployArgs) -> Result<()> {
     let bar = ProgressBar::new_spinner();
@@ -103,101 +99,9 @@ pub async fn deploy(rpc_url: String, signer: Keypair, deploy_args: DeployArgs) -
             println!("Uploaded to S3 url {}", url);
             url
         }
-        DeployArgs::ShadowDrive(shadow_drive_upload) => {
-            let ShadowDriveUploadArgs {
-                storage_account,
-                storage_account_size_mb,
-                storage_account_name,
-                alternate_keypair,
-                create,
-                ..
-            } = shadow_drive_upload;
-
-            let alternate_keypair = alternate_keypair
-                .map(|alt_keypair| -> anyhow::Result<Keypair> {
-                    read_keypair_file(Path::new(&alt_keypair)).map_err(|err| {
-                        BonsolCliError::FailedToReadKeypair {
-                            file: alt_keypair,
-                            err: format!("{err:?}"),
-                        }
-                        .into()
-                    })
-                })
-                .transpose()?;
-            let wallet = alternate_keypair.as_ref().unwrap_or(&signer);
-            let wallet_pubkey = wallet.pubkey();
-
-            let client = ShadowDriveClient::new(wallet, &rpc_url);
-
-            let storage_account = if create {
-                let name = storage_account_name.unwrap_or(manifest.name.clone());
-                let min = std::cmp::max(((loaded_binary.len() as u64) / 1024 / 1024) * 2, 1);
-                let size = storage_account_size_mb.unwrap_or(min);
-
-                println!(
-                    "Creating storage account with {}MB under the name '{}' with signer pubkey {}",
-                    size, &name, wallet_pubkey
-                );
-                let storage_account = client
-                    .create_storage_account(
-                        &name,
-                        Byte::from_unit(size as f64, ByteUnit::MB).map_err(|err| {
-                            BonsolCliError::ShadowDriveClientError(
-                                ShadowDriveClientError::ByteError {
-                                    size: size as f64,
-                                    err,
-                                },
-                            )
-                        })?,
-                        shadow_drive_sdk::StorageAccountVersion::V2,
-                    )
-                    .await
-                    .map_err(|err| {
-                        BonsolCliError::ShadowDriveClientError(
-                            ShadowDriveClientError::StorageAccountCreationFailed {
-                                name: name.clone(),
-                                signer: wallet_pubkey,
-                                size,
-                                err,
-                            },
-                        )
-                    })?
-                    .shdw_bucket
-                    .ok_or(BonsolCliError::ShadowDriveClientError(
-                        ShadowDriveClientError::InvalidStorageAccount {
-                            name,
-                            signer: wallet_pubkey,
-                            size,
-                        },
-                    ))?;
-
-                println!("Created new storage account with public key: {storage_account}");
-                storage_account
-            } else {
-                // cli parsing prevents both `create` and `storage_account` to be passed simultaneously
-                // and require at least one or the other is passed, making this unwrap safe.
-                storage_account.unwrap().to_string()
-            };
-
-            let name = format!("{}-{}", manifest.name, manifest.image_id);
-            let resp = client
-                .store_files(
-                    &Pubkey::from_str(&storage_account)?,
-                    vec![ShadowFile::bytes(name.clone(), loaded_binary)],
-                )
-                .await
-                .map_err(|err| {
-                    BonsolCliError::ShadowDriveClientError(ShadowDriveClientError::UploadFailed {
-                        storage_account,
-                        name: manifest.name.clone(),
-                        binary_path: manifest.binary_path,
-                        err,
-                    })
-                })?;
-
-            bar.finish_and_clear();
-            println!("Uploaded to shadow drive");
-            resp.message
+        DeployArgs::ShadowDrive(_) => {
+            println!("Shadow Drive upload has been removed due to api changes");
+            return Err(BonsolCliError::UnsupportedDeployError().into());
         }
         DeployArgs::Url(url_upload) => {
             let req = reqwest::get(&url_upload.url).await?;

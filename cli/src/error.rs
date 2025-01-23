@@ -1,11 +1,8 @@
 use std::io::Error as IoError;
 
-use byte_unit::ByteError;
 use cargo_toml::Error as CargoManifestError;
 use object_store::Error as S3Error;
 use serde_json::Error as SerdeJsonError;
-use shadow_drive_sdk::error::Error as ShdwDriveError;
-use shadow_drive_sdk::Pubkey;
 use thiserror::Error as DeriveError;
 
 pub(crate) const DEFAULT_SOLANA_CONFIG_PATH: &str = ".config/solana/cli/config.yml";
@@ -38,8 +35,8 @@ pub enum BonsolCliError {
     #[error(transparent)]
     S3ClientError(#[from] S3ClientError),
 
-    #[error(transparent)]
-    ShadowDriveClientError(#[from] ShadowDriveClientError),
+    #[error("This upload method is not supported")]
+    UnsupportedDeployError(),
 
     #[error("The binary uploaded does not match the local binary at path '{binary_path}', is the URL correct?\nupload_url: {url}")]
     OriginBinaryMismatch { url: String, binary_path: String },
@@ -177,36 +174,5 @@ pub enum S3ClientError {
     UploadFailed {
         dest: object_store::path::Path,
         err: S3Error,
-    },
-}
-
-#[derive(Debug, DeriveError)]
-pub enum ShadowDriveClientError {
-    #[error(
-        "Failed to produce a valid byte representation for the given size ({size}_f64): {err:?}"
-    )]
-    ByteError { size: f64, err: ByteError },
-
-    #[error("Shadow Drive storage account creation failed for account with {size}MB under the name '{name}' with signer pubkey {signer}: {err:?}")]
-    StorageAccountCreationFailed {
-        name: String,
-        signer: Pubkey,
-        size: u64,
-        err: ShdwDriveError,
-    },
-
-    #[error("A Shadow Drive storage account was created without a valid bucket:\n\nsize: {size}MB\nname: {name}\nsigner_pubkey: {signer}")]
-    InvalidStorageAccount {
-        name: String,
-        signer: Pubkey,
-        size: u64,
-    },
-
-    #[error("Failed to upload binary at '{binary_path}' to Shadow Drive account '{storage_account}' under the name '{name}': {err:?}")]
-    UploadFailed {
-        storage_account: String,
-        name: String,
-        binary_path: String,
-        err: ShdwDriveError,
     },
 }

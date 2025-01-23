@@ -6,10 +6,6 @@ use solana_program::{
 
 use crate::error::ChannelError;
 
-pub fn err<T>(i: Result<T, ChannelError>, err: ChannelError) -> Result<T, ChannelError> {
-    i.map_err(|_| err)
-}
-
 pub fn or(res: &[Result<(), ChannelError>], error: ChannelError) -> Result<(), ChannelError> {
     for r in res {
         if r.is_ok() {

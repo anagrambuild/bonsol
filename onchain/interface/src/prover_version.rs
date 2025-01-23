@@ -1,4 +1,7 @@
-use std::{convert::{TryFrom, TryInto}, fmt::Display};
+use std::{
+    convert::{TryFrom, TryInto},
+    fmt::Display,
+};
 
 use bonsol_schema::ProverVersion as FBSProverVersion;
 
@@ -10,12 +13,8 @@ pub const DIGEST_V1_2_1_BYTES: &str =
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ProverVersion {
-    V1_0_1 {
-        verifier_digest: &'static str,
-    },
-    V1_2_1 {
-        verifier_digest: &'static str,
-    },
+    V1_0_1 { verifier_digest: &'static str },
+    V1_2_1 { verifier_digest: &'static str },
     UnsupportedVersion,
 }
 
@@ -45,7 +44,7 @@ impl TryFrom<FBSProverVersion> for ProverVersion {
 
     fn try_from(prover_version: FBSProverVersion) -> Result<Self, Self::Error> {
         match prover_version {
-            FBSProverVersion::V1_0_1  => Ok(VERSION_V1_0_1),
+            FBSProverVersion::V1_0_1 => Ok(VERSION_V1_0_1),
             FBSProverVersion::V1_2_1 | FBSProverVersion::DEFAULT => Ok(VERSION_V1_2_1),
             _ => Err(ProverVersionError::UnsupportedVersion),
         }
