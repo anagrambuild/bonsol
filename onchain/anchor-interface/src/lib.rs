@@ -1,8 +1,7 @@
 use anchor_lang::declare_id;
 use anchor_lang::prelude::Pubkey;
 use bonsol_schema::{
-    root_as_deploy_v1, root_as_execution_request_v1, DeployV1,
-    ExecutionRequestV1,
+    root_as_deploy_v1, root_as_execution_request_v1, DeployV1, ExecutionRequestV1,
 };
 use paste::paste;
 use std::marker::PhantomData;

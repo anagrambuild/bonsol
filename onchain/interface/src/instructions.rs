@@ -273,7 +273,7 @@ pub fn execute_v1_with_accounts<'a>(
         } else {
             (None, None, None)
         };
-    let mut accounts = vec![
+    let accounts = vec![
         AccountMeta::new(*requester, true),
         AccountMeta::new(*payer, true),
         AccountMeta::new(*execution_account, false),

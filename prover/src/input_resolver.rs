@@ -214,7 +214,7 @@ impl InputResolver for DefaultInputResolver {
         let mut res = vec![ProgramInput::Empty; inputs.len()];
         for (index, input) in inputs.into_iter().enumerate() {
             let client = self.http_client.clone();
-            res[index as usize] =
+            res[index] =
                 self.par_resolve_input(client, index as u8, input, &mut url_set)?;
         }
         while let Some(url) = url_set.join_next().await {
@@ -382,13 +382,8 @@ mod test {
     use super::*;
     use mockito::Mock;
     use reqwest::{Client, Url};
-    use solana_account_decoder::{UiAccount, UiAccountData, UiAccountEncoding};
-    use solana_rpc_client_api::{
-        request::RpcRequest,
-        response::{Response, RpcResponseContext},
-    };
 
-    use std::{collections::HashMap, sync::Arc};
+    use std::sync::Arc;
 
     // Modified to return the server along with the mock and URL
     pub async fn get_server(url_path: &str, response: &[u8]) -> (Mock, Url, mockito::ServerGuard) {
