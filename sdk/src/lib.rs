@@ -21,7 +21,7 @@ use tokio::time::Instant;
 
 use bonsol_interface::bonsol_schema::{root_as_deploy_v1, root_as_execution_request_v1};
 pub use bonsol_interface::bonsol_schema::{
-    ClaimV1T, DeployV1T, ExecutionRequestV1T, ExitCode, InputSetT, InputT, InputType,
+    ClaimV1T, DeployV1T, ExecutionRequestV1T, ExitCode, InputT, InputType,
     ProgramInputType, StatusTypes,
 };
 use bonsol_interface::claim_state::ClaimStateHolder;

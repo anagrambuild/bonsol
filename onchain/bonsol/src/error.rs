@@ -61,12 +61,6 @@ pub enum ChannelError {
     InvalidImageChecksum,
     #[error("Transfer Error")]
     TransferError,
-    #[error("Invalid Input Set Account")]
-    InvalidInputSetAccount,
-    #[error("Invalid Input Set Data")]
-    InvalidInputSetData,
-    #[error("Input set Nesting Error")]
-    InputSetNestingError,
     #[error("Execution expired")]
     ExecutionExpired,
     #[error("Invalid Deployment Account PDA")]

@@ -6,6 +6,7 @@ import * as flatbuffers from 'flatbuffers';
 
 import { Account, AccountT } from './account.js';
 import { Input, InputT } from './input.js';
+import { ProverVersion } from './prover-version.js';
 
 
 export class ExecutionRequestV1 implements flatbuffers.IUnpackableObject<ExecutionRequestV1T> {
@@ -169,8 +170,24 @@ callbackExtraAccountsLength():number {
   return offset ? this.bb!.__vector_len(this.bb_pos + offset) : 0;
 }
 
+proverVersion():ProverVersion {
+  const offset = this.bb!.__offset(this.bb_pos, 26);
+  return offset ? this.bb!.readUint16(this.bb_pos + offset) : ProverVersion.DEFAULT;
+}
+
+mutate_prover_version(value:ProverVersion):boolean {
+  const offset = this.bb!.__offset(this.bb_pos, 26);
+
+  if (offset === 0) {
+    return false;
+  }
+
+  this.bb!.writeUint16(this.bb_pos + offset, value);
+  return true;
+}
+
 static startExecutionRequestV1(builder:flatbuffers.Builder) {
-  builder.startObject(11);
+  builder.startObject(12);
 }
 
 static addTip(builder:flatbuffers.Builder, tip:bigint) {
@@ -269,6 +286,10 @@ static startCallbackExtraAccountsVector(builder:flatbuffers.Builder, numElems:nu
   builder.startVector(40, numElems, 8);
 }
 
+static addProverVersion(builder:flatbuffers.Builder, proverVersion:ProverVersion) {
+  builder.addFieldInt16(11, proverVersion, ProverVersion.DEFAULT);
+}
+
 static endExecutionRequestV1(builder:flatbuffers.Builder):flatbuffers.Offset {
   const offset = builder.endObject();
   return offset;
@@ -282,7 +303,7 @@ static finishSizePrefixedExecutionRequestV1Buffer(builder:flatbuffers.Builder, o
   builder.finish(offset, undefined, true);
 }
 
-static createExecutionRequestV1(builder:flatbuffers.Builder, tip:bigint, executionIdOffset:flatbuffers.Offset, imageIdOffset:flatbuffers.Offset, callbackProgramIdOffset:flatbuffers.Offset, callbackInstructionPrefixOffset:flatbuffers.Offset, forwardOutput:boolean, verifyInputHash:boolean, inputOffset:flatbuffers.Offset, inputDigestOffset:flatbuffers.Offset, maxBlockHeight:bigint, callbackExtraAccountsOffset:flatbuffers.Offset):flatbuffers.Offset {
+static createExecutionRequestV1(builder:flatbuffers.Builder, tip:bigint, executionIdOffset:flatbuffers.Offset, imageIdOffset:flatbuffers.Offset, callbackProgramIdOffset:flatbuffers.Offset, callbackInstructionPrefixOffset:flatbuffers.Offset, forwardOutput:boolean, verifyInputHash:boolean, inputOffset:flatbuffers.Offset, inputDigestOffset:flatbuffers.Offset, maxBlockHeight:bigint, callbackExtraAccountsOffset:flatbuffers.Offset, proverVersion:ProverVersion):flatbuffers.Offset {
   ExecutionRequestV1.startExecutionRequestV1(builder);
   ExecutionRequestV1.addTip(builder, tip);
   ExecutionRequestV1.addExecutionId(builder, executionIdOffset);
@@ -295,6 +316,7 @@ static createExecutionRequestV1(builder:flatbuffers.Builder, tip:bigint, executi
   ExecutionRequestV1.addInputDigest(builder, inputDigestOffset);
   ExecutionRequestV1.addMaxBlockHeight(builder, maxBlockHeight);
   ExecutionRequestV1.addCallbackExtraAccounts(builder, callbackExtraAccountsOffset);
+  ExecutionRequestV1.addProverVersion(builder, proverVersion);
   return ExecutionRequestV1.endExecutionRequestV1(builder);
 }
 
@@ -310,7 +332,8 @@ unpack(): ExecutionRequestV1T {
     this.bb!.createObjList<Input, InputT>(this.input.bind(this), this.inputLength()),
     this.bb!.createScalarList<number>(this.inputDigest.bind(this), this.inputDigestLength()),
     this.maxBlockHeight(),
-    this.bb!.createObjList<Account, AccountT>(this.callbackExtraAccounts.bind(this), this.callbackExtraAccountsLength())
+    this.bb!.createObjList<Account, AccountT>(this.callbackExtraAccounts.bind(this), this.callbackExtraAccountsLength()),
+    this.proverVersion()
   );
 }
 
@@ -327,6 +350,7 @@ unpackTo(_o: ExecutionRequestV1T): void {
   _o.inputDigest = this.bb!.createScalarList<number>(this.inputDigest.bind(this), this.inputDigestLength());
   _o.maxBlockHeight = this.maxBlockHeight();
   _o.callbackExtraAccounts = this.bb!.createObjList<Account, AccountT>(this.callbackExtraAccounts.bind(this), this.callbackExtraAccountsLength());
+  _o.proverVersion = this.proverVersion();
 }
 }
 
@@ -342,7 +366,8 @@ constructor(
   public input: (InputT)[] = [],
   public inputDigest: (number)[] = [],
   public maxBlockHeight: bigint = BigInt('0'),
-  public callbackExtraAccounts: (AccountT)[] = []
+  public callbackExtraAccounts: (AccountT)[] = [],
+  public proverVersion: ProverVersion = ProverVersion.DEFAULT
 ){}
 
 
@@ -366,7 +391,8 @@ pack(builder:flatbuffers.Builder): flatbuffers.Offset {
     input,
     inputDigest,
     this.maxBlockHeight,
-    callbackExtraAccounts
+    callbackExtraAccounts,
+    this.proverVersion
   );
 }
 }

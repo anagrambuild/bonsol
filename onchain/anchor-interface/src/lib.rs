@@ -1,8 +1,8 @@
 use anchor_lang::declare_id;
 use anchor_lang::prelude::Pubkey;
 use bonsol_schema::{
-    root_as_deploy_v1, root_as_execution_request_v1, root_as_input_set, DeployV1,
-    ExecutionRequestV1, InputSet,
+    root_as_deploy_v1, root_as_execution_request_v1, DeployV1,
+    ExecutionRequestV1,
 };
 use paste::paste;
 use std::marker::PhantomData;
@@ -72,7 +72,6 @@ macro_rules! impl_anchor_for {
 // Usage example:
 impl_anchor_for!(DeployV1, root_as_deploy_v1);
 impl_anchor_for!(ExecutionRequestV1, root_as_execution_request_v1);
-impl_anchor_for!(InputSet, root_as_input_set);
 
 pub struct Bonsol {}
 
@@ -95,5 +94,3 @@ macro_rules! impl_anchor_for_idl {
 impl_anchor_for_idl!(DeployV1);
 #[cfg(feature = "idl-build")]
 impl_anchor_for_idl!(ExecutionRequestV1);
-#[cfg(feature = "idl-build")]
-impl_anchor_for_idl!(InputSet);

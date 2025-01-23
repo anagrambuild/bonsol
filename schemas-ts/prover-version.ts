@@ -2,7 +2,8 @@
 
 /* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion */
 
-export { Input, InputT } from './input.js';
-export { InputSet, InputSetT } from './input-set.js';
-export { InputType } from './input-type.js';
-export { ProgramInputType } from './program-input-type.js';
+export enum ProverVersion {
+  DEFAULT = 0,
+  V1_0_1 = 1,
+  V1_2_1 = 9
+}

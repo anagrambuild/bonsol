@@ -977,7 +977,7 @@ checksum = "8d696c370c750c948ada61c69a0ee2cbbb9c50b1019ddb86d9317157a99c2cae"
 
 [[package]]
 name = "bonsol"
-version = "0.2.1"
+version = "0.3.0"
 dependencies = [
  "ark-bn254",
  "ark-serialize",
@@ -993,7 +993,7 @@ dependencies = [
 
 [[package]]
 name = "bonsol-anchor-interface"
-version = "0.2.1"
+version = "0.3.0"
 dependencies = [
  "anchor-lang",
  "bonsol-interface",
@@ -1003,7 +1003,7 @@ dependencies = [
 
 [[package]]
 name = "bonsol-cli"
-version = "0.2.1"
+version = "0.3.0"
 dependencies = [
  "anyhow",
  "assert_cmd",
@@ -1041,7 +1041,7 @@ dependencies = [
 
 [[package]]
 name = "bonsol-interface"
-version = "0.2.1"
+version = "0.3.0"
 dependencies = [
  "arrayref",
  "bonsol-schema",
@@ -1057,7 +1057,7 @@ dependencies = [
 
 [[package]]
 name = "bonsol-node"
-version = "0.2.1"
+version = "0.3.0"
 dependencies = [
  "anyhow",
  "ark-bn254",
@@ -1120,9 +1120,10 @@ dependencies = [
 
 [[package]]
 name = "bonsol-prover"
-version = "0.2.1"
+version = "0.3.0"
 dependencies = [
  "anyhow",
+ "arrayref",
  "async-trait",
  "bincode",
  "bonsol-schema",
@@ -1134,6 +1135,7 @@ dependencies = [
  "risc0-zkvm",
  "serde",
  "serde_json",
+ "solana-account-decoder",
  "solana-rpc-client",
  "solana-rpc-client-api",
  "solana-sdk",
@@ -1142,7 +1144,7 @@ dependencies = [
 
 [[package]]
 name = "bonsol-schema"
-version = "0.2.1"
+version = "0.3.0"
 dependencies = [
  "bytemuck",
  "flatbuffers",
@@ -1153,7 +1155,7 @@ dependencies = [
 
 [[package]]
 name = "bonsol-sdk"
-version = "0.2.1"
+version = "0.3.0"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -1177,7 +1179,7 @@ dependencies = [
 
 [[package]]
 name = "bonsol-tester"
-version = "0.2.1"
+version = "0.3.0"
 dependencies = [
  "anyhow",
  "bonsol-cli",
@@ -1414,7 +1416,7 @@ dependencies = [
 
 [[package]]
 name = "callback-example"
-version = "0.2.1"
+version = "0.3.0"
 dependencies = [
  "bonsol-interface",
  "solana-program 2.0.23",
@@ -3374,7 +3376,7 @@ dependencies = [
 
 [[package]]
 name = "iop"
-version = "0.2.1"
+version = "0.3.0"
 
 [[package]]
 name = "ipnet"

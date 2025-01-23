@@ -2,8 +2,6 @@ pub mod channel_instruction_generated;
 pub mod claim_v1_generated;
 pub mod deploy_v1_generated;
 pub mod execution_request_v1_generated;
-pub mod input_set_generated;
-pub mod input_set_op_v1_generated;
 pub mod input_type_generated;
 pub mod status_v1_generated;
 use std::fmt::Display;
@@ -15,7 +13,6 @@ pub use channel_instruction_generated::*;
 pub use claim_v1_generated::*;
 pub use deploy_v1_generated::*;
 pub use execution_request_v1_generated::*;
-pub use input_set_generated::*;
 pub use input_type_generated::*;
 pub use status_v1_generated::*;
 pub fn parse_ix_data(ix_data: &[u8]) -> Result<ChannelInstruction, ChannelSchemaError> {
@@ -72,12 +69,6 @@ impl InputT {
     pub const fn url(data: Vec<u8>) -> Self {
         Self {
             input_type: InputType::PublicUrl,
-            data: Some(data),
-        }
-    }
-    pub const fn input_set(data: Vec<u8>) -> Self {
-        Self {
-            input_type: InputType::InputSet,
             data: Some(data),
         }
     }

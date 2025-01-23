@@ -2,14 +2,13 @@ include "./execution_request_v1.fbs";
 include "./status_v1.fbs";
 include "./deploy_v1.fbs";
 include "./claim_v1.fbs";
-include "./input_set_op_v1.fbs";
 
 enum ChannelInstructionIxType: uint8 {
   ExecuteV1 = 0,
   StatusV1 = 1,
   DeployV1 = 2,
   ClaimV1 = 3,
-  InputSetOpV1 = 4,
+  //4 is reserved for InputSet which is removed
 }
 table ChannelInstruction{
   ix_type: ChannelInstructionIxType;
@@ -17,6 +16,5 @@ table ChannelInstruction{
   status_v1: [ubyte] (nested_flatbuffer: "StatusV1");
   deploy_v1: [ubyte] (nested_flatbuffer: "DeployV1");
   claim_v1: [ubyte] (nested_flatbuffer: "ClaimV1");
-  input_set_v1: [ubyte] (nested_flatbuffer: "InputSetOpV1");
 }
 root_type ChannelInstruction;
