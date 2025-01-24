@@ -20,7 +20,7 @@ Private inputs are inputs that are passed in the execution request. There is onl
 
 ## Input Sets
 
-Input sets are used to pass multiple inputs to the prover. This is like a preconfigured set of inputs that a developer has made to simplify the process of passing inputs to the prover. It also can help with complex applications where immutability of most of the inputs is desired. For seasoned solana devs think of this as being like and account lookup table.
+Input sets have been removed due to lack of use.
 
 ## Public Proof Inputs
 Proof inputs are actually urls to a location on the internet that the prover will pull the data from. The data will be a risc0 reciept. They are too big to fit in a single solana transaction so it usually takes many many transactions to post them to solana. This is why we treat them as url inputs. They must be deliniated from public url inputs so that the prover can add them to the risc0 zkvm in a special way. The bonsol cli has a method to allow you to locally prove something and get the output as a json payload. While json is less efficient than a binary format, it is easier to reason about by more developers. The json file will be hundreds of kilobytes in size and will contain the reciept which is the proof(seail) and the output of the execution.

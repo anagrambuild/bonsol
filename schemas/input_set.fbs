@@ -1,7 +1,0 @@
-include "./input_type.fbs";
-
-table InputSet {
-  inputs: [Input];
-}
-
-root_type InputSet;

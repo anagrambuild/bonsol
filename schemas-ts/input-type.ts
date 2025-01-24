@@ -8,7 +8,6 @@ export enum InputType {
   PublicAccountData = 3,
   PublicUrl = 4,
   Private = 5,
-  InputSet = 6,
   PublicProof = 7,
   PrivateLocal = 8
 }

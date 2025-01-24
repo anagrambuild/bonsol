@@ -8,8 +8,6 @@ use {solana_sdk::msg, solana_sdk::program_error::ProgramError};
 pub enum ClientError {
     #[error("InvalidInput")]
     InvalidInput,
-    #[error("InvalidInputSetAddress")]
-    InvalidInputSetAddress,
     #[error("InvalidCallbackExtraAccounts")]
     InvalidCallbackExtraAccounts,
     #[error("InvalidCallbackProgram")]

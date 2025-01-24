@@ -20,7 +20,7 @@ members = [
 resolver = "2"
 # Only necessary for nix cargo workspace artifacts to build without warnings.
 # The actual crate derivations build using their individual manifest version.
-package.version = "0.2.1"
+package.version = "0.3.0"
 
 [workspace.dependencies]
 solana-sdk = "~2.0"
@@ -33,6 +33,7 @@ solana-rpc-client = "~2.0"
 solana-rpc-client-api = "~2.0"
 solana-pubsub-client = "~2.0"
 solana-transaction-status = "~2.0"
+solana-account-decoder = "~2.0"
 solana-cli-config = "~2.0"
 yellowstone-grpc-client = "3.1.1"
 yellowstone-grpc-proto = "3.1.1"

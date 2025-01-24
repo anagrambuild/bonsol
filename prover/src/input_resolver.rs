@@ -3,8 +3,9 @@ use std::sync::Arc;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use anyhow::Result;
+use arrayref::array_ref;
 use async_trait::async_trait;
-use bonsol_schema::{root_as_input_set, InputT, InputType, ProgramInputType};
+use bonsol_schema::{InputT, InputType, ProgramInputType};
 use reqwest::Url;
 use serde::{Deserialize, Serialize};
 use solana_sdk::pubkey::Pubkey;
@@ -67,7 +68,7 @@ pub trait InputResolver: Send + Sync {
     ) -> Result<(), anyhow::Error>;
 }
 
-// naive resolver that downloads inputs and resolves inputsets just in time
+// naive resolver that downloads inputs just in time
 pub struct DefaultInputResolver {
     http_client: Arc<reqwest::Client>,
     solana_rpc_client: Arc<solana_rpc_client::nonblocking::rpc_client::RpcClient>,
@@ -165,39 +166,30 @@ impl DefaultInputResolver {
                     input_type: ProgramInputType::PublicProof,
                 }))
             }
+            InputType::PublicAccountData => {
+                let pubkey = input.data.ok_or(anyhow::anyhow!("Invalid data"))?;
+                if pubkey.len() != 32 {
+                    return Err(anyhow::anyhow!("Invalid pubkey"));
+                }
+                let pubkey = Pubkey::new_from_array(*array_ref!(pubkey, 0, 32));
+                let rpc_client_clone = self.solana_rpc_client.clone();
+                task_set.spawn(download_public_account(
+                    rpc_client_clone,
+                    index,
+                    pubkey,
+                    self.max_input_size_mb as usize,
+                ));
+                Ok(ProgramInput::Unresolved(UnresolvedInput {
+                    index,
+                    url: format!("solana://{}", pubkey).parse()?,
+                    input_type: ProgramInputType::Public,
+                }))
+            }
             _ => {
                 // not implemented yet / or unknown
                 Err(anyhow::anyhow!("Invalid input type"))
             }
         }
-    }
-
-    async fn par_resolve_input_set<'a>(
-        &self,
-        input_set_account: Pubkey,
-        client: Arc<reqwest::Client>,
-        index: u8,
-        task_set: &mut JoinSet<Result<ResolvedInput>>,
-    ) -> Result<Vec<ProgramInput>> {
-        let data = self
-            .solana_rpc_client
-            .get_account_data(&input_set_account)
-            .await?;
-        let input_set =
-            root_as_input_set(&data).map_err(|_| anyhow::anyhow!("Invalid Input set data"))?;
-        if input_set.inputs().is_none() {
-            return Err(anyhow::anyhow!("Invalid Input set data"));
-        }
-        let inputs = input_set.inputs().unwrap();
-        let mut res = Vec::with_capacity(inputs.len());
-        for input in inputs.into_iter() {
-            if input.input_type() == InputType::InputSet {
-                return Err(anyhow::anyhow!("Input set nesting not supported"));
-            }
-            let input = input.unpack();
-            res.push(self.par_resolve_input(client.clone(), index, input, task_set)?);
-        }
-        Ok(res)
     }
 }
 
@@ -210,7 +202,6 @@ impl InputResolver for DefaultInputResolver {
             InputType::PublicAccountData => true,
             InputType::Private => true,
             InputType::PublicProof => true,
-            InputType::InputSet => true,
             _ => false,
         }
     }
@@ -221,32 +212,10 @@ impl InputResolver for DefaultInputResolver {
     ) -> Result<Vec<ProgramInput>, anyhow::Error> {
         let mut url_set = JoinSet::new();
         let mut res = vec![ProgramInput::Empty; inputs.len()];
-        let mut index_offset = 0;
         for (index, input) in inputs.into_iter().enumerate() {
-            let index: u8 = index as u8 + index_offset;
             let client = self.http_client.clone();
-
-            match input.input_type {
-                InputType::InputSet => {
-                    if let Some(input_set_account) = input
-                        .data
-                        .as_ref()
-                        .and_then(|i| Pubkey::try_from(i.as_slice()).ok())
-                    {
-                        let inputs = self
-                            .par_resolve_input_set(input_set_account, client, index, &mut url_set)
-                            .await?;
-                        index_offset += inputs.len() as u8;
-                        res.extend(inputs);
-                    } else {
-                        return Err(anyhow::anyhow!("Invalid Input set data"));
-                    }
-                }
-                _ => {
-                    res[index as usize] =
-                        self.par_resolve_input(client, index, input, &mut url_set)?;
-                }
-            }
+            res[index] =
+                self.par_resolve_input(client, index as u8, input, &mut url_set)?;
         }
         while let Some(url) = url_set.join_next().await {
             match url {
@@ -364,6 +333,23 @@ async fn download_public_input(
     })
 }
 
+async fn download_public_account(
+    solana_client: Arc<solana_rpc_client::nonblocking::rpc_client::RpcClient>,
+    index: u8,
+    pubkey: Pubkey,
+    max_size_mb: usize,
+) -> Result<ResolvedInput> {
+    let resp = solana_client.get_account_data(&pubkey).await?;
+    if resp.len() > max_size_mb * 1024 * 1024 {
+        return Err(anyhow::anyhow!("Max size exceeded"));
+    }
+    Ok(ResolvedInput {
+        index,
+        data: resp,
+        input_type: ProgramInputType::Public,
+    })
+}
+
 async fn download_private_input(
     client: Arc<reqwest::Client>,
     index: u8,
@@ -396,6 +382,7 @@ mod test {
     use super::*;
     use mockito::Mock;
     use reqwest::{Client, Url};
+
     use std::sync::Arc;
 
     // Modified to return the server along with the mock and URL
