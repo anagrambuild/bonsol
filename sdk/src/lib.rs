@@ -6,8 +6,8 @@ use bytes::Bytes;
 use futures_util::TryFutureExt;
 use num_traits::FromPrimitive;
 
-use solana_rpc_client::nonblocking::rpc_client::RpcClient;
-use solana_rpc_client_api::config::RpcSendTransactionConfig;
+use solana_client::nonblocking::rpc_client::RpcClient;
+use solana_client::rpc_config::RpcSendTransactionConfig;
 use solana_sdk::account::Account;
 use solana_sdk::commitment_config::CommitmentConfig;
 use solana_sdk::compute_budget::ComputeBudgetInstruction;

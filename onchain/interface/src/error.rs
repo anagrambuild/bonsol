@@ -2,7 +2,7 @@
 use solana_program::program_error::ProgramError;
 
 #[cfg(not(feature = "on-chain"))]
-use {solana_sdk::msg, solana_sdk::program_error::ProgramError};
+use solana_sdk::program_error::ProgramError;
 
 #[derive(thiserror::Error, Debug)]
 pub enum ClientError {

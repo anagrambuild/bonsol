@@ -1,0 +1,7 @@
+table ClaimV1 {
+  execution_id: string;
+  block_commitment: uint64;
+  //maybe some cool mpc decryption keys here or something
+}
+
+root_type ClaimV1;
