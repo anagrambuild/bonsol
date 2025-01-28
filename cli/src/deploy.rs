@@ -99,10 +99,6 @@ pub async fn deploy(rpc_url: String, signer: Keypair, deploy_args: DeployArgs) -
             println!("Uploaded to S3 url {}", url);
             url
         }
-        DeployArgs::ShadowDrive(_) => {
-            println!("Shadow Drive upload has been removed due to api changes");
-            return Err(BonsolCliError::UnsupportedDeployError().into());
-        }
         DeployArgs::Url(url_upload) => {
             let req = reqwest::get(&url_upload.url).await?;
             let bytes = req.bytes().await?;

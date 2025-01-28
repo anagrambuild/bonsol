@@ -12,7 +12,8 @@ pub struct DeployAccounts<'a, 'b> {
     pub payer: &'a AccountInfo<'a>,
     pub deployment: &'a AccountInfo<'a>,
     pub system_program: &'a AccountInfo<'a>,
-    pub extra_accounts: &'a [AccountInfo<'a>],
+    pub extra_accounts: &'a [AccountInfo<'a>], // todo: this can be removed because extra accounts
+    // are not used in deployment
     pub deployment_bump: Option<u8>,
     pub image_id: &'b str,
     pub image_checksum: &'b [u8],
