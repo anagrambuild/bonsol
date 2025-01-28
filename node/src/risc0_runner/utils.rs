@@ -18,6 +18,15 @@ static TOOLS_ENTRIES: [&str; 4] = [
     "stark_verify_final.zkey",
     "rapidsnark",
 ];
+
+pub fn check_x86_64arch() -> bool {
+    if cfg!(target_arch = "x86_64") {
+        true
+    } else {
+        false
+    }
+}
+
 pub fn check_stark_compression_tools_path(path: &str) -> Result<()> {
     let tools_path = Path::new(path);
     for entry in TOOLS_ENTRIES.iter() {

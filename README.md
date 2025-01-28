@@ -9,6 +9,10 @@ Interact with the docs at [Bonsol.sh](https://bonsol.sh)
 # NOTE !!!!!
 Do not use `node_keypair.json` in production, it is for local development only. 
 
+## Requirements:
+
+* x86_64-linux due to (stark to snark tooling)[https://github.com/risc0/risc0/commit/7c6101f925e8fd1b3de09654941f0608d4459a2b]
+
 ## Roadmap
 Stage 1: Dawn (current stage)
 * Developer feedback

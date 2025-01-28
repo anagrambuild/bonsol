@@ -3,7 +3,10 @@ pub mod verify_prover_version;
 
 use crate::transaction_sender::TransactionStatus;
 
-use {solana_sdk::instruction::AccountMeta, utils::check_stark_compression_tools_path};
+use {
+    solana_sdk::instruction::AccountMeta,
+    utils::{check_stark_compression_tools_path, check_x86_64arch},
+};
 
 use {
     crate::{
@@ -134,6 +137,11 @@ impl Risc0Runner {
                 loaded_images.insert(img.id.clone(), img);
             }
         }
+
+        if !check_x86_64arch() {
+            warn!("Bonsol node will not compress STARKs to SNARKs after successful risc0vm\nproving due to stark compression tooling requiring x86_64 architectures - virtualization will also fail");
+        }
+
         check_stark_compression_tools_path(&config.stark_compression_tools_path)?;
 
         Ok(Risc0Runner {
