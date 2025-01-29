@@ -14,7 +14,12 @@ RUN apt-get clean && \
     pkg-config \
     libssl-dev \
     software-properties-common \
-    build-essential
+    build-essential \
+    cmake && \
+    git clone https://github.com/google/flatbuffers.git && \
+    cd flatbuffers && \
+    cmake -G "Unix Makefiles" && \
+    make install
 WORKDIR /app/
 COPY --from=planner /app/recipe.json recipe.json
 RUN cargo chef cook --bin bonsol-node --release --recipe-path recipe.json
