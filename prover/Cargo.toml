@@ -1,6 +1,6 @@
 [package]
 name = "bonsol-prover"
-version = "0.1.2"
+version = "0.3.0"
 description = "Prover functionality for Bonsol"
 authors = ["anagram build team"]
 repository = "https://github.com/anagrambuild/bonsol"

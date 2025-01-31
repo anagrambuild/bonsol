@@ -1057,12 +1057,12 @@ checksum = "8d696c370c750c948ada61c69a0ee2cbbb9c50b1019ddb86d9317157a99c2cae"
 
 [[package]]
 name = "bonsol"
-version = "0.1.2"
+version = "0.3.0"
 dependencies = [
  "anyhow",
  "ark-bn254",
  "ark-serialize",
- "bonsol-interface 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "bonsol-interface 0.1.2",
  "flatbuffers 25.1.24",
  "groth16-solana",
  "hex",
@@ -1077,11 +1077,11 @@ dependencies = [
 
 [[package]]
 name = "bonsol-anchor-interface"
-version = "0.2.1"
+version = "0.3.0"
 dependencies = [
  "anchor-lang",
- "bonsol-interface 0.1.2",
- "bonsol-schema 0.1.2",
+ "bonsol-interface 0.3.0",
+ "bonsol-schema 0.3.0",
  "paste",
 ]
 
@@ -1093,9 +1093,9 @@ dependencies = [
  "assert_cmd",
  "atty",
  "bincode",
- "bonsol-interface 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "bonsol-prover 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "bonsol-sdk 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "bonsol-interface 0.1.2",
+ "bonsol-prover 0.1.2",
+ "bonsol-sdk 0.1.2",
  "byte-unit",
  "bytemuck",
  "bytes",
@@ -1126,9 +1126,11 @@ dependencies = [
 [[package]]
 name = "bonsol-interface"
 version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bbc954b023f5abb2eeaeb12b2c7afb650913fe55889a90646dbbb34bf195c8a9"
 dependencies = [
  "arrayref",
- "bonsol-schema 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "bonsol-schema 0.1.2",
  "bytemuck",
  "flatbuffers 25.1.24",
  "hex",
@@ -1141,12 +1143,10 @@ dependencies = [
 
 [[package]]
 name = "bonsol-interface"
-version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bbc954b023f5abb2eeaeb12b2c7afb650913fe55889a90646dbbb34bf195c8a9"
+version = "0.3.0"
 dependencies = [
  "arrayref",
- "bonsol-schema 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "bonsol-schema 0.1.2",
  "bytemuck",
  "flatbuffers 25.1.24",
  "hex",
@@ -1159,7 +1159,7 @@ dependencies = [
 
 [[package]]
 name = "bonsol-node"
-version = "0.2.1"
+version = "0.3.0"
 dependencies = [
  "anyhow",
  "ark-bn254",
@@ -1171,8 +1171,8 @@ dependencies = [
  "ark-serialize",
  "ark-std",
  "async-trait",
- "bonsol-interface 0.1.2",
- "bonsol-prover 0.1.2",
+ "bonsol-interface 0.3.0",
+ "bonsol-prover 0.3.0",
  "bytemuck",
  "byteorder",
  "bytes",
@@ -1223,14 +1223,15 @@ dependencies = [
 [[package]]
 name = "bonsol-prover"
 version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5364390ddd1d9ebde7ea79d3ab086785dedecfe84d14787746d9750b0ff1c3e6"
 dependencies = [
  "anyhow",
  "async-trait",
  "bincode",
- "bonsol-schema 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "bonsol-schema 0.1.2",
  "bytes",
  "futures-util",
- "mockito",
  "reqwest 0.11.27",
  "risc0-binfmt",
  "risc0-zkvm",
@@ -1244,16 +1245,15 @@ dependencies = [
 
 [[package]]
 name = "bonsol-prover"
-version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5364390ddd1d9ebde7ea79d3ab086785dedecfe84d14787746d9750b0ff1c3e6"
+version = "0.3.0"
 dependencies = [
  "anyhow",
  "async-trait",
  "bincode",
- "bonsol-schema 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "bonsol-schema 0.1.2",
  "bytes",
  "futures-util",
+ "mockito",
  "reqwest 0.11.27",
  "risc0-binfmt",
  "risc0-zkvm",
@@ -1263,17 +1263,6 @@ dependencies = [
  "solana-rpc-client-api",
  "solana-sdk",
  "tokio",
-]
-
-[[package]]
-name = "bonsol-schema"
-version = "0.1.2"
-dependencies = [
- "bytemuck",
- "flatbuffers 25.1.24",
- "num-derive 0.3.3",
- "num-traits",
- "thiserror 1.0.69",
 ]
 
 [[package]]
@@ -1290,14 +1279,50 @@ dependencies = [
 ]
 
 [[package]]
+name = "bonsol-schema"
+version = "0.3.0"
+dependencies = [
+ "bytemuck",
+ "flatbuffers 25.1.24",
+ "num-derive 0.3.3",
+ "num-traits",
+ "thiserror 1.0.69",
+]
+
+[[package]]
 name = "bonsol-sdk"
 version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "70203463f013f0e0c4c2b4744f6afbb565a88358d9fa6b535b256253dc7543de"
 dependencies = [
  "anyhow",
  "async-trait",
  "bincode",
- "bonsol-interface 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "bonsol-schema 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "bonsol-interface 0.1.2",
+ "bonsol-schema 0.1.2",
+ "bytes",
+ "flatbuffers 25.1.24",
+ "futures",
+ "futures-util",
+ "num-traits",
+ "reqwest 0.11.27",
+ "serde",
+ "serde_json",
+ "solana-client",
+ "solana-sdk",
+ "thiserror 1.0.69",
+ "tokio",
+]
+
+[[package]]
+name = "bonsol-sdk"
+version = "0.3.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "bincode",
+ "bonsol-interface 0.1.2",
+ "bonsol-schema 0.1.2",
  "bytes",
  "flatbuffers 25.1.24",
  "futures",
@@ -1314,38 +1339,13 @@ dependencies = [
 ]
 
 [[package]]
-name = "bonsol-sdk"
-version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "70203463f013f0e0c4c2b4744f6afbb565a88358d9fa6b535b256253dc7543de"
-dependencies = [
- "anyhow",
- "async-trait",
- "bincode",
- "bonsol-interface 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "bonsol-schema 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "bytes",
- "flatbuffers 25.1.24",
- "futures",
- "futures-util",
- "num-traits",
- "reqwest 0.11.27",
- "serde",
- "serde_json",
- "solana-client",
- "solana-sdk",
- "thiserror 1.0.69",
- "tokio",
-]
-
-[[package]]
 name = "bonsol-tester"
-version = "0.2.1"
+version = "0.3.0"
 dependencies = [
  "anyhow",
  "bonsol-cli",
- "bonsol-interface 0.1.2",
- "bonsol-sdk 0.1.2",
+ "bonsol-interface 0.3.0",
+ "bonsol-sdk 0.3.0",
  "rand 0.8.5",
  "rand_core 0.6.4",
  "solana-rpc-client",
@@ -1598,9 +1598,9 @@ dependencies = [
 
 [[package]]
 name = "callback-example"
-version = "0.2.1"
+version = "0.3.0"
 dependencies = [
- "bonsol-interface 0.1.2",
+ "bonsol-interface 0.3.0",
  "solana-program 2.0.24",
 ]
 
@@ -3800,7 +3800,7 @@ dependencies = [
 
 [[package]]
 name = "iop"
-version = "0.2.1"
+version = "0.3.0"
 
 [[package]]
 name = "ipnet"

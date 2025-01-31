@@ -1,6 +1,6 @@
 [package]
 name = "bonsol-interface"
-version = "0.1.2"
+version = "0.3.0"
 description = "Interface to Bonsol on-chain program instructions, PDA methods and non-flatbuffer types"
 authors = ["anagram build team"]
 repository = "https://github.com/anagrambuild/bonsol"
