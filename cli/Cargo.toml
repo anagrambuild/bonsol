@@ -1,25 +1,25 @@
 [package]
 name = "bonsol-cli"
-version.workspace = true
+version = "0.1.2"
 edition = "2021"
-publish = false          # Exclude local crates from licensing checks
+description = "Command line interface for Bonsol - a zero-knowledge proof system for Solana"
+license = "Apache-2.0"
+repository = "https://github.com/anagrambuild/bonsol"
 
 [[bin]]
 name = "bonsol"
 path = "src/main.rs"
 
 [features]
-mac = ["risc0-zkvm/metal"]
-linux = ["risc0-zkvm/cuda"]
 integration-tests = []
 
 [dependencies]
 anyhow = "1.0.86"
 atty = "0.2.14"
 bincode = "1.3.3"
-bonsol-interface.workspace = true
-bonsol-prover = { path = "../prover" }
-bonsol-sdk = { path = "../sdk" }
+bonsol-interface = "0.1.2"
+bonsol-prover = "0.1.2"
+bonsol-sdk = "0.1.2"
 bytemuck = "1.15.0"
 hex = "0.4.3"
 byte-unit = "4.0.19"
@@ -36,16 +36,16 @@ reqwest = { version = "0.11.26", features = [
   "stream",
   "native-tls-vendored",
 ] }
-risc0-binfmt = { workspace = true }
-risc0-zkvm = { workspace = true, default-features = false, features = ["prove", "std"] }
-risc0-zkvm-platform = { workspace = true }
-risc0-circuit-rv32im = { workspace = true }
+risc0-binfmt = "1.2.1"
+risc0-zkvm = { version = "1.2.1", features = ["prove"], default-features = false }
+risc0-zkvm-platform = "1.2.1"
+risc0-circuit-rv32im = "1.2.1"
 serde = { version = "1.0.197", features = ["derive"] }
 serde_json = "1.0.104"
 sha2 = "0.10.6"
-solana-cli-config = { workspace = true }
-solana-rpc-client = { workspace = true }
-solana-sdk = { workspace = true }
+solana-cli-config = "2.0"
+solana-rpc-client = "2.0"
+solana-sdk = "2.0"
 tera = "1.17.1"
 thiserror = "1.0.65"
 tokio = { version = "1.38.0", features = ["full"] }
