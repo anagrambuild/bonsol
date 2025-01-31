@@ -1222,12 +1222,12 @@ dependencies = [
 
 [[package]]
 name = "bonsol-prover"
-version = "0.2.1"
+version = "0.1.2"
 dependencies = [
  "anyhow",
  "async-trait",
  "bincode",
- "bonsol-schema 0.1.2",
+ "bonsol-schema 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "bytes",
  "futures-util",
  "mockito",
