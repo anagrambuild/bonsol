@@ -82,8 +82,6 @@ ENV PATH      ${NVM_NODE_PATH}/bin:$PATH
 COPY --from=node-slim --chown=${USER}:${USER} /usr/local/nvm /usr/local/nvm
 RUN bash -c ". $NVM_DIR/nvm.sh && nvm install $NODE_VERSION && nvm alias default $NODE_VERSION && nvm use default"
 
-
-RUN npm install npm -g
 RUN npm install yarn -g
 
 # Install PNPM
