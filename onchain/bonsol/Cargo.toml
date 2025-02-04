@@ -18,14 +18,14 @@ no-entrypoint = []
 test-sbf = []
 
 [dependencies]
-ark-bn254 = "0.4.0"
-ark-serialize = "0.4.0"
+ark-bn254 = { version = "0.4.0", default-features = false }
+ark-serialize = { version = "0.4.0", default-features = false }
 bonsol-interface = { version = "0.3.1", features = ["on-chain"], default-features = false }
-flatbuffers = "25.1.21"
-groth16-solana = "0.0.2"
-hex = "0.4.2"
+flatbuffers = { version = "25.1.21", default-features = false }
+groth16-solana = { version = "0.0.2", default-features = false }
+hex = { version = "0.4.2", default-features = false }
 hex-literal = "0.4.1"
-num-bigint = "0.4.4"
+num-bigint = { version = "0.4.4", default-features = false }
 solana-program = "~2.0"
 thiserror = "1.0.57"
 getrandom = { version = "0.2.15", default-features = false, features = ["custom"] }
@@ -35,3 +35,6 @@ solana-program-test = "~2.0"
 solana-sdk = "~2.0"
 anyhow = "1.0.79"
 tokio-test = "0.4.3"
+
+[patch.crates-io]
+getrandom = { version = "0.1.16", default-features = false, features = ["custom"] }
