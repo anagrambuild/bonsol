@@ -1,6 +1,6 @@
 [package]
 name = "bonsol-interface"
-version.workspace = true
+version = "0.3.3"
 edition = "2021"
 publish = false           # Exclude local crates from licensing checks
 
