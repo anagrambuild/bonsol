@@ -20,7 +20,7 @@ test-sbf = []
 [dependencies]
 ark-bn254 = "0.4.0"
 ark-serialize = "0.4.0"
-bonsol-interface = { version = "0.1.2", features = ["on-chain"], default-features = false }
+bonsol-interface = { workspace = true, features = ["on-chain"], default-features = false }
 flatbuffers = "25.1.21"
 groth16-solana = "0.0.2"
 hex = "0.4.2"

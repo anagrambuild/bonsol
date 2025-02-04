@@ -1077,7 +1077,7 @@ dependencies = [
 
 [[package]]
 name = "bonsol-anchor-interface"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "anchor-lang",
  "bonsol-interface 0.3.1",
@@ -1087,15 +1087,15 @@ dependencies = [
 
 [[package]]
 name = "bonsol-cli"
-version = "0.1.2"
+version = "0.3.1"
 dependencies = [
  "anyhow",
  "assert_cmd",
  "atty",
  "bincode",
- "bonsol-interface 0.1.2",
- "bonsol-prover 0.1.2",
- "bonsol-sdk 0.1.2",
+ "bonsol-interface 0.3.1",
+ "bonsol-prover",
+ "bonsol-sdk",
  "byte-unit",
  "bytemuck",
  "bytes",
@@ -1134,10 +1134,8 @@ dependencies = [
  "bytemuck",
  "flatbuffers",
  "hex",
- "serde",
  "sha3 0.10.8",
  "solana-program 2.0.25",
- "solana-sdk",
  "thiserror 1.0.69",
 ]
 
@@ -1159,7 +1157,7 @@ dependencies = [
 
 [[package]]
 name = "bonsol-node"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "anyhow",
  "ark-bn254",
@@ -1172,7 +1170,7 @@ dependencies = [
  "ark-std",
  "async-trait",
  "bonsol-interface 0.3.1",
- "bonsol-prover 0.3.1",
+ "bonsol-prover",
  "bytemuck",
  "byteorder",
  "bytes",
@@ -1218,29 +1216,6 @@ dependencies = [
  "tracing-subscriber 0.3.19",
  "yellowstone-grpc-client",
  "yellowstone-grpc-proto",
-]
-
-[[package]]
-name = "bonsol-prover"
-version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5364390ddd1d9ebde7ea79d3ab086785dedecfe84d14787746d9750b0ff1c3e6"
-dependencies = [
- "anyhow",
- "async-trait",
- "bincode",
- "bonsol-schema 0.1.2",
- "bytes",
- "futures-util",
- "reqwest 0.11.27",
- "risc0-binfmt",
- "risc0-zkvm",
- "serde",
- "serde_json",
- "solana-rpc-client",
- "solana-rpc-client-api",
- "solana-sdk",
- "tokio",
 ]
 
 [[package]]
@@ -1306,38 +1281,13 @@ dependencies = [
 
 [[package]]
 name = "bonsol-sdk"
-version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "70203463f013f0e0c4c2b4744f6afbb565a88358d9fa6b535b256253dc7543de"
+version = "0.3.1"
 dependencies = [
  "anyhow",
  "async-trait",
  "bincode",
- "bonsol-interface 0.1.2",
- "bonsol-schema 0.1.2",
- "bytes",
- "flatbuffers",
- "futures",
- "futures-util",
- "num-traits",
- "reqwest 0.11.27",
- "serde",
- "serde_json",
- "solana-client",
- "solana-sdk",
- "thiserror 1.0.69",
- "tokio",
-]
-
-[[package]]
-name = "bonsol-sdk"
-version = "0.3.0"
-dependencies = [
- "anyhow",
- "async-trait",
- "bincode",
- "bonsol-interface 0.1.2",
- "bonsol-schema 0.1.2",
+ "bonsol-interface 0.3.1",
+ "bonsol-schema 0.3.1",
  "bytes",
  "flatbuffers",
  "futures",
@@ -1355,12 +1305,12 @@ dependencies = [
 
 [[package]]
 name = "bonsol-tester"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "anyhow",
  "bonsol-cli",
  "bonsol-interface 0.3.1",
- "bonsol-sdk 0.3.0",
+ "bonsol-sdk",
  "rand 0.8.5",
  "rand_core 0.6.4",
  "solana-rpc-client",
@@ -1613,7 +1563,7 @@ dependencies = [
 
 [[package]]
 name = "callback-example"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "bonsol-interface 0.3.1",
  "solana-program 2.0.25",
@@ -3805,7 +3755,7 @@ dependencies = [
 
 [[package]]
 name = "iop"
-version = "0.3.0"
+version = "0.3.1"
 
 [[package]]
 name = "ipnet"
