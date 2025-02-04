@@ -29,7 +29,9 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Extract Version from Cargo.toml
-        run: echo "VERSION=v${{ github.head_ref || github.ref_name }}-$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[] | select(.name == "bonsol-node") | .version')" >> $GITHUB_ENV
+        run: |
+          CARGO_VERSION=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[] | select(.name == "bonsol-node") | .version')
+          echo "VERSION=${CARGO_VERSION}" >> $GITHUB_ENV
         working-directory: ./node
       - name: Check tag and version match
         run: |
@@ -37,8 +39,10 @@ jobs:
             echo "Tag must start with v"
             exit 1
           fi
-          if [[ "${{ github.ref_name }}" != "${{ env.VERSION }}" ]]; then
-            echo "Tag and version do not match"
+          # Remove 'v' prefix from ref_name for comparison
+          TAG_VERSION=${GITHUB_REF_NAME#v}
+          if [[ "${TAG_VERSION}" != "${{ env.VERSION }}" ]]; then
+            echo "Tag version (${TAG_VERSION}) does not match cargo version (${{ env.VERSION }})"
             exit 1
           fi
       - name: Build and Push Docker Image
