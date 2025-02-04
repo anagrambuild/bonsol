@@ -997,7 +997,7 @@ version = "0.3.0"
 dependencies = [
  "anchor-lang",
  "bonsol-interface",
- "bonsol-schema 0.3.3",
+ "bonsol-schema 0.3.4",
  "paste",
 ]
 
@@ -1041,10 +1041,10 @@ dependencies = [
 
 [[package]]
 name = "bonsol-interface"
-version = "0.3.3"
+version = "0.3.4"
 dependencies = [
  "arrayref",
- "bonsol-schema 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "bonsol-schema 0.3.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "bytemuck",
  "flatbuffers",
  "hex",
@@ -1126,7 +1126,7 @@ dependencies = [
  "arrayref",
  "async-trait",
  "bincode",
- "bonsol-schema 0.3.3",
+ "bonsol-schema 0.3.4",
  "bytes",
  "futures-util",
  "mockito",
@@ -1144,7 +1144,7 @@ dependencies = [
 
 [[package]]
 name = "bonsol-schema"
-version = "0.3.3"
+version = "0.3.4"
 dependencies = [
  "bytemuck",
  "flatbuffers",
@@ -1155,9 +1155,9 @@ dependencies = [
 
 [[package]]
 name = "bonsol-schema"
-version = "0.3.3"
+version = "0.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5e92397482e39ef486a74688aed16159a3497704a43a57fb42833bd4eebed8b1"
+checksum = "0ea6dd31ebf298a14d1a5111e40c836ca9ac4ce230e3649be703846b2c1ce23f"
 dependencies = [
  "bytemuck",
  "flatbuffers",
@@ -1174,7 +1174,7 @@ dependencies = [
  "async-trait",
  "bincode",
  "bonsol-interface",
- "bonsol-schema 0.3.3",
+ "bonsol-schema 0.3.4",
  "bytes",
  "flatbuffers",
  "futures-util",

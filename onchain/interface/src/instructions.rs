@@ -48,7 +48,7 @@ pub fn deploy_v1(
             image_id: Some(image_id),
             program_name: Some(name),
             url: Some(url),
-            size: image_size,
+            size_: image_size,
             inputs: Some(fb_inputs),
         },
     );
