@@ -37,6 +37,7 @@ solana-account-decoder = "~2.0"
 solana-cli-config = "~2.0"
 yellowstone-grpc-client = "3.1.1"
 yellowstone-grpc-proto = "3.1.1"
+getrandom = { version = "0.2.15", default-features = false, features = ["custom"] }
 risc0-zkvm = { version = "1.2.1", features = [
   "prove",
 ], default-features = false }
