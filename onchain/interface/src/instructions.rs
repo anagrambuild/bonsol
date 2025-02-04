@@ -194,12 +194,6 @@ impl<'a> InputRef<'a> {
             data,
         }
     }
-    pub fn input_set(data: &'a [u8]) -> Self {
-        Self {
-            input_type: InputType::InputSet,
-            data,
-        }
-    }
     pub fn public_account(data: &'a [u8]) -> Self {
         Self {
             input_type: InputType::PublicAccountData,
@@ -279,7 +273,7 @@ pub fn execute_v1_with_accounts<'a>(
         } else {
             (None, None, None)
         };
-    let mut accounts = vec![
+    let accounts = vec![
         AccountMeta::new(*requester, true),
         AccountMeta::new(*payer, true),
         AccountMeta::new(*execution_account, false),
@@ -290,27 +284,12 @@ pub fn execute_v1_with_accounts<'a>(
     let inputlen = inputs.len();
     let mut inputs_vec = Vec::with_capacity(inputlen);
     for input in inputs {
-        match input.input_type {
-            InputType::InputSet => {
-                let input_set_pubkey = Pubkey::try_from(input.data)
-                    .map_err(|_| ClientError::InvalidInputSetAddress)?;
-                accounts.push(AccountMeta::new_readonly(input_set_pubkey, false));
-                let data_off = fbb.create_vector(&[(accounts.len() - 1) as u8]);
-                let mut ibb = InputBuilder::new(&mut fbb);
-                ibb.add_input_type(InputType::InputSet);
-                ibb.add_data(data_off);
-                let input_set = ibb.finish();
-                inputs_vec.push(input_set);
-            }
-            _ => {
-                let data_off = fbb.create_vector(input.data);
-                let mut ibb = InputBuilder::new(&mut fbb);
-                ibb.add_data(data_off);
-                ibb.add_input_type(input.input_type);
-                let input = ibb.finish();
-                inputs_vec.push(input);
-            }
-        }
+        let data_off = fbb.create_vector(input.data);
+        let mut ibb = InputBuilder::new(&mut fbb);
+        ibb.add_data(data_off);
+        ibb.add_input_type(input.input_type);
+        let input = ibb.finish();
+        inputs_vec.push(input);
     }
     let fb_inputs = fbb.create_vector(&inputs_vec);
     let image_id = fbb.create_string(image_id);

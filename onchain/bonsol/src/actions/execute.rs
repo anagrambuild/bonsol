@@ -1,9 +1,7 @@
 use crate::{assertions::*, error::ChannelError, utilities::*};
 
 use bonsol_interface::{
-    bonsol_schema::{
-        root_as_deploy_v1, root_as_input_set, ChannelInstruction, ExecutionRequestV1, InputType,
-    },
+    bonsol_schema::{root_as_deploy_v1, ChannelInstruction, ExecutionRequestV1, InputType},
     util::execution_address_seeds,
 };
 
@@ -70,34 +68,7 @@ impl<'a, 'b> ExecuteAccounts<'a, 'b> {
             }
             // this should never be less than 1
             let required_input_size = deploy.inputs().map(|x| x.len()).unwrap_or(1);
-            let mut num_sets = 0;
-            let input_set: usize = inputs
-                .iter()
-                .filter(|i| {
-                    // these must be changed on client to reference account index, the will be 1 byte
-                    i.data().is_some() && i.input_type() == InputType::InputSet
-                })
-                .flat_map(|i| {
-                    num_sets += 1;
-                    // can panic here
-                    let index = i.data().and_then(|x| x.bytes().first()).unwrap();
-                    let rel_index = index - 6;
-                    let account = ea
-                        .extra_accounts
-                        .get(rel_index as usize)
-                        .ok_or(ChannelError::InvalidInputs)
-                        .unwrap();
-                    let data = account.data.borrow();
-                    let input_set =
-                        root_as_input_set(&data).map_err(|_| ChannelError::InvalidInputs)?;
-                    input_set
-                        .inputs()
-                        .map(|x| x.len())
-                        .ok_or(ChannelError::InvalidInputs)
-                })
-                .sum();
-
-            if inputs.len() - num_sets + input_set != required_input_size {
+            if inputs.len() != required_input_size {
                 return Err(ChannelError::InvalidInputs);
             }
             ea.exec_bump = Some(check_pda(
