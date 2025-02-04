@@ -20,7 +20,7 @@ members = [
 resolver = "2"
 # Only necessary for nix cargo workspace artifacts to build without warnings.
 # The actual crate derivations build using their individual manifest version.
-package.version = "0.3.0"
+package.version = "0.3.1"
 
 [workspace.dependencies]
 solana-sdk = "~2.0"
