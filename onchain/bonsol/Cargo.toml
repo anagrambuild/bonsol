@@ -18,7 +18,7 @@ no-entrypoint = []
 test-sbf = []
 
 [dependencies]
-ark-bn254 = { version = "0.4.0", default-features = false }
+ark-bn254 = { version = "0.4.0" }
 ark-serialize = { version = "0.4.0", default-features = false }
 bonsol-interface = { version = "0.3.1", features = ["on-chain"], default-features = false }
 flatbuffers = { version = "25.1.21", default-features = false }
