@@ -1,18 +1,23 @@
 [package]
 name = "bonsol-schema"
-version.workspace = true
+version = "0.3.3"
 description = "Bonsol types, schema definitions"
 authors = ["anagram build team"]
 repository = "https://github.com/anagrambuild/bonsol"
 license = "MIT"
 edition = "2021"
+include = [
+    "src/**/*",
+    "build.rs",
+    "schemas/*.fbs"
+]
 
 [dependencies]
 bytemuck = "1.7.2"
-flatbuffers = { workspace = true }
+flatbuffers = "24.3.25"
 num-derive = "0.3.3"
 num-traits = "0.2.15"
-thiserror = { workspace = true }
+thiserror = "1.0.57"
 
 [lints.rust]
 unused_imports = "allow"
