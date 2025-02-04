@@ -636,7 +636,7 @@ async fn handle_image_deployment<'a>(
     loaded_images: LoadedImageMapRef<'a>,
 ) -> Result<()> {
     let url = deploy.url().ok_or(Risc0RunnerError::InvalidData)?;
-    let size = deploy.size_();
+    let size = deploy.size();
     emit_histogram!(MetricEvents::ImageDownload, size as f64, url => url.to_string());
     emit_event_with_duration!(MetricEvents::ImageDownload, {
         let resp = http_client.get(url).send().await?.error_for_status()?;

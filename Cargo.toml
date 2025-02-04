@@ -25,7 +25,7 @@ package.version = "0.3.0"
 [workspace.dependencies]
 solana-sdk = "~2.0"
 thiserror = "1.0.57"
-flatbuffers = "24.3.25"
+flatbuffers = "25.1.21"
 anyhow = "1.0.40"
 solana-program = "~2.0"
 solana-program-test = "~2.0"
