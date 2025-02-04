@@ -1080,7 +1080,7 @@ name = "bonsol-anchor-interface"
 version = "0.3.0"
 dependencies = [
  "anchor-lang",
- "bonsol-interface 0.3.0",
+ "bonsol-interface 0.3.1",
  "bonsol-schema 0.3.1",
  "paste",
 ]
@@ -1143,10 +1143,10 @@ dependencies = [
 
 [[package]]
 name = "bonsol-interface"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "arrayref",
- "bonsol-schema 0.3.0",
+ "bonsol-schema 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "bytemuck",
  "flatbuffers",
  "hex",
@@ -1171,8 +1171,8 @@ dependencies = [
  "ark-serialize",
  "ark-std",
  "async-trait",
- "bonsol-interface 0.3.0",
- "bonsol-prover 0.3.0",
+ "bonsol-interface 0.3.1",
+ "bonsol-prover 0.3.1",
  "bytemuck",
  "byteorder",
  "bytes",
@@ -1245,13 +1245,13 @@ dependencies = [
 
 [[package]]
 name = "bonsol-prover"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "anyhow",
  "arrayref",
  "async-trait",
  "bincode",
- "bonsol-schema 0.3.0",
+ "bonsol-schema 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "bytes",
  "futures-util",
  "mockito",
@@ -1282,9 +1282,7 @@ dependencies = [
 
 [[package]]
 name = "bonsol-schema"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4c5901da861ee5f016ae17e683dcd4449713889f77a4719b793c9bc2b19968ae"
+version = "0.3.1"
 dependencies = [
  "bytemuck",
  "flatbuffers",
@@ -1296,6 +1294,8 @@ dependencies = [
 [[package]]
 name = "bonsol-schema"
 version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6027eb5a6de345236235963f35818fc18a1612c98edc1351c0411d6f5d19c1c2"
 dependencies = [
  "bytemuck",
  "flatbuffers",
@@ -1359,7 +1359,7 @@ version = "0.3.0"
 dependencies = [
  "anyhow",
  "bonsol-cli",
- "bonsol-interface 0.3.0",
+ "bonsol-interface 0.3.1",
  "bonsol-sdk 0.3.0",
  "rand 0.8.5",
  "rand_core 0.6.4",
@@ -1615,7 +1615,7 @@ dependencies = [
 name = "callback-example"
 version = "0.3.0"
 dependencies = [
- "bonsol-interface 0.3.0",
+ "bonsol-interface 0.3.1",
  "solana-program 2.0.25",
 ]
 

@@ -1,6 +1,6 @@
 [package]
 name = "bonsol-prover"
-version = "0.3.0"
+version = "0.3.1"
 description = "Prover functionality for Bonsol"
 authors = ["anagram build team"]
 repository = "https://github.com/anagrambuild/bonsol"
@@ -30,7 +30,7 @@ solana-account-decoder = "2.0"
 solana-sdk = "2.0"
 tokio = "1.36.0"
 arrayref = "0.3.6"
-bonsol-schema = "0.3.0"
+bonsol-schema = "0.3.1"
 
 [dev-dependencies]
 mockito = "1.5.0"

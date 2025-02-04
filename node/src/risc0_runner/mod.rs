@@ -535,7 +535,7 @@ async fn handle_execution_request<'a>(
         .ok_or(Risc0RunnerError::ImgLoadError)?;
 
         // naive compute cost estimate which is YES WE CAN DO THIS in the default amount of time
-        emit_histogram!(MetricEvents::ImageComputeEstimate, img.size  as f64, image_id => image_id.clone());
+        emit_histogram!(MetricEvents::ImageComputeEstimate, img.size as f64, image_id => image_id.clone());
         //ensure compute can happen before expiry
         //execution_block + (image_compute_estimate % config.max_compute_per_block) + 1 some bogus calc
         let computable_by = expiry / 2;
@@ -636,7 +636,7 @@ async fn handle_image_deployment<'a>(
     loaded_images: LoadedImageMapRef<'a>,
 ) -> Result<()> {
     let url = deploy.url().ok_or(Risc0RunnerError::InvalidData)?;
-    let size = deploy.size();
+    let size = deploy.size_();
     emit_histogram!(MetricEvents::ImageDownload, size as f64, url => url.to_string());
     emit_event_with_duration!(MetricEvents::ImageDownload, {
         let resp = http_client.get(url).send().await?.error_for_status()?;
