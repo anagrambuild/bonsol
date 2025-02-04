@@ -1057,13 +1057,14 @@ checksum = "8d696c370c750c948ada61c69a0ee2cbbb9c50b1019ddb86d9317157a99c2cae"
 
 [[package]]
 name = "bonsol"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "anyhow",
  "ark-bn254",
  "ark-serialize",
- "bonsol-interface 0.1.2",
+ "bonsol-interface 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "flatbuffers",
+ "getrandom 0.2.15",
  "groth16-solana",
  "hex",
  "hex-literal",
@@ -1125,26 +1126,10 @@ dependencies = [
 
 [[package]]
 name = "bonsol-interface"
-version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bbc954b023f5abb2eeaeb12b2c7afb650913fe55889a90646dbbb34bf195c8a9"
-dependencies = [
- "arrayref",
- "bonsol-schema 0.1.2",
- "bytemuck",
- "flatbuffers",
- "hex",
- "sha3 0.10.8",
- "solana-program 2.0.25",
- "thiserror 1.0.69",
-]
-
-[[package]]
-name = "bonsol-interface"
 version = "0.3.1"
 dependencies = [
  "arrayref",
- "bonsol-schema 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "bonsol-schema 0.3.1",
  "bytemuck",
  "flatbuffers",
  "hex",
@@ -1152,6 +1137,22 @@ dependencies = [
  "sha3 0.10.8",
  "solana-program 2.0.25",
  "solana-sdk",
+ "thiserror 1.0.69",
+]
+
+[[package]]
+name = "bonsol-interface"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f199512e8ee540d059e36692b3295ef8b5ba717dd840f663632dce3cf14cfb2a"
+dependencies = [
+ "arrayref",
+ "bonsol-schema 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "bytemuck",
+ "flatbuffers",
+ "hex",
+ "sha3 0.10.8",
+ "solana-program 2.0.25",
  "thiserror 1.0.69",
 ]
 
@@ -1240,19 +1241,6 @@ dependencies = [
  "solana-rpc-client-api",
  "solana-sdk",
  "tokio",
-]
-
-[[package]]
-name = "bonsol-schema"
-version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6891ec647e75b063d7883fed4ec04752ed919f56f42c1923f36e2263b09fe7bf"
-dependencies = [
- "bytemuck",
- "flatbuffers",
- "num-derive 0.3.3",
- "num-traits",
- "thiserror 1.0.69",
 ]
 
 [[package]]

@@ -1,6 +1,6 @@
 [package]
 name = "bonsol-sdk"
-version = "0.3.1"
+version = "0.3.2"
 description = "SDK for interacting with Bonsol programs"
 authors = ["anagram build team"]
 repository = "https://github.com/anagrambuild/bonsol"

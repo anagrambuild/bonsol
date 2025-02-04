@@ -1,6 +1,6 @@
 [package]
 name = "bonsol"
-version = "0.3.1"
+version = "0.3.2"
 description = "Bonsol onchain program"
 authors = ["anagram build team"]
 repository = "https://github.com/anagrambuild/bonsol"
@@ -28,6 +28,7 @@ hex-literal = "0.4.1"
 num-bigint = "0.4.4"
 solana-program = "~2.0"
 thiserror = "1.0.57"
+getrandom = { version = "0.2.15", default-features = false, features = ["custom"] }
 
 [dev-dependencies]
 solana-program-test = "~2.0"
