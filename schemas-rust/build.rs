@@ -4,22 +4,29 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 
 fn main() {
+    // First, ensure we have a local schemas directory
+    if !Path::new("schemas").exists() {
+        fs::create_dir("schemas").expect("Failed to create schemas directory");
+    }
+
+    // If we're in local development and ../schemas exists, copy the files
+    if Path::new("../schemas").exists() {
+        for entry in fs::read_dir("../schemas").expect("Failed to read ../schemas") {
+            let entry = entry.expect("Failed to read entry");
+            let path = entry.path();
+            if path.extension().and_then(|ext| ext.to_str()) == Some("fbs") {
+                let target = Path::new("schemas").join(path.file_name().unwrap());
+                fs::copy(&path, &target).expect("Failed to copy schema file");
+            }
+        }
+    }
+
     // Define schema directory and target directory for generated Rust code.
-    let schema_dir = if Path::new("../schemas").exists() {
-        // Local development path
-        Path::new("../schemas")
-    } else if Path::new("schemas").exists() {
-        // Published package path or local schemas directory
-        Path::new("schemas")
-    } else {
-        panic!("Schema directory not found in either ../schemas or ./schemas");
-    };
+    let schema_dir = Path::new("schemas");
+    println!("cargo:warning=Using schema path: {}", schema_dir.display());
     
     let generated_src =
         PathBuf::from(env::var("GENERATED_CODE_DIR").unwrap_or_else(|_| "src".to_string()));
-
-    // Print the schema directory for debugging
-    println!("cargo:warning=Looking for schemas in: {}", schema_dir.display());
 
     // Collect all .fbs files in the schema directory.
     let file_list: Vec<_> = fs::read_dir(schema_dir)
