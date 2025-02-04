@@ -1,6 +1,6 @@
 [package]
 name = "bonsol-interface"
-version = "0.3.3"
+version = "0.3.4"
 edition = "2021"
 publish = false           # Exclude local crates from licensing checks
 
@@ -18,6 +18,6 @@ sha3 = "0.10.8"
 solana-program = { workspace = true, optional = true }
 solana-sdk = { workspace = true, optional = true }
 thiserror = { workspace = true }
-bonsol-schema = "0.3.3"
+bonsol-schema = "0.3.4"
 
 [dev-dependencies]
