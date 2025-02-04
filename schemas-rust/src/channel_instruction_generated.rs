@@ -5,10 +5,9 @@
 
 use crate::execution_request_v1_generated::*;
 use crate::status_v1_generated::*;
-use crate::input_type_generated::*;
 use crate::claim_v1_generated::*;
+use crate::input_type_generated::*;
 use crate::deploy_v1_generated::*;
-use crate::input_set_op_v1_generated::*;
 use core::mem;
 use core::cmp::Ordering;
 
@@ -18,15 +17,14 @@ use self::flatbuffers::{EndianScalar, Follow};
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
 pub const ENUM_MIN_CHANNEL_INSTRUCTION_IX_TYPE: u8 = 0;
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-pub const ENUM_MAX_CHANNEL_INSTRUCTION_IX_TYPE: u8 = 4;
+pub const ENUM_MAX_CHANNEL_INSTRUCTION_IX_TYPE: u8 = 3;
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_CHANNEL_INSTRUCTION_IX_TYPE: [ChannelInstructionIxType; 5] = [
+pub const ENUM_VALUES_CHANNEL_INSTRUCTION_IX_TYPE: [ChannelInstructionIxType; 4] = [
   ChannelInstructionIxType::ExecuteV1,
   ChannelInstructionIxType::StatusV1,
   ChannelInstructionIxType::DeployV1,
   ChannelInstructionIxType::ClaimV1,
-  ChannelInstructionIxType::InputSetOpV1,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -38,16 +36,14 @@ impl ChannelInstructionIxType {
   pub const StatusV1: Self = Self(1);
   pub const DeployV1: Self = Self(2);
   pub const ClaimV1: Self = Self(3);
-  pub const InputSetOpV1: Self = Self(4);
 
   pub const ENUM_MIN: u8 = 0;
-  pub const ENUM_MAX: u8 = 4;
+  pub const ENUM_MAX: u8 = 3;
   pub const ENUM_VALUES: &'static [Self] = &[
     Self::ExecuteV1,
     Self::StatusV1,
     Self::DeployV1,
     Self::ClaimV1,
-    Self::InputSetOpV1,
   ];
   /// Returns the variant's name or "" if unknown.
   pub fn variant_name(self) -> Option<&'static str> {
@@ -56,7 +52,6 @@ impl ChannelInstructionIxType {
       Self::StatusV1 => Some("StatusV1"),
       Self::DeployV1 => Some("DeployV1"),
       Self::ClaimV1 => Some("ClaimV1"),
-      Self::InputSetOpV1 => Some("InputSetOpV1"),
       _ => None,
     }
   }
@@ -133,7 +128,6 @@ impl<'a> ChannelInstruction<'a> {
   pub const VT_STATUS_V1: flatbuffers::VOffsetT = 8;
   pub const VT_DEPLOY_V1: flatbuffers::VOffsetT = 10;
   pub const VT_CLAIM_V1: flatbuffers::VOffsetT = 12;
-  pub const VT_INPUT_SET_V1: flatbuffers::VOffsetT = 14;
 
   #[inline]
   pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
@@ -145,7 +139,6 @@ impl<'a> ChannelInstruction<'a> {
     args: &'args ChannelInstructionArgs<'args>
   ) -> flatbuffers::WIPOffset<ChannelInstruction<'bldr>> {
     let mut builder = ChannelInstructionBuilder::new(_fbb);
-    if let Some(x) = args.input_set_v1 { builder.add_input_set_v1(x); }
     if let Some(x) = args.claim_v1 { builder.add_claim_v1(x); }
     if let Some(x) = args.deploy_v1 { builder.add_deploy_v1(x); }
     if let Some(x) = args.status_v1 { builder.add_status_v1(x); }
@@ -168,16 +161,12 @@ impl<'a> ChannelInstruction<'a> {
     let claim_v1 = self.claim_v1().map(|x| {
       x.into_iter().collect()
     });
-    let input_set_v1 = self.input_set_v1().map(|x| {
-      x.into_iter().collect()
-    });
     ChannelInstructionT {
       ix_type,
       execute_v1,
       status_v1,
       deploy_v1,
       claim_v1,
-      input_set_v1,
     }
   }
 
@@ -252,22 +241,6 @@ impl<'a> ChannelInstruction<'a> {
       unsafe { <flatbuffers::ForwardsUOffset<ClaimV1<'a>>>::follow(data.bytes(), 0) }
     })
   }
-  #[inline]
-  pub fn input_set_v1(&self) -> Option<flatbuffers::Vector<'a, u8>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, u8>>>(ChannelInstruction::VT_INPUT_SET_V1, None)}
-  }
-  pub fn input_set_v1_nested_flatbuffer(&'a self) -> Option<InputSetOpV1<'a>> {
-    self.input_set_v1().map(|data| {
-      use flatbuffers::Follow;
-      // Safety:
-      // Created from a valid Table for this object
-      // Which contains a valid flatbuffer in this slot
-      unsafe { <flatbuffers::ForwardsUOffset<InputSetOpV1<'a>>>::follow(data.bytes(), 0) }
-    })
-  }
 }
 
 impl flatbuffers::Verifiable for ChannelInstruction<'_> {
@@ -282,7 +255,6 @@ impl flatbuffers::Verifiable for ChannelInstruction<'_> {
      .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, u8>>>("status_v1", Self::VT_STATUS_V1, false)?
      .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, u8>>>("deploy_v1", Self::VT_DEPLOY_V1, false)?
      .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, u8>>>("claim_v1", Self::VT_CLAIM_V1, false)?
-     .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, u8>>>("input_set_v1", Self::VT_INPUT_SET_V1, false)?
      .finish();
     Ok(())
   }
@@ -293,7 +265,6 @@ pub struct ChannelInstructionArgs<'a> {
     pub status_v1: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a, u8>>>,
     pub deploy_v1: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a, u8>>>,
     pub claim_v1: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a, u8>>>,
-    pub input_set_v1: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a, u8>>>,
 }
 impl<'a> Default for ChannelInstructionArgs<'a> {
   #[inline]
@@ -304,7 +275,6 @@ impl<'a> Default for ChannelInstructionArgs<'a> {
       status_v1: None,
       deploy_v1: None,
       claim_v1: None,
-      input_set_v1: None,
     }
   }
 }
@@ -335,10 +305,6 @@ impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> ChannelInstructionBuilder<'a, '
     self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(ChannelInstruction::VT_CLAIM_V1, claim_v1);
   }
   #[inline]
-  pub fn add_input_set_v1(&mut self, input_set_v1: flatbuffers::WIPOffset<flatbuffers::Vector<'b , u8>>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(ChannelInstruction::VT_INPUT_SET_V1, input_set_v1);
-  }
-  #[inline]
   pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>) -> ChannelInstructionBuilder<'a, 'b, A> {
     let start = _fbb.start_table();
     ChannelInstructionBuilder {
@@ -361,7 +327,6 @@ impl core::fmt::Debug for ChannelInstruction<'_> {
       ds.field("status_v1", &self.status_v1());
       ds.field("deploy_v1", &self.deploy_v1());
       ds.field("claim_v1", &self.claim_v1());
-      ds.field("input_set_v1", &self.input_set_v1());
       ds.finish()
   }
 }
@@ -373,7 +338,6 @@ pub struct ChannelInstructionT {
   pub status_v1: Option<Vec<u8>>,
   pub deploy_v1: Option<Vec<u8>>,
   pub claim_v1: Option<Vec<u8>>,
-  pub input_set_v1: Option<Vec<u8>>,
 }
 impl Default for ChannelInstructionT {
   fn default() -> Self {
@@ -383,7 +347,6 @@ impl Default for ChannelInstructionT {
       status_v1: None,
       deploy_v1: None,
       claim_v1: None,
-      input_set_v1: None,
     }
   }
 }
@@ -405,16 +368,12 @@ impl ChannelInstructionT {
     let claim_v1 = self.claim_v1.as_ref().map(|x|{
       _fbb.create_vector(x)
     });
-    let input_set_v1 = self.input_set_v1.as_ref().map(|x|{
-      _fbb.create_vector(x)
-    });
     ChannelInstruction::create(_fbb, &ChannelInstructionArgs{
       ix_type,
       execute_v1,
       status_v1,
       deploy_v1,
       claim_v1,
-      input_set_v1,
     })
   }
 }

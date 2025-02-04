@@ -108,13 +108,12 @@ pub const ENUM_MIN_INPUT_TYPE: u8 = 0;
 pub const ENUM_MAX_INPUT_TYPE: u8 = 8;
 #[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_INPUT_TYPE: [InputType; 8] = [
+pub const ENUM_VALUES_INPUT_TYPE: [InputType; 7] = [
   InputType::Unknown,
   InputType::PublicData,
   InputType::PublicAccountData,
   InputType::PublicUrl,
   InputType::Private,
-  InputType::InputSet,
   InputType::PublicProof,
   InputType::PrivateLocal,
 ];
@@ -129,7 +128,6 @@ impl InputType {
   pub const PublicAccountData: Self = Self(3);
   pub const PublicUrl: Self = Self(4);
   pub const Private: Self = Self(5);
-  pub const InputSet: Self = Self(6);
   pub const PublicProof: Self = Self(7);
   pub const PrivateLocal: Self = Self(8);
 
@@ -141,7 +139,6 @@ impl InputType {
     Self::PublicAccountData,
     Self::PublicUrl,
     Self::Private,
-    Self::InputSet,
     Self::PublicProof,
     Self::PrivateLocal,
   ];
@@ -153,7 +150,6 @@ impl InputType {
       Self::PublicAccountData => Some("PublicAccountData"),
       Self::PublicUrl => Some("PublicUrl"),
       Self::Private => Some("Private"),
-      Self::InputSet => Some("InputSet"),
       Self::PublicProof => Some("PublicProof"),
       Self::PrivateLocal => Some("PrivateLocal"),
       _ => None,

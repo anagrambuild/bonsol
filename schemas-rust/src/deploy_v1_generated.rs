@@ -30,7 +30,7 @@ impl<'a> DeployV1<'a> {
   pub const VT_IMAGE_ID: flatbuffers::VOffsetT = 6;
   pub const VT_PROGRAM_NAME: flatbuffers::VOffsetT = 8;
   pub const VT_URL: flatbuffers::VOffsetT = 10;
-  pub const VT_SIZE: flatbuffers::VOffsetT = 12;
+  pub const VT_SIZE_: flatbuffers::VOffsetT = 12;
   pub const VT_INPUTS: flatbuffers::VOffsetT = 14;
 
   #[inline]
@@ -43,7 +43,7 @@ impl<'a> DeployV1<'a> {
     args: &'args DeployV1Args<'args>
   ) -> flatbuffers::WIPOffset<DeployV1<'bldr>> {
     let mut builder = DeployV1Builder::new(_fbb);
-    builder.add_size(args.size);
+    builder.add_size_(args.size_);
     if let Some(x) = args.inputs { builder.add_inputs(x); }
     if let Some(x) = args.url { builder.add_url(x); }
     if let Some(x) = args.program_name { builder.add_program_name(x); }
@@ -65,7 +65,7 @@ impl<'a> DeployV1<'a> {
     let url = self.url().map(|x| {
       x.to_string()
     });
-    let size = self.size();
+    let size_ = self.size_();
     let inputs = self.inputs().map(|x| {
       x.into_iter().collect()
     });
@@ -74,7 +74,7 @@ impl<'a> DeployV1<'a> {
       image_id,
       program_name,
       url,
-      size,
+      size_,
       inputs,
     }
   }
@@ -108,11 +108,11 @@ impl<'a> DeployV1<'a> {
     unsafe { self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(DeployV1::VT_URL, None)}
   }
   #[inline]
-  pub fn size(&self) -> u64 {
+  pub fn size_(&self) -> u64 {
     // Safety:
     // Created from valid Table for this object
     // which contains a valid value in this slot
-    unsafe { self._tab.get::<u64>(DeployV1::VT_SIZE, Some(0)).unwrap()}
+    unsafe { self._tab.get::<u64>(DeployV1::VT_SIZE_, Some(0)).unwrap()}
   }
   #[inline]
   pub fn inputs(&self) -> Option<flatbuffers::Vector<'a, ProgramInputType>> {
@@ -134,7 +134,7 @@ impl flatbuffers::Verifiable for DeployV1<'_> {
      .visit_field::<flatbuffers::ForwardsUOffset<&str>>("image_id", Self::VT_IMAGE_ID, false)?
      .visit_field::<flatbuffers::ForwardsUOffset<&str>>("program_name", Self::VT_PROGRAM_NAME, false)?
      .visit_field::<flatbuffers::ForwardsUOffset<&str>>("url", Self::VT_URL, false)?
-     .visit_field::<u64>("size", Self::VT_SIZE, false)?
+     .visit_field::<u64>("size_", Self::VT_SIZE_, false)?
      .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, ProgramInputType>>>("inputs", Self::VT_INPUTS, false)?
      .finish();
     Ok(())
@@ -145,7 +145,7 @@ pub struct DeployV1Args<'a> {
     pub image_id: Option<flatbuffers::WIPOffset<&'a str>>,
     pub program_name: Option<flatbuffers::WIPOffset<&'a str>>,
     pub url: Option<flatbuffers::WIPOffset<&'a str>>,
-    pub size: u64,
+    pub size_: u64,
     pub inputs: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a, ProgramInputType>>>,
 }
 impl<'a> Default for DeployV1Args<'a> {
@@ -156,7 +156,7 @@ impl<'a> Default for DeployV1Args<'a> {
       image_id: None,
       program_name: None,
       url: None,
-      size: 0,
+      size_: 0,
       inputs: None,
     }
   }
@@ -184,8 +184,8 @@ impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> DeployV1Builder<'a, 'b, A> {
     self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(DeployV1::VT_URL, url);
   }
   #[inline]
-  pub fn add_size(&mut self, size: u64) {
-    self.fbb_.push_slot::<u64>(DeployV1::VT_SIZE, size, 0);
+  pub fn add_size_(&mut self, size_: u64) {
+    self.fbb_.push_slot::<u64>(DeployV1::VT_SIZE_, size_, 0);
   }
   #[inline]
   pub fn add_inputs(&mut self, inputs: flatbuffers::WIPOffset<flatbuffers::Vector<'b , ProgramInputType>>) {
@@ -213,7 +213,7 @@ impl core::fmt::Debug for DeployV1<'_> {
       ds.field("image_id", &self.image_id());
       ds.field("program_name", &self.program_name());
       ds.field("url", &self.url());
-      ds.field("size", &self.size());
+      ds.field("size_", &self.size_());
       ds.field("inputs", &self.inputs());
       ds.finish()
   }
@@ -225,7 +225,7 @@ pub struct DeployV1T {
   pub image_id: Option<String>,
   pub program_name: Option<String>,
   pub url: Option<String>,
-  pub size: u64,
+  pub size_: u64,
   pub inputs: Option<Vec<ProgramInputType>>,
 }
 impl Default for DeployV1T {
@@ -235,7 +235,7 @@ impl Default for DeployV1T {
       image_id: None,
       program_name: None,
       url: None,
-      size: 0,
+      size_: 0,
       inputs: None,
     }
   }
@@ -257,7 +257,7 @@ impl DeployV1T {
     let url = self.url.as_ref().map(|x|{
       _fbb.create_string(x)
     });
-    let size = self.size;
+    let size_ = self.size_;
     let inputs = self.inputs.as_ref().map(|x|{
       _fbb.create_vector(x)
     });
@@ -266,7 +266,7 @@ impl DeployV1T {
       image_id,
       program_name,
       url,
-      size,
+      size_,
       inputs,
     })
   }

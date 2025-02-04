@@ -6,7 +6,7 @@ table DeployV1 {
   image_id: string; //digest of the program elf file
   program_name: string;
   url: string; //url to the program elf file probbaly on ipfs/arweave/other 
-  size: uint64; //size of the program elf file
+  size_: uint64; //size of the program elf file
   inputs: [ProgramInputType]; //loaded into the program in array order
 }
 
