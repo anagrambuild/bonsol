@@ -1,6 +1,6 @@
 [package]
 name = "bonsol-sdk"
-version = "0.3.0"
+version = "0.3.1"
 description = "SDK for interacting with Bonsol programs"
 authors = ["anagram build team"]
 repository = "https://github.com/anagrambuild/bonsol"
@@ -29,9 +29,9 @@ solana-client = "~2.0"
 thiserror = "1.0.57"
 tokio = { version = "1.24.2", features = ["full"] }
 
-# Use published versions
-bonsol-schema = "0.1.2"
-bonsol-interface = "0.1.2"
+# Use workspace versions
+bonsol-schema = { workspace = true }
+bonsol-interface = { workspace = true }
 
 [dev-dependencies]
 tokio-test = "0.4.3"
