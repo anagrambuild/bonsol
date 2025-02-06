@@ -981,7 +981,7 @@ version = "0.3.0"
 dependencies = [
  "ark-bn254",
  "ark-serialize",
- "bonsol-interface",
+ "bonsol-interface 0.3.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "flatbuffers",
  "groth16-solana",
  "hex",
@@ -996,7 +996,7 @@ name = "bonsol-anchor-interface"
 version = "0.3.0"
 dependencies = [
  "anchor-lang",
- "bonsol-interface",
+ "bonsol-interface 0.3.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "bonsol-schema 0.3.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "paste",
 ]
@@ -1009,7 +1009,7 @@ dependencies = [
  "assert_cmd",
  "atty",
  "bincode",
- "bonsol-interface",
+ "bonsol-interface 0.3.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "bonsol-prover",
  "bonsol-sdk",
  "byte-unit",
@@ -1041,7 +1041,25 @@ dependencies = [
 
 [[package]]
 name = "bonsol-interface"
-version = "0.3.0"
+version = "0.3.5"
+dependencies = [
+ "arrayref",
+ "bonsol-schema 0.3.5 (registry+https://github.com/rust-lang/crates.io-index)",
+ "bytemuck",
+ "flatbuffers",
+ "hex",
+ "serde",
+ "sha3 0.10.8",
+ "solana-program 2.0.23",
+ "solana-sdk",
+ "thiserror 1.0.69",
+]
+
+[[package]]
+name = "bonsol-interface"
+version = "0.3.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e26442126f1e156d03978977e51ae82d16c76aefe62bb2dea76c8500baa15a6d"
 dependencies = [
  "arrayref",
  "bonsol-schema 0.3.5 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1069,7 +1087,7 @@ dependencies = [
  "ark-serialize",
  "ark-std",
  "async-trait",
- "bonsol-interface",
+ "bonsol-interface 0.3.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "bonsol-prover",
  "bytemuck",
  "byteorder",
@@ -1173,7 +1191,7 @@ dependencies = [
  "anyhow",
  "async-trait",
  "bincode",
- "bonsol-interface",
+ "bonsol-interface 0.3.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "bonsol-schema 0.3.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "bytes",
  "flatbuffers",
@@ -1196,7 +1214,7 @@ version = "0.3.0"
 dependencies = [
  "anyhow",
  "bonsol-cli",
- "bonsol-interface",
+ "bonsol-interface 0.3.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "bonsol-sdk",
  "rand 0.8.5",
  "rand_core 0.6.4",
@@ -1431,7 +1449,7 @@ dependencies = [
 name = "callback-example"
 version = "0.3.0"
 dependencies = [
- "bonsol-interface",
+ "bonsol-interface 0.3.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "solana-program 2.0.23",
 ]
 
