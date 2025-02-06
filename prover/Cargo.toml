@@ -1,13 +1,18 @@
 [package]
 name = "bonsol-prover"
-version.workspace = true
+version = "0.3.5"
+description = "Zero-knowledge proof generation for Bonsol"
+authors = ["anagram build team"]
+repository = "https://github.com/anagrambuild/bonsol"
+license = "MIT"
 edition = "2021"
-publish = false          # Exclude local crates from licensing checks
 
 [dependencies]
 anyhow = "1.0.86"
 async-trait = "0.1.80"
+arrayref = "0.3.6"
 bincode = "1.3.3"
+bonsol-schema = "0.3.5"
 bytes = "1.5.0"
 futures-util = "0.3.30"
 reqwest = { version = "0.11.26", features = [
@@ -16,17 +21,15 @@ reqwest = { version = "0.11.26", features = [
   "stream",
   "native-tls-vendored",
 ] }
-risc0-binfmt = { workspace = true }
-risc0-zkvm = { workspace = true }
+risc0-binfmt = "1.2.1"
+risc0-zkvm = { version = "1.2.1", features = ["prove"], default-features = false }
 serde = { version = "1.0.197" }
 serde_json = "1.0.104"
-solana-rpc-client = { workspace = true }
-solana-rpc-client-api = { workspace = true }
-solana-account-decoder = { workspace = true }
-solana-sdk = { workspace = true }
+solana-rpc-client = "~2.0"
+solana-rpc-client-api = "~2.0"
+solana-account-decoder = "~2.0"
+solana-sdk = "~2.0"
 tokio = "1.36.0"
-arrayref = "0.3.6"
-bonsol-schema.workspace = true
 
 [dev-dependencies]
 mockito = "1.5.0"

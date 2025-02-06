@@ -5,7 +5,7 @@ use std::process::Command;
 
 fn main() {
     // Define schema directory and target directory for generated Rust code.
-    let schema_dir = Path::new("../schemas");
+    let schema_dir = Path::new("schema");
     let generated_src =
         PathBuf::from(env::var("GENERATED_CODE_DIR").unwrap_or_else(|_| "src".to_string()));
 

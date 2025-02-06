@@ -1,15 +1,20 @@
 [package]
 name = "bonsol-sdk"
-version.workspace = true
+version = "0.3.5"
+description = "SDK for interacting with Bonsol protocol"
+authors = ["anagram build team"]
+repository = "https://github.com/anagrambuild/bonsol"
+license = "MIT"
 edition = "2021"
-publish = false          # Exclude local crates from licensing checks
 
 [dependencies]
 anyhow = "1.0.86"
 async-trait = "0.1.80"
 bincode = "1.3.3"
+bonsol-interface = "0.3.5"
+bonsol-schema = "0.3.5"
 bytes = "1.5.0"
-flatbuffers = { workspace = true }
+flatbuffers = "24.3.25"
 futures-util = "0.3.30"
 num-traits = "0.2.16"
 reqwest = { version = "0.11.26", features = [
@@ -18,14 +23,11 @@ reqwest = { version = "0.11.26", features = [
   "stream",
   "native-tls-vendored",
 ] }
-risc0-binfmt = { workspace = true }
-risc0-zkvm = { workspace = true }
+risc0-binfmt = "1.2.1"
+risc0-zkvm = { version = "1.2.1", features = ["prove"], default-features = false }
 serde = { version = "1.0.197" }
 serde_json = "1.0.104"
-solana-rpc-client = { workspace = true }
-solana-rpc-client-api = { workspace = true }
-solana-sdk = { workspace = true }
+solana-rpc-client = "~2.0"
+solana-rpc-client-api = "~2.0"
+solana-sdk = "~2.0"
 tokio = "1.36.0"
-
-bonsol-interface.workspace = true
-bonsol-schema.workspace = true
