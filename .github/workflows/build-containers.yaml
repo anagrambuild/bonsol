@@ -1,5 +1,6 @@
 name: Build and Publish Node Images (CUDA & Standard)
 on:
+  workflow_dispatch:
   push:
     tags:
       - "*"
