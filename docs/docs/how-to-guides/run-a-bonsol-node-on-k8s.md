@@ -14,4 +14,4 @@ This will vary from k8s provider to k8s provider, but you can check the kubelet 
 I know it sounds crazy but `ulimit -s unlimited` is the best bet right now. We hope to remove this requirement in the future.
 
 ## Installing the Helm Chart
-Refer to [this documentation](https://github.com/anagrambuild/bonsol/tree/main/charts) on how to install the Helm chart.
+Refer to [this documentation](https://github.com/Bonsol-Collective/bonsol/tree/main/charts) on how to install the Helm chart.
