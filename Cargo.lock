@@ -1003,7 +1003,7 @@ dependencies = [
 
 [[package]]
 name = "bonsol-cli"
-version = "0.3.5"
+version = "0.3.0"
 dependencies = [
  "anyhow",
  "assert_cmd",
