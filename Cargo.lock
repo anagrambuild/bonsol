@@ -1003,7 +1003,7 @@ dependencies = [
 
 [[package]]
 name = "bonsol-cli"
-version = "0.3.0"
+version = "0.3.5"
 dependencies = [
  "anyhow",
  "assert_cmd",
@@ -1011,7 +1011,7 @@ dependencies = [
  "bincode",
  "bonsol-interface 0.3.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "bonsol-prover 0.3.5 (registry+https://github.com/rust-lang/crates.io-index)",
- "bonsol-sdk 0.3.5",
+ "bonsol-sdk 0.3.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "byte-unit",
  "bytemuck",
  "bytes",
