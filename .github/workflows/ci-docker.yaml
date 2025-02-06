@@ -32,7 +32,7 @@ jobs:
           file: .github/docker/Dockerfile.build
           platforms: linux/amd64
           push: true
-          tags: ghcr.io/${{ lowercase(github.repository_owner) }}/bonsol-ci-env:latest
+          tags: ghcr.io/bonsol-collective/bonsol-ci-env:latest
           build-args: |
             VERSION=latest
           cache-from: type=gha
