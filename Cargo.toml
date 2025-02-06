@@ -51,7 +51,7 @@ risc0-circuit-rv32im = { version = "1.2.1" }
 risc0-circuit-recursion-sys = { version = "1.2.1" }
 tokio-test = "0.4.3"
 bonsol-interface = { path = "./onchain/interface" }
-bonsol-schema = { path = "./schemas-rust" }
+bonsol-schema = "0.3.5"
 bonsol-cli = { path = "./cli" }
 bonsol-sdk = { path = "./sdk" }
 
