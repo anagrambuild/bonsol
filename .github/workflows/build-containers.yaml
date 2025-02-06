@@ -48,8 +48,8 @@ jobs:
           push: true
           file: Dockerfile.${{ matrix.flavor }}
           tags: |
-            ghcr.io/${{ lowercase(github.repository_owner) }}/bonsol-node:${{ matrix.flavor }}-v${{ github.ref_name }}
-            ghcr.io/${{ lowercase(github.repository_owner )}}/bonsol-node:${{ matrix.flavor }}-${{ github.sha }}
+            ghcr.io/bonsol-collective/bonsol-node:${{ matrix.flavor }}-v${{ github.ref_name }}
+            ghcr.io/bonsol-collective/bonsol-node:${{ matrix.flavor }}-${{ github.sha }}
           platforms: linux/amd64
           cache-from: type=gha
           cache-to: type=gha,mode=max
