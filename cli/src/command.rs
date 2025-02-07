@@ -91,40 +91,6 @@ pub struct S3UploadArgs {
 }
 
 #[derive(Debug, Clone, Args)]
-#[command(alias = "sd", group(
-    // If creating a new account, there's no reason to pass an already existing pubkey
-    ArgGroup::new("create_group")
-        .required(true) // Ensures that either `create` or `storage_account` is specified
-        .args(&["create", "storage_account"])
-        .multiple(false)
-))]
-pub struct ShadowDriveUploadArgs {
-    #[arg(help = "Specify a Shadow Drive storage account public key", long)]
-    pub storage_account: Option<String>,
-
-    #[arg(
-        help = "Specify the size of the Shadow Drive storage account in MB",
-        long
-    )]
-    pub storage_account_size_mb: Option<u64>,
-
-    #[arg(help = "Specify the name of the Shadow Drive storage account", long)]
-    pub storage_account_name: Option<String>,
-
-    #[arg(
-        help = "Specify an alternate keypair for testing on devnet, but deploying to Shadow Drive",
-        long
-    )]
-    pub alternate_keypair: Option<String>,
-
-    #[arg(help = "Create a new Shadow Drive storage account", long)]
-    pub create: bool,
-
-    #[command(flatten)]
-    pub shared_args: SharedDeployArgs,
-}
-
-#[derive(Debug, Clone, Args)]
 pub struct UrlUploadArgs {
     #[arg(help = "Specify a URL endpoint to deploy to", long, required = true)]
     pub url: String,
@@ -138,9 +104,6 @@ pub enum DeployArgs {
     #[command(about = "Deploy a program using an AWS S3 bucket")]
     S3(S3UploadArgs),
 
-    #[command(about = "Deploy a program using ShadowDrive")]
-    ShadowDrive(ShadowDriveUploadArgs),
-
     #[command(about = "Deploy a program manually with a URL")]
     Url(UrlUploadArgs),
 }
@@ -149,7 +112,6 @@ impl DeployArgs {
     pub fn shared_args(&self) -> SharedDeployArgs {
         match self {
             Self::S3(s3) => s3.shared_args.clone(),
-            Self::ShadowDrive(sd) => sd.shared_args.clone(),
             Self::Url(url) => url.shared_args.clone(),
         }
     }
@@ -175,7 +137,7 @@ pub struct SharedDeployArgs {
 #[derive(Subcommand, Debug)]
 pub enum Command {
     #[command(
-        about = "Deploy a program with various storage options, such as S3, ShadowDrive, or manually with a URL"
+        about = "Deploy a program with various storage options, such as S3, or manually with a URL"
     )]
     Deploy {
         #[clap(subcommand)]
