@@ -6,7 +6,7 @@ on:
       - "*"
 jobs:
   build-and-push:
-    runs-on: ubuntu-latest-m
+    runs-on: self-hosted-linux
     strategy:
       matrix:
         flavor: [standard, cuda]
