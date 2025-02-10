@@ -1,0 +1,29 @@
+include "./input_type.fbs";
+
+enum ProverVersion: uint16 {
+    DEFAULT = 0,
+    V1_0_1 = 1,
+    V1_2_1 = 9,
+}
+
+struct Account (force_align: 8) {
+  writable: uint8;
+  pubkey: [uint8:32];
+}
+
+table ExecutionRequestV1{
+  tip: uint64;
+  execution_id: string;
+  image_id: string;
+  callback_program_id: [uint8];
+  callback_instruction_prefix: [uint8];
+  forward_output: bool = false;
+  verify_input_hash: bool = true;
+  input: [Input];
+  input_digest: [uint8]; // sha256 of the input data, checked against journal digest
+  max_block_height: uint64; // max block height to accept prover commitment
+  callback_extra_accounts: [Account] (force_align: 8); // extra accounts to pass to callback program 
+  prover_version: ProverVersion = DEFAULT;
+}
+
+root_type ExecutionRequestV1;

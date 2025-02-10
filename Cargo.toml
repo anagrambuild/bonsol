@@ -50,10 +50,10 @@ risc0-zkvm-platform = { version = "1.2.1" }
 risc0-circuit-rv32im = { version = "1.2.1" }
 risc0-circuit-recursion-sys = { version = "1.2.1" }
 tokio-test = "0.4.3"
-bonsol-interface = { path = "./onchain/interface" }
-bonsol-schema = { path = "./schemas-rust" }
+bonsol-interface = "0.3.5"
+bonsol-schema = "0.3.5"
 bonsol-cli = { path = "./cli" }
-bonsol-sdk = { path = "./sdk" }
+bonsol-sdk = "0.3.5"
 
 [patch.crates-io.curve25519-dalek] 
  git = "https://github.com/anza-xyz/curve25519-dalek.git" 

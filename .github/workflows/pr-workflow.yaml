@@ -12,7 +12,7 @@ jobs:
     name: Check & Fmt
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/anagrambuild/bonsol-ci-env:latest
+      image: ghcr.io/Bonsol-Collective/bonsol-ci-env:latest
       volumes:
         - local:/workspaces/bonsol
     steps:
@@ -32,7 +32,7 @@ jobs:
     name: Unit Test
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/anagrambuild/bonsol-ci-env:latest
+      image: ghcr.io/Bonsol-Collective/bonsol-ci-env:latest
       options: "-it"
       volumes:
         - local:/workspaces/bonsol
@@ -45,7 +45,7 @@ jobs:
     name: E2E Test
     runs-on: ubuntu-latest-m
     container:
-      image: ghcr.io/anagrambuild/bonsol-ci-env:latest
+      image: ghcr.io/Bonsol-Collective/bonsol-ci-env:latest
       options: "-it"
       volumes:
         - local:/workspaces/bonsol
