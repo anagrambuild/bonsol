@@ -30,12 +30,16 @@ use {
 pub enum CliError {
     #[error("Invalid RPC URL")]
     InvalidRpcUrl,
+    #[error("Invalid config: {0}")]
+    InvalidConfig(String),
     #[error("Invalid Bonsol program")]
     InvalidBonsolProgram,
-    #[error("Invalid RISC0 image folder")]
-    InvalidRisc0ImageFolder,
-    #[error("Invalid signer: Missing/Invalid")]
-    InvalidSigner,
+    #[error("Invalid RISC0 image folder: {0}")]
+    InvalidRisc0ImageFolder(String),
+    #[error("Invalid RISC0 image file limit: {0}")]
+    InvalidRisc0ImageLimit(u32),
+    #[error("Invalid signer path: {0}")]
+    InvalidSigner(String),
     #[error("Invalid Ingester")]
     InvalidIngester,
     #[error("Invalid Transaction Sender")]
@@ -59,7 +63,7 @@ async fn main() -> Result<()> {
         return Ok(());
     }
     let config_file = &args[2];
-    let config = config::load_config(config_file);
+    let config = config::load_config(config_file)?;
     let program = Pubkey::from_str(&config.bonsol_program)?;
     if let MetricsConfig::Prometheus {} = config.metrics_config {
         let builder = PrometheusBuilder::new();
@@ -72,8 +76,8 @@ async fn main() -> Result<()> {
     //todo use traits for signer
     let signer = match config.signer_config.clone() {
         SignerConfig::KeypairFile { path } => {
-            info!("Using Keypair File");
-            read_keypair_file(&path).map_err(|_| CliError::InvalidSigner)?
+            info!("Using Keypair File {:?}", config.signer_config);
+            read_keypair_file(&path).map_err(|e| CliError::InvalidSigner(e.to_string()))?
         }
     };
     let signer_identity = signer.pubkey();
@@ -117,7 +121,19 @@ async fn main() -> Result<()> {
             config.image_download_timeout_secs as u64,
         )),
     );
-    //may take time to load images, depending on the number of images TODO put limit
+
+    let risc0_image_folder = config.risc0_image_folder.clone();
+    if std::fs::read_dir(risc0_image_folder)
+        .map_err(|e| return CliError::InvalidRisc0ImageFolder(e.to_string()))?
+        .filter_map(Result::ok)
+        .filter(|entry| entry.file_type().map(|ft| ft.is_file()).unwrap_or(false))
+        .count() as u32
+        > config.risc0_image_folder_limit
+    {
+        return Err(CliError::InvalidRisc0ImageLimit(config.risc0_image_folder_limit).into());
+    }
+
+    //may take time to load images, depending on the number of images
     let mut runner = Risc0Runner::new(
         config.clone(),
         signer_identity,
@@ -125,6 +141,7 @@ async fn main() -> Result<()> {
         Arc::new(input_resolver),
     )
     .await?;
+
     let runner_chan = runner.start()?;
     let mut ingester_chan = ingester.start(program)?;
     let handle = tokio::spawn(async move {
