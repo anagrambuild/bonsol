@@ -32,6 +32,7 @@ pub enum CliError {
     InvalidRpcUrl,
     #[error("Invalid Bonsol program")]
     InvalidBonsolProgram,
+    #[allow(dead_code)]
     #[error("Invalid RISC0 image folder")]
     InvalidRisc0ImageFolder,
     #[error("Invalid signer: Missing/Invalid")]

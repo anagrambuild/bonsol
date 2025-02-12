@@ -127,6 +127,16 @@ impl Risc0Runner {
         txn_sender: Arc<RpcTransactionSender>,
         input_resolver: Arc<dyn InputResolver + 'static>,
     ) -> Result<Risc0Runner> {
+        if !check_x86_64arch() {
+            warn!("Bonsol node will not compress STARKs to SNARKs after successful risc0vm\nproving due to stark compression tooling requiring x86_64 architectures - virtualization will also fail");
+        }
+
+        check_stark_compression_tools_path(&config.stark_compression_tools_path)?;
+
+        if !std::path::Path::new(&config.risc0_image_folder).exists() {
+            fs::create_dir_all(&config.risc0_image_folder)?;
+        }
+
         let dir = fs::read_dir(&config.risc0_image_folder)?;
         let loaded_images = DashMap::new();
         for entry in dir {
@@ -137,12 +147,6 @@ impl Risc0Runner {
                 loaded_images.insert(img.id.clone(), img);
             }
         }
-
-        if !check_x86_64arch() {
-            warn!("Bonsol node will not compress STARKs to SNARKs after successful risc0vm\nproving due to stark compression tooling requiring x86_64 architectures - virtualization will also fail");
-        }
-
-        check_stark_compression_tools_path(&config.stark_compression_tools_path)?;
 
         Ok(Risc0Runner {
             config: Arc::new(config),
