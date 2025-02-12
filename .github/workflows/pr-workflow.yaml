@@ -47,7 +47,7 @@ jobs:
         run: cargo test -- --nocapture
   e2e-test:
     name: E2E Test
-    runs-on: ubuntu-latest-m
+    runs-on: ubuntu-latest
     container:
       image: ghcr.io/bonsol-collective/bonsol-ci-env:latest
       options: "-it"
