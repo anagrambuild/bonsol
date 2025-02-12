@@ -76,7 +76,7 @@ async fn main() -> Result<()> {
     //todo use traits for signer
     let signer = match config.signer_config.clone() {
         SignerConfig::KeypairFile { path } => {
-            info!("Using Keypair File");
+            info!("Using Keypair File {:?}", config.signer_config);
             read_keypair_file(&path).map_err(|e| CliError::InvalidSigner(e.to_string()))?
         }
     };
