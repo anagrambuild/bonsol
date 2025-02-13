@@ -1,4 +1,5 @@
 use {
+    crate::CliError,
     figment::{
         providers::{Format, Toml},
         Figment,
@@ -48,6 +49,8 @@ pub struct ProverNodeConfig {
     pub bonsol_program: String,
     #[serde(default = "default_risc0_image_folder")]
     pub risc0_image_folder: String,
+    #[serde(default = "default_risc0_image_folder_limit")]
+    pub risc0_image_folder_limit: u32,
     #[serde(default = "default_max_image_size_mb")]
     pub max_image_size_mb: u32,
     #[serde(default = "default_image_compression_ttl_hours")]
@@ -102,6 +105,10 @@ fn default_risc0_image_folder() -> String {
     "./elf".to_string()
 }
 
+const fn default_risc0_image_folder_limit() -> u32 {
+    300
+}
+
 const fn default_max_image_size_mb() -> u32 {
     10
 }
@@ -150,6 +157,7 @@ impl Default for ProverNodeConfig {
             env: Some("dev".to_string()),
             bonsol_program: default_bonsol_program(),
             risc0_image_folder: default_risc0_image_folder(),
+            risc0_image_folder_limit: default_risc0_image_folder_limit(),
             max_image_size_mb: default_max_image_size_mb(),
             image_compression_ttl_hours: default_image_compression_ttl_hours(),
             max_input_size_mb: default_max_input_size_mb(),
@@ -166,9 +174,12 @@ impl Default for ProverNodeConfig {
     }
 }
 
-pub fn load_config(config_path: &str) -> ProverNodeConfig {
+pub fn load_config(config_path: &str) -> Result<ProverNodeConfig, CliError> {
     let figment = Figment::new().merge(Toml::file(config_path));
-    figment.extract().unwrap()
+    let cfg: ProverNodeConfig = figment
+        .extract()
+        .map_err(|e| return CliError::InvalidConfig(e.to_string()))?;
+    Ok(cfg)
 }
 
 #[cfg(test)]
