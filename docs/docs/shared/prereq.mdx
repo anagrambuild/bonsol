@@ -15,8 +15,12 @@
   cargo install --git https://github.com/project-serum/anchor avm --locked
   # Install Anchor 0.30.1
   avm install 0.30.1
-  # Install Bonsol CLI, Risc0 Toolchain
+  # Install Bonsol CLI, Risc0 Toolchain, Flatbuffers
   curl --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/anagrambuild/bonsol/refs/heads/main/bin/install.sh | sh
+  # Install Flatbuffers
+  # follow the instructions at https://flatbuffers.dev/building/  
+  # or if on a mac use brew 
+  brew install flatbuffers@24.3.25
   ```
 </details>
 
